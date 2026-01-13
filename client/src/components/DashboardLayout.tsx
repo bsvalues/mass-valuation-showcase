@@ -9,6 +9,7 @@ import {
   Box,
   Calculator,
   ChevronRight,
+  Factory,
   Home,
   Layers,
   LayoutDashboard,
@@ -16,6 +17,7 @@ import {
   Menu,
   Search,
   Settings,
+  Shield,
   ShieldCheck,
   Sliders,
   Zap
@@ -35,10 +37,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Home, label: "Overview", href: "/" },
     { icon: Sliders, label: "Calibration Studio", href: "/calibration" },
     { icon: Calculator, label: "Cost Matrix", href: "/cost-matrix" },
-    { icon: LayoutDashboard, label: "Valuation Dashboard", href: "/dashboard" },
+    { icon: Factory, label: "Mass Valuation Studio", href: "/mass-valuation" },
     { icon: BarChart3, label: "Market Analysis", href: "/analysis" },
     { icon: MapIcon, label: "Map Explorer", href: "/map-explorer" },
     { icon: Box, label: "Models & Algorithms", href: "/models" },
+    { icon: Shield, label: "Defense Studio", href: "/defense" },
     { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
   ];
 

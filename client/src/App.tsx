@@ -10,6 +10,8 @@ import Governance from "./pages/Governance";
 import CostMatrix from "./pages/CostMatrix";
 import MapExplorer from "./pages/MapExplorer";
 import CalibrationStudio from "./pages/CalibrationStudio";
+import MassValuationStudio from "./pages/MassValuationStudio";
+import DefenseStudio from "./pages/DefenseStudio";
 
 
 function Router() {
@@ -20,6 +22,8 @@ function Router() {
       <Route path={"/cost-matrix"} component={CostMatrix} />
       <Route path={"/map-explorer"} component={MapExplorer} />
       <Route path={"/calibration"} component={CalibrationStudio} />
+      <Route path={"/mass-valuation"} component={MassValuationStudio} />
+      <Route path={"/defense"} component={DefenseStudio} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

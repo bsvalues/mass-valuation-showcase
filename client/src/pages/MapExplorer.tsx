@@ -13,6 +13,7 @@ import { useState } from "react";
 export default function MapExplorer() {
   const [activeLayer, setActiveLayer] = useState("valuation");
   const [is3DMode, setIs3DMode] = useState(true);
+  const [isSwarmMode, setIsSwarmMode] = useState(false);
 
   return (
     <DashboardLayout>
@@ -95,6 +96,25 @@ export default function MapExplorer() {
                   Enable WebGL terrain extrusion based on property value density.
                 </p>
               </div>
+
+              {/* Swarm Controls */}
+              <div className={`p-3 rounded-lg border transition-all duration-500 ${isSwarmMode ? 'bg-[#00ffee]/10 border-[#00ffee]/50 shadow-[0_0_15px_rgba(0,255,238,0.2)]' : 'bg-white/5 border-white/10'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-sm font-medium flex items-center gap-2 ${isSwarmMode ? 'text-[#00ffee]' : 'text-slate-300'}`}>
+                    <Zap className={`w-4 h-4 ${isSwarmMode ? 'animate-pulse' : ''}`} />
+                    Swarm Visualization
+                  </span>
+                  <Switch checked={isSwarmMode} onCheckedChange={setIsSwarmMode} />
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Visualize the "Million Agent Consciousness" and synaptic connections between comparable properties.
+                </p>
+                {isSwarmMode && (
+                  <div className="mt-2 text-[10px] font-mono text-[#00ffee] animate-pulse">
+                    &gt; SYNAPSES ACTIVE: 42,891
+                  </div>
+                )}
+              </div>
             </div>
           </ScrollArea>
         </Card>
@@ -131,6 +151,17 @@ export default function MapExplorer() {
                 </div>
               </div>
             </div>
+
+            {/* Swarm Overlay */}
+            {isSwarmMode && (
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="relative w-full h-full overflow-hidden opacity-30">
+                  <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite]" />
+                  <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite_1s]" />
+                  <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite_2s]" />
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
