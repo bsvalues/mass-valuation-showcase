@@ -18,6 +18,7 @@ import CalibrationStudio from "./pages/CalibrationStudio";
 import MassValuationStudio from "./pages/MassValuationStudio";
 import DefenseStudio from "./pages/DefenseStudio";
 import NeuralCore from "./pages/NeuralCore";
+import ModelsAlgorithms from "./pages/ModelsAlgorithms";
 
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path={"/governance"} component={Governance} />
       <Route path={"/cost-matrix"} component={CostMatrix} />
       <Route path={"/map-explorer"} component={MapExplorer} />
+      <Route path={"/models"} component={ModelsAlgorithms} />
       <Route path={"/calibration"} component={CalibrationStudio} />
       <Route path={"/mass-valuation"} component={MassValuationStudio} />
       <Route path={"/defense"} component={DefenseStudio} />
@@ -53,8 +55,8 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider
-        defaultTheme="light"
-        // switchable
+        defaultTheme="dark"
+        switchable
       >
         <AdaptiveThemeProvider>
           <GlobalSimulationProvider>

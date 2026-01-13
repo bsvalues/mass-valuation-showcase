@@ -24,10 +24,13 @@ import {
   Shield,
   ShieldCheck,
   Sliders,
-  Zap
+  Zap,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -37,6 +40,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [location] = useLocation();
   const { systemResonance, isRevalRunning, ingestData } = useGlobalSimulation();
+  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/" },
@@ -166,6 +170,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <DataIngestionPortal onDataLoaded={ingestData} />
             <CommandCenterMode />
             <VoiceCommandInterface />
+            
+            {/* Theme Toggle */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme}
+              className="text-muted-foreground hover:text-primary"
+              title={theme === 'dark' ? "Switch to Field Ops Mode (Light)" : "Switch to Command Center Mode (Dark)"}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+
             <Button variant="outline" size="sm" className="hidden sm:flex active-recoil hover-lift">
               Export Report
             </Button>

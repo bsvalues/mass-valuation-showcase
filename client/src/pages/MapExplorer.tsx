@@ -7,17 +7,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Map as MapIcon, MousePointer2, Navigation, Search, Settings2, Zap, Network } from "lucide-react";
+import { Layers, Map as MapIcon, MousePointer2, Navigation, Search, Settings2, Zap, Network, X, Building2, Ruler, DollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
 import { toast } from "sonner";
 import { performKMeansClustering } from "@/lib/clustering";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function MapExplorer() {
   const [activeLayer, setActiveLayer] = useState("valuation");
   const [is3DMode, setIs3DMode] = useState(true);
   const [isSwarmMode, setIsSwarmMode] = useState(false);
   const [clusters, setClusters] = useState<any[]>([]);
+  const [selectedParcel, setSelectedParcel] = useState<any>(null);
   const { realData, hasRealData } = useGlobalSimulation();
 
   useEffect(() => {
@@ -196,16 +198,101 @@ export default function MapExplorer() {
                   {clusters.map((cluster, i) => (
                     <div 
                       key={i}
-                      className="absolute w-4 h-4 bg-purple-500 rounded-full animate-pulse shadow-[0_0_20px_#a855f7]"
+                      className="absolute w-4 h-4 bg-purple-500 rounded-full animate-pulse shadow-[0_0_20px_#a855f7] cursor-pointer hover:scale-150 transition-transform"
                       style={{
                         top: `${50 + (cluster.centroid.lat - 25.7617) * 200}%`,
                         left: `${50 + (cluster.centroid.lng - (-80.1918)) * 200}%`
+                      }}
+                      onClick={() => {
+                        // Find a representative parcel from this cluster to show details
+                        if (cluster.points.length > 0) {
+                          const parcelId = cluster.points[0].id;
+                          const parcelData = realData.find((d: any) => d.pin === parcelId || d.id === parcelId) || {
+                            pin: parcelId,
+                            address: "1234 Market St",
+                            owner: "TerraFusion Corp",
+                            total_value: cluster.centroid.value,
+                            land_value: cluster.centroid.value * 0.3,
+                            imp_value: cluster.centroid.value * 0.7,
+                            total_sqft: 2500
+                          };
+                          setSelectedParcel(parcelData);
+                        }
                       }}
                     />
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Parcel Detail Modal */}
+            <Dialog open={!!selectedParcel} onOpenChange={(open) => !open && setSelectedParcel(null)}>
+              <DialogContent className="bg-[#0b1020]/95 border border-[#00ffee]/30 backdrop-blur-xl sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-[#00ffee] flex items-center gap-2">
+                    <Building2 className="w-5 h-5" />
+                    Property Detail Card
+                  </DialogTitle>
+                </DialogHeader>
+                
+                {selectedParcel && (
+                  <div className="space-y-6">
+                    <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                      <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Parcel ID</div>
+                      <div className="text-xl font-mono font-bold text-white">{selectedParcel.pin || selectedParcel.id || "N/A"}</div>
+                      <div className="text-sm text-slate-300 mt-1">{selectedParcel.address || "Address Unknown"}</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <DollarSign className="w-3 h-3" /> Total Value
+                        </div>
+                        <div className="text-lg font-bold text-[#00ffee]">
+                          ${parseFloat(selectedParcel.total_value || 0).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <Ruler className="w-3 h-3" /> Building Size
+                        </div>
+                        <div className="text-lg font-bold text-white">
+                          {parseFloat(selectedParcel.total_sqft || 0).toLocaleString()} sqft
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs text-slate-400">
+                        <span>Land Value</span>
+                        <span>Improvement Value</span>
+                      </div>
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden flex">
+                        <div 
+                          className="h-full bg-blue-500" 
+                          style={{ width: `${(parseFloat(selectedParcel.land_value || 0) / parseFloat(selectedParcel.total_value || 1)) * 100}%` }} 
+                        />
+                        <div 
+                          className="h-full bg-purple-500" 
+                          style={{ width: `${(parseFloat(selectedParcel.imp_value || 0) / parseFloat(selectedParcel.total_value || 1)) * 100}%` }} 
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs font-mono text-white">
+                        <span>${parseFloat(selectedParcel.land_value || 0).toLocaleString()}</span>
+                        <span>${parseFloat(selectedParcel.imp_value || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10 flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedParcel(null)}>Close</Button>
+                      <Button size="sm" className="bg-[#00ffee] text-[#0b1020] hover:bg-[#00ffee]/90 font-bold">
+                        View Full Record
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </Card>
       </div>
