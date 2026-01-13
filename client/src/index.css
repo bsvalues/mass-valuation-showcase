@@ -43,100 +43,88 @@
 }
 
 :root {
-  /* TerraFusion Brand Kit Palette */
-  /* Primary: Trust Blue (#0099ff) -> oklch(0.6 0.2 250) */
-  /* Transcend: Cyan (#00ffee) -> oklch(0.85 0.2 190) */
-  /* Accent: Success Green (#00ffaa) -> oklch(0.85 0.2 150) */
-  /* Dark: Deep Space (#0b1020) -> oklch(0.15 0.05 260) */
-  /* Surface: Midnight (#1a1f3a) -> oklch(0.20 0.05 260) */
+  /* TerraFusion Brand Kit v4.1 Core Colors */
+  --terra-cyan: #00FFFF;
+  --terra-midnight: #0A0E1A;
+  --terra-blue: #0080FF;
+  --terra-slate: #1E293B;
+  
+  /* Semantic Colors */
+  --success-green: #00FF88;
+  --warning-amber: #FFAA00;
+  --error-red: #FF4444;
+  --info-purple: #8844FF;
 
-  --primary: oklch(0.6 0.2 250);
-  --primary-foreground: oklch(0.98 0.003 247.858);
+  /* Shadcn Mapping */
+  --background: #0A0E1A; /* Terra Midnight */
+  --foreground: #F8FAFC; /* Gray 50 */
   
-  --sidebar-primary: oklch(0.85 0.2 190); /* Cyan for highlights */
-  --sidebar-primary-foreground: oklch(0.15 0.05 260);
+  --card: rgba(15, 23, 42, 0.6); /* Glass effect base */
+  --card-foreground: #F8FAFC;
   
-  --chart-1: oklch(0.6 0.2 250); /* Blue */
-  --chart-2: oklch(0.85 0.2 190); /* Cyan */
-  --chart-3: oklch(0.85 0.2 150); /* Green */
-  --chart-4: oklch(0.745 0.142 82.263); /* Gold (Elite Tier) */
-  --chart-5: oklch(0.623 0.214 259.815); /* Purple */
-
-  --radius: 0.75rem; /* More rounded for modern feel */
+  --popover: #0A0E1A;
+  --popover-foreground: #F8FAFC;
   
-  /* Light Mode (Clean, Official) */
-  --background: oklch(0.98 0.003 247.858);
-  --foreground: oklch(0.15 0.05 260);
+  --primary: #00FFFF; /* Terra Cyan */
+  --primary-foreground: #0A0E1A;
   
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.05 260);
+  --secondary: rgba(0, 255, 255, 0.1);
+  --secondary-foreground: #00FFFF;
   
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.05 260);
+  --muted: rgba(30, 41, 59, 0.5);
+  --muted-foreground: #94A3B8;
   
-  --secondary: oklch(0.95 0.01 250);
-  --secondary-foreground: oklch(0.15 0.05 260);
+  --accent: rgba(0, 255, 255, 0.1);
+  --accent-foreground: #00FFFF;
   
-  --muted: oklch(0.95 0.01 250);
-  --muted-foreground: oklch(0.55 0.05 250);
+  --destructive: #FF4444;
+  --destructive-foreground: #FFFFFF;
   
-  --accent: oklch(0.95 0.01 250);
-  --accent-foreground: oklch(0.15 0.05 260);
+  --border: rgba(0, 255, 255, 0.2);
+  --input: rgba(30, 41, 59, 0.5);
+  --ring: rgba(0, 255, 255, 0.5);
   
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
+  --radius: 0.5rem; /* 8px per brand kit */
   
-  --border: oklch(0.90 0.02 250);
-  --input: oklch(0.90 0.02 250);
-  --ring: oklch(0.6 0.2 250);
+  /* Sidebar specific */
+  --sidebar: #0A0E1A;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #00FFFF;
+  --sidebar-primary-foreground: #0A0E1A;
+  --sidebar-accent: rgba(0, 255, 255, 0.1);
+  --sidebar-accent-foreground: #00FFFF;
+  --sidebar-border: rgba(0, 255, 255, 0.1);
+  --sidebar-ring: #00FFFF;
   
-  --sidebar: oklch(0.15 0.05 260);
-  --sidebar-foreground: oklch(0.98 0.003 247.858);
-  --sidebar-accent: oklch(0.20 0.05 260);
-  --sidebar-accent-foreground: oklch(0.98 0.003 247.858);
-  --sidebar-border: oklch(0.25 0.05 260);
-  --sidebar-ring: oklch(0.85 0.2 190);
+  /* Charts */
+  --chart-1: #00FFFF;
+  --chart-2: #0080FF;
+  --chart-3: #00FF88;
+  --chart-4: #8844FF;
+  --chart-5: #FFAA00;
 }
 
 .dark {
-  /* Dark Mode: Deep Space (Brand Aligned) */
-  --primary: oklch(0.6 0.2 250); /* Trust Blue */
-  --primary-foreground: oklch(0.98 0.003 247.858);
-  
-  --sidebar-primary: oklch(0.85 0.2 190); /* Cyan */
-  --sidebar-primary-foreground: oklch(0.15 0.05 260);
-  
-  --background: oklch(0.15 0.05 260); /* #0b1020 */
-  --foreground: oklch(0.98 0.003 247.858);
-  
-  --card: oklch(0.20 0.05 260); /* #1a1f3a */
-  --card-foreground: oklch(0.98 0.003 247.858);
-  
-  --popover: oklch(0.20 0.05 260);
-  --popover-foreground: oklch(0.98 0.003 247.858);
-  
-  --secondary: oklch(0.25 0.05 260);
-  --secondary-foreground: oklch(0.98 0.003 247.858);
-  
-  --muted: oklch(0.25 0.05 260);
-  --muted-foreground: oklch(0.70 0.05 250);
-  
-  --accent: oklch(0.25 0.05 260);
-  --accent-foreground: oklch(0.98 0.003 247.858);
-  
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  
-  --border: oklch(0.30 0.05 260);
-  --input: oklch(0.30 0.05 260);
-  --ring: oklch(0.85 0.2 190);
-  
-  --sidebar: oklch(0.12 0.04 260);
-  --sidebar-foreground: oklch(0.98 0.003 247.858);
-  --sidebar-accent: oklch(0.20 0.05 260);
-  --sidebar-accent-foreground: oklch(0.85 0.2 190);
-  --sidebar-border: oklch(0.30 0.05 260);
-  --sidebar-ring: oklch(0.85 0.2 190);
+  /* Same as root since TerraFusion is dark-first */
+  --background: #0A0E1A;
+  --foreground: #F8FAFC;
+  --card: rgba(15, 23, 42, 0.6);
+  --card-foreground: #F8FAFC;
+  --popover: #0A0E1A;
+  --popover-foreground: #F8FAFC;
+  --primary: #00FFFF;
+  --primary-foreground: #0A0E1A;
+  --secondary: rgba(0, 255, 255, 0.1);
+  --secondary-foreground: #00FFFF;
+  --muted: rgba(30, 41, 59, 0.5);
+  --muted-foreground: #94A3B8;
+  --accent: rgba(0, 255, 255, 0.1);
+  --accent-foreground: #00FFFF;
+  --destructive: #FF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(0, 255, 255, 0.2);
+  --input: rgba(30, 41, 59, 0.5);
+  --ring: rgba(0, 255, 255, 0.5);
 }
 
 @layer base {
@@ -145,17 +133,23 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    background-image: linear-gradient(135deg, #0A0E1A 0%, #1E293B 100%);
+    min-height: 100vh;
   }
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
-  [type="button"]:not(:disabled),
-  [type="submit"]:not(:disabled),
-  [type="reset"]:not(:disabled),
-  a[href],
-  select:not(:disabled),
-  input[type="checkbox"]:not(:disabled),
-  input[type="radio"]:not(:disabled) {
-    @apply cursor-pointer;
+  
+  /* Typography Overrides */
+  h1, .h1 {
+    font-family: 'SF Pro Display', -apple-system, sans-serif;
+    letter-spacing: -0.02em;
+  }
+  
+  h2, .h2 {
+    font-family: 'SF Pro Display', -apple-system, sans-serif;
+    letter-spacing: -0.01em;
+  }
+  
+  code, .code {
+    font-family: 'JetBrains Mono', monospace;
   }
 }
 
@@ -166,34 +160,38 @@
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
+    max-width: 1440px; /* Brand kit max-width */
   }
 
-  .flex {
-    min-height: 0;
-    min-width: 0;
-  }
-
-  @media (min-width: 640px) {
-    .container {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .container {
-      padding-left: 2rem;
-      padding-right: 2rem;
-      max-width: 1400px;
-    }
+  /* Brand Kit Card Style */
+  .terra-card {
+    @apply bg-card/60 backdrop-blur-xl border border-[rgba(0,255,255,0.2)] rounded-2xl transition-all duration-300;
   }
   
-  /* Glassmorphism Utility */
-  .glass {
-    @apply bg-background/60 backdrop-blur-xl border border-white/10;
+  .terra-card:hover {
+    @apply border-[rgba(0,255,255,0.4)] shadow-[0_10px_30px_rgba(0,255,255,0.2)] -translate-y-0.5;
   }
   
-  .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-white/10 shadow-xl;
+  /* Brand Kit Button Styles */
+  .btn-terra-primary {
+    background: linear-gradient(135deg, #00FFFF 0%, #0080FF 100%);
+    @apply text-[#0A0E1A] font-semibold uppercase tracking-wider hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,255,255,0.3)] transition-all duration-300;
+  }
+  
+  .btn-terra-secondary {
+    @apply bg-transparent text-[#00FFFF] border border-[#00FFFF] hover:bg-[rgba(0,255,255,0.1)] hover:shadow-[0_0_20px_rgba(0,255,255,0.3)] transition-all duration-300;
+  }
+  
+  /* Text Gradients */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #00FFFF 0%, #0080FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .text-gradient-aurora {
+    background: linear-gradient(90deg, #00FFFF, #00FF88, #8844FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }

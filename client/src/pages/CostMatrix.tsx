@@ -33,10 +33,10 @@ export default function CostMatrix() {
                 Status: CALIBRATED
               </Badge>
             </div>
-            <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-muted-foreground">
+            <h1 className="h1 text-gradient-primary mb-2">
               Master Cost Matrix
             </h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl">
+            <p className="body-text max-w-2xl">
               The quantum heart of the valuation system. Calibrate base rates, adjust market modifiers, and simulate county-wide impacts in real-time.
             </p>
           </div>
@@ -54,13 +54,13 @@ export default function CostMatrix() {
 
         {/* Simulation Control Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 border-primary/20 bg-gradient-to-br from-card to-primary/5">
+          <Card className="lg:col-span-2 terra-card bg-gradient-to-br from-[rgba(10,14,26,0.8)] to-[rgba(0,255,255,0.05)]">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings2 className="w-5 h-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-[#00FFFF]">
+                <Settings2 className="w-5 h-5" />
                 Calibration Controls
               </CardTitle>
-              <CardDescription>Adjust global factors to see immediate impact on the Master Cost Index.</CardDescription>
+              <CardDescription className="text-slate-400">Adjust global factors to see immediate impact on the Master Cost Index.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
               {/* Base Rate Slider */}
@@ -118,20 +118,20 @@ export default function CostMatrix() {
           </Card>
 
           {/* Real-time Impact Card */}
-          <Card className="bg-sidebar text-sidebar-foreground border-sidebar-border shadow-xl">
+          <Card className="terra-card bg-[rgba(0,255,255,0.05)] border-[rgba(0,255,255,0.2)]">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sidebar-primary">
+              <CardTitle className="flex items-center gap-2 text-[#00FFFF]">
                 <Activity className="w-5 h-5" />
                 Projected Impact
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <p className="text-sm text-sidebar-foreground/70 mb-1">Total Assessed Value (Simulated)</p>
-                <div className="text-3xl font-bold tracking-tight font-mono">
+                <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">Total Assessed Value (Simulated)</p>
+                <div className="text-3xl font-light tracking-tight font-mono text-white">
                   ${(totalValuation * (baseRate / 145.5) * marketFactor).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </div>
-                <div className="flex items-center gap-2 mt-2 text-sm text-green-400">
+                <div className="flex items-center gap-2 mt-2 text-sm text-[#00FF88]">
                   <TrendingUp className="w-4 h-4" />
                   <span>+{((((baseRate / 145.5) * marketFactor) - 1) * 100).toFixed(2)}% vs Baseline</span>
                 </div>
@@ -145,8 +145,8 @@ export default function CostMatrix() {
                 <Progress value={99.2} className="h-1 bg-sidebar-foreground/10" />
               </div>
 
-              <div className="pt-4 border-t border-sidebar-foreground/10">
-                <Button className="w-full bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90">
+              <div className="pt-4 border-t border-[rgba(0,255,255,0.1)]">
+                <Button className="w-full btn-terra-primary">
                   Run Deep Simulation
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

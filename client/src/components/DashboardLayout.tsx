@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { TerraLogo } from "./TerraLogo";
 import {
   BarChart3,
   Box,
   Calculator,
   ChevronRight,
-  Hexagon,
   Home,
   Layers,
   LayoutDashboard,
@@ -48,11 +48,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <div className="flex flex-col h-full">
           {/* Logo Area */}
-          <div className="h-16 flex items-center px-6 border-b border-sidebar-border bg-sidebar-accent/10">
-            <Hexagon className="w-8 h-8 text-sidebar-primary mr-3 fill-current" />
+          <div className="h-20 flex items-center px-6 border-b border-[rgba(0,255,255,0.1)] bg-[rgba(0,255,255,0.02)]">
+            <TerraLogo className="w-10 h-10 mr-3 animate-pulse-slow" />
             <div>
-              <h1 className="font-bold text-lg tracking-tight">TerraFusion</h1>
-              <p className="text-xs text-sidebar-foreground/70 uppercase tracking-wider">Elite Gov OS</p>
+              <h1 className="font-['SF_Pro_Display'] font-light text-2xl tracking-tight text-gradient-primary">TERRAFUSION</h1>
+              <p className="text-[10px] text-cyan-400/70 uppercase tracking-[0.2em]">Quantum Gov OS</p>
             </div>
           </div>
 
@@ -74,28 +74,32 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       <item.icon
                         className={cn(
                           "w-5 h-5 mr-3 transition-colors",
-                          isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-primary"
+                          isActive ? "text-[#00FFFF]" : "text-slate-400 group-hover:text-[#00FFFF]"
                         )}
                       />
-                      {item.label}
-                      {isActive && <ChevronRight className="w-4 h-4 ml-auto text-sidebar-primary" />}
+                      <span className={cn("tracking-wide", isActive ? "text-white" : "text-slate-300")}>
+                        {item.label}
+                      </span>
+                      {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00FFFF] shadow-[0_0_10px_#00FFFF]" />}
                     </div>
                   </Link>
                 );
               })}
             </nav>
 
-            <div className="mt-8">
-              <h3 className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2">
-                System Status
-              </h3>
-              <div className="px-3 py-2 bg-sidebar-accent/20 rounded-md border border-sidebar-border/50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium">Quantum Balance</span>
-                  <span className="text-xs font-bold text-sidebar-primary">12.000</span>
+            <div className="mt-12 px-3">
+              <div className="p-4 rounded-xl bg-[rgba(0,255,255,0.03)] border border-[rgba(0,255,255,0.1)] relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#00FFFF] to-transparent opacity-50" />
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] uppercase tracking-widest text-cyan-400">System Vitality</span>
+                  <span className="text-xs font-mono text-[#00FFFF]">12.000</span>
                 </div>
-                <div className="w-full bg-sidebar-accent/30 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-sidebar-primary h-full w-full animate-pulse" />
+                <div className="w-full bg-slate-800/50 h-1 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-[#00FFFF] to-[#0080FF] h-full w-full animate-pulse" />
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#00FF88] animate-pulse" />
+                  <span className="text-[10px] text-slate-400">Quantum Core Active</span>
                 </div>
               </div>
             </div>
