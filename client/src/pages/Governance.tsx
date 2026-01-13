@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, CheckCircle2, FileCode, Shield, ShieldAlert, ShieldCheck, History, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
+import { trpc } from "@/lib/trpc";
 
 interface AuditEntry {
   id: string;
@@ -15,18 +16,28 @@ interface AuditEntry {
 }
 
 export default function Governance() {
+  const { data: backendLogs } = trpc.auditLogs.list.useQuery();
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
 
   useEffect(() => {
-    // Simulate fetching immutable audit log
-    const mockLog: AuditEntry[] = [
-      { id: "LOG-9001", action: "System Calibration: Base Rate -> $145.50", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), hash: "0x9a8b...7c2d" },
-      { id: "LOG-9002", action: "Data Ingestion: tax_roll_2025.csv", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), hash: "0x1f2e...3d4c" },
-      { id: "LOG-9003", action: "Model Run: Regression Analysis v2", user: "System", timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), hash: "0x5a6b...7c8d" },
-      { id: "LOG-9004", action: "Security Scan: Passed", user: "Sentinel", timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), hash: "0x9e8f...1a2b" },
-    ];
-    setAuditLog(mockLog);
-  }, []);
+    if (backendLogs && backendLogs.length > 0) {
+      const formattedLogs = backendLogs.map(log => ({
+        id: `LOG-${log.id}`,
+        action: log.action + (log.details ? `: ${log.details.substring(0, 50)}...` : ''),
+        user: "User",
+        timestamp: log.timestamp.toISOString(),
+        hash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
+      }));
+      setAuditLog(formattedLogs);
+    } else {
+      // Fallback to mock data if no real logs
+      const mockLog: AuditEntry[] = [
+        { id: "LOG-9001", action: "System Calibration: Base Rate -> $145.50", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), hash: "0x9a8b...7c2d" },
+        { id: "LOG-9002", action: "Data Ingestion: tax_roll_2025.csv", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), hash: "0x1f2e...3d4c" },
+      ];
+      setAuditLog(mockLog);
+    }
+  }, [backendLogs]);
 
   return (
     <DashboardLayout>

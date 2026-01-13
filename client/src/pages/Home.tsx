@@ -1,3 +1,4 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TranscendenceCanvas } from "@/components/TranscendenceCanvas";
 import { ValuationChart3D } from "@/components/ValuationChart3D";
@@ -10,6 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowUpRight, BarChart, CheckCircle2, Clock, FileText, TrendingUp, Users, Zap } from "lucide-react";
 
 export default function Home() {
+  // The userAuth hooks provides authentication state
+  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
+  let { user, loading, error, isAuthenticated, logout } = useAuth();
+
   return (
     <DashboardLayout>
       <div className="space-y-8">

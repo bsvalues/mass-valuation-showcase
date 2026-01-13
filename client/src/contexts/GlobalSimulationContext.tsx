@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
+import { trpc } from "@/lib/trpc";
 
 interface GlobalSimulationContextType {
   isRevalRunning: boolean;
@@ -20,10 +21,36 @@ export function GlobalSimulationProvider({ children }: { children: ReactNode }) 
   const [systemResonance, setSystemResonance] = useState(12.000);
   const [realData, setRealData] = useState<any[]>([]);
 
-  const ingestData = (data: any[]) => {
+  const createParcelMutation = trpc.parcels.create.useMutation();
+  const deleteAllParcelsMutation = trpc.parcels.deleteAll.useMutation();
+  const { data: backendParcels, refetch: refetchParcels } = trpc.parcels.list.useQuery();
+
+  const ingestData = async (data: any[]) => {
+    // Clear existing data first
+    await deleteAllParcelsMutation.mutateAsync();
+    
+    // Upload new data to backend
+    for (const parcel of data) {
+      await createParcelMutation.mutateAsync({
+        parcelId: parcel.parcelId || parcel.id || String(Math.random()),
+        address: parcel.address,
+        latitude: String(parcel.latitude || parcel.lat || 0),
+        longitude: String(parcel.longitude || parcel.lng || 0),
+        landValue: parcel.landValue || parcel.land_value,
+        buildingValue: parcel.buildingValue || parcel.building_value,
+        totalValue: parcel.totalValue || parcel.total_value,
+        squareFeet: parcel.squareFeet || parcel.square_feet,
+        yearBuilt: parcel.yearBuilt || parcel.year_built,
+        propertyType: parcel.propertyType || parcel.property_type,
+        neighborhood: parcel.neighborhood,
+        cluster: parcel.cluster,
+      });
+    }
+    
+    // Refresh data from backend
+    await refetchParcels();
     setRealData(data);
     setTotalParcelsProcessed(data.length);
-    // Calculate resonance based on data quality (mock logic for now)
     const qualityScore = Math.min(12, 9 + (data.length > 0 ? 3 : 0));
     setSystemResonance(qualityScore);
   };

@@ -21,8 +21,8 @@ import NeuralCore from "./pages/NeuralCore";
 import ModelsAlgorithms from "./pages/ModelsAlgorithms";
 import MarketAnalysis from "./pages/MarketAnalysis";
 
-
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
