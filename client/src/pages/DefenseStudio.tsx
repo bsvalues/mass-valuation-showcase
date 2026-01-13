@@ -6,8 +6,37 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, FileText, Gavel, Scale, Shield, ShieldCheck, Zap } from "lucide-react";
+import { generateDefensePacket } from "@/lib/pdfGenerator";
+import { toast } from "sonner";
 
 export default function DefenseStudio() {
+  const handleDownload = (id: string) => {
+    toast.promise(
+      new Promise((resolve) => {
+        setTimeout(() => {
+          generateDefensePacket({
+            id: id,
+            address: "12405 NW 23rd Ave",
+            owner: "Smith, John",
+            issue: "Patio Valuation Dispute",
+            assessedValue: 4800,
+            comparables: [
+              { address: "12401 NW 23rd Ave", value: 5000, diff: 4.2 },
+              { address: "12409 NW 23rd Ave", value: 4600, diff: -4.1 },
+              { address: "12398 NW 22nd St", value: 4900, diff: 2.1 },
+              { address: "12410 NW 22nd St", value: 4750, diff: -1.0 },
+            ]
+          });
+          resolve(true);
+        }, 1500);
+      }),
+      {
+        loading: 'Compiling Defense Dossier...',
+        success: 'Packet Downloaded Successfully',
+        error: 'Failed to generate packet'
+      }
+    );
+  };
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -99,11 +128,12 @@ export default function DefenseStudio() {
                       size="sm" 
                       className={`${appeal.status === 'ready' ? 'bg-[#00ffee] text-[#0b1020] hover:bg-[#00ffee]/90' : 'bg-white/10 text-slate-400 cursor-not-allowed'} font-bold active-recoil`}
                       disabled={appeal.status !== 'ready'}
+                      onClick={() => handleDownload(appeal.id)}
                     >
                       {appeal.status === 'ready' ? (
                         <>
                           <FileText className="w-4 h-4 mr-2" />
-                          View Packet
+                          Download Packet
                         </>
                       ) : (
                         "Generating..."
@@ -158,7 +188,10 @@ export default function DefenseStudio() {
                 </p>
               </div>
 
-              <Button className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 active-recoil">
+              <Button 
+                className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 active-recoil"
+                onClick={() => handleDownload("AP-2026-042")}
+              >
                 Download PDF Dossier
               </Button>
             </CardContent>

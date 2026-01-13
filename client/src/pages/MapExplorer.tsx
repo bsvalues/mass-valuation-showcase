@@ -8,12 +8,23 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Layers, Map as MapIcon, MousePointer2, Navigation, Search, Settings2, Zap } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
+import { toast } from "sonner";
 
 export default function MapExplorer() {
   const [activeLayer, setActiveLayer] = useState("valuation");
   const [is3DMode, setIs3DMode] = useState(true);
   const [isSwarmMode, setIsSwarmMode] = useState(false);
+  const { realData, hasRealData } = useGlobalSimulation();
+
+  useEffect(() => {
+    if (hasRealData) {
+      toast.success("Map Data Hydrated", {
+        description: `Visualizing ${realData.length.toLocaleString()} parcels from uploaded tax roll.`
+      });
+    }
+  }, [hasRealData, realData.length]);
 
   return (
     <DashboardLayout>
@@ -111,7 +122,7 @@ export default function MapExplorer() {
                 </p>
                 {isSwarmMode && (
                   <div className="mt-2 text-[10px] font-mono text-[#00ffee] animate-pulse">
-                    &gt; SYNAPSES ACTIVE: 42,891
+                    &gt; SYNAPSES ACTIVE: {hasRealData ? (realData.length * 3.5).toLocaleString(undefined, {maximumFractionDigits: 0}) : "42,891"}
                   </div>
                 )}
               </div>
@@ -149,6 +160,14 @@ export default function MapExplorer() {
                   <div className="w-20 h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 rounded-full" />
                   <span>Low</span>
                 </div>
+                {hasRealData && (
+                  <div className="mt-2 pt-2 border-t border-white/10">
+                    <div className="flex justify-between text-[10px] text-slate-400">
+                      <span>Parcels Loaded:</span>
+                      <span className="text-[#00ffee]">{realData.length.toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

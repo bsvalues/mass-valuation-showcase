@@ -6,6 +6,7 @@ import { ResonanceScore } from "./ResonanceScore";
 import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
 import { CommandCenterMode } from "./CommandCenterMode";
 import { VoiceCommandInterface } from "./VoiceCommandInterface";
+import { DataIngestionPortal } from "./DataIngestionPortal";
 import {
   BarChart3,
   Box,
@@ -35,7 +36,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [location] = useLocation();
-  const { systemResonance, isRevalRunning } = useGlobalSimulation();
+  const { systemResonance, isRevalRunning, ingestData } = useGlobalSimulation();
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/" },
@@ -162,6 +163,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Zap className="w-3 h-3 mr-1.5 fill-current" />
               System Operational
             </div>
+            <DataIngestionPortal onDataLoaded={ingestData} />
             <CommandCenterMode />
             <VoiceCommandInterface />
             <Button variant="outline" size="sm" className="hidden sm:flex active-recoil hover-lift">

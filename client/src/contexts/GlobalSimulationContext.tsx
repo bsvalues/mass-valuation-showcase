@@ -6,6 +6,9 @@ interface GlobalSimulationContextType {
   revalProgress: number;
   totalParcelsProcessed: number;
   systemResonance: number;
+  ingestData: (data: any[]) => void;
+  realData: any[];
+  hasRealData: boolean;
 }
 
 const GlobalSimulationContext = createContext<GlobalSimulationContextType | undefined>(undefined);
@@ -15,6 +18,15 @@ export function GlobalSimulationProvider({ children }: { children: ReactNode }) 
   const [revalProgress, setRevalProgress] = useState(0);
   const [totalParcelsProcessed, setTotalParcelsProcessed] = useState(0);
   const [systemResonance, setSystemResonance] = useState(12.000);
+  const [realData, setRealData] = useState<any[]>([]);
+
+  const ingestData = (data: any[]) => {
+    setRealData(data);
+    setTotalParcelsProcessed(data.length);
+    // Calculate resonance based on data quality (mock logic for now)
+    const qualityScore = Math.min(12, 9 + (data.length > 0 ? 3 : 0));
+    setSystemResonance(qualityScore);
+  };
 
   const startReval = () => {
     setIsRevalRunning(true);
@@ -43,7 +55,10 @@ export function GlobalSimulationProvider({ children }: { children: ReactNode }) 
       startReval, 
       revalProgress, 
       totalParcelsProcessed,
-      systemResonance
+      systemResonance,
+      ingestData,
+      realData,
+      hasRealData: realData.length > 0
     }}>
       {children}
     </GlobalSimulationContext.Provider>
