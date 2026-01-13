@@ -195,3 +195,34 @@
     -webkit-text-fill-color: transparent;
   }
 }
+
+@layer utilities {
+  .ease-golden {
+    transition-timing-function: cubic-bezier(0.618, 0, 0.382, 1);
+  }
+  
+  .animate-spin-slow {
+    animation: spin 12s linear infinite;
+  }
+  
+  .animate-spin-reverse-slow {
+    animation: spin 15s linear infinite reverse;
+  }
+  
+  .animate-pulse-core {
+    animation: pulse-glow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.5));
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+    filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.2));
+  }
+}

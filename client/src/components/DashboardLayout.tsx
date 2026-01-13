@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { TerraLogo } from "./TerraLogo";
+import { AnimatedTerraLogo } from "./AnimatedTerraLogo";
 import {
   BarChart3,
   Box,
@@ -49,7 +49,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo Area */}
           <div className="h-20 flex items-center px-6 border-b border-[rgba(0,255,255,0.1)] bg-[rgba(0,255,255,0.02)]">
-            <TerraLogo className="w-10 h-10 mr-3 animate-pulse-slow" />
+            <AnimatedTerraLogo size={48} className="mr-3" />
             <div>
               <h1 className="font-['SF_Pro_Display'] font-light text-2xl tracking-tight text-gradient-primary">TERRAFUSION</h1>
               <p className="text-[10px] text-cyan-400/70 uppercase tracking-[0.2em]">Quantum Gov OS</p>
@@ -65,7 +65,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Link key={item.href} href={item.href}>
                     <div
                       className={cn(
-                        "flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer group",
+                        "flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-300 ease-golden cursor-pointer group hover:translate-x-1",
                         isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -73,8 +73,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     >
                       <item.icon
                         className={cn(
-                          "w-5 h-5 mr-3 transition-colors",
-                          isActive ? "text-[#00FFFF]" : "text-slate-400 group-hover:text-[#00FFFF]"
+                          "w-5 h-5 mr-3 transition-all duration-300 ease-golden",
+                          isActive ? "text-[#00FFFF] scale-110" : "text-slate-400 group-hover:text-[#00FFFF] group-hover:scale-110"
                         )}
                       />
                       <span className={cn("tracking-wide", isActive ? "text-white" : "text-slate-300")}>
