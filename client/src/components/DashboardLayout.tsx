@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { AnimatedTerraLogo } from "./AnimatedTerraLogo";
+import { VoiceCommandInterface } from "./VoiceCommandInterface";
 import {
   BarChart3,
   Box,
@@ -149,10 +150,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Zap className="w-3 h-3 mr-1.5 fill-current" />
               System Operational
             </div>
-            <Button variant="outline" size="sm" className="hidden sm:flex">
+            <VoiceCommandInterface />
+            <Button variant="outline" size="sm" className="hidden sm:flex active-recoil hover-lift">
               Export Report
             </Button>
-            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">
+            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 active-recoil hover-lift click-pulse relative overflow-hidden">
               New Valuation
             </Button>
           </div>

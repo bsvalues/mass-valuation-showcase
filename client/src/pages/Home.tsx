@@ -1,5 +1,6 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TranscendenceCanvas } from "@/components/TranscendenceCanvas";
+import { ValuationChart3D } from "@/components/ValuationChart3D";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -207,19 +208,15 @@ export default function Home() {
 
             {/* Main Chart Area */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Valuation Trends by Neighborhood</CardTitle>
-                  <CardDescription>Comparative analysis of median value changes over the last 5 years.</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[300px] flex items-center justify-center bg-muted/10 rounded-md border border-dashed border-muted">
-                  <div className="text-center text-muted-foreground">
-                    <BarChart className="w-12 h-12 mx-auto mb-2 opacity-20" />
-                    <p>Interactive Chart Component Placeholder</p>
-                    <p className="text-xs">(Will be implemented with Recharts)</p>
-                  </div>
-                </CardContent>
-              </Card>
+	              <Card className="lg:col-span-2 terra-card bg-[rgba(10,14,26,0.6)]">
+	                <CardHeader>
+	                  <CardTitle className="text-[#00FFFF]">Valuation Trends by Neighborhood</CardTitle>
+	                  <CardDescription className="text-slate-400">Comparative analysis of median value changes over the last 5 years.</CardDescription>
+	                </CardHeader>
+	                <CardContent>
+	                  <ValuationChart3D />
+	                </CardContent>
+	              </Card>
 
               <Card>
                 <CardHeader>
