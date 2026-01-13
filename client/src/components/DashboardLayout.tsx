@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   BarChart3,
   Box,
+  Calculator,
   ChevronRight,
   Hexagon,
   Home,
@@ -28,6 +29,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/" },
+    { icon: Calculator, label: "Cost Matrix", href: "/cost-matrix" },
     { icon: LayoutDashboard, label: "Valuation Dashboard", href: "/dashboard" },
     { icon: BarChart3, label: "Market Analysis", href: "/analysis" },
     { icon: Layers, label: "Map Explorer", href: "/map" },
