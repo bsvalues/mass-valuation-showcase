@@ -7,15 +7,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Map as MapIcon, MousePointer2, Navigation, Search, Settings2, Zap } from "lucide-react";
+import { Layers, Map as MapIcon, MousePointer2, Navigation, Search, Settings2, Zap, Network } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
 import { toast } from "sonner";
+import { performKMeansClustering } from "@/lib/clustering";
 
 export default function MapExplorer() {
   const [activeLayer, setActiveLayer] = useState("valuation");
   const [is3DMode, setIs3DMode] = useState(true);
   const [isSwarmMode, setIsSwarmMode] = useState(false);
+  const [clusters, setClusters] = useState<any[]>([]);
   const { realData, hasRealData } = useGlobalSimulation();
 
   useEffect(() => {
@@ -23,6 +25,10 @@ export default function MapExplorer() {
       toast.success("Map Data Hydrated", {
         description: `Visualizing ${realData.length.toLocaleString()} parcels from uploaded tax roll.`
       });
+      
+      // Auto-run clustering when data loads
+      const calculatedClusters = performKMeansClustering(realData, 5);
+      setClusters(calculatedClusters);
     }
   }, [hasRealData, realData.length]);
 
@@ -121,8 +127,15 @@ export default function MapExplorer() {
                   Visualize the "Million Agent Consciousness" and synaptic connections between comparable properties.
                 </p>
                 {isSwarmMode && (
-                  <div className="mt-2 text-[10px] font-mono text-[#00ffee] animate-pulse">
-                    &gt; SYNAPSES ACTIVE: {hasRealData ? (realData.length * 3.5).toLocaleString(undefined, {maximumFractionDigits: 0}) : "42,891"}
+                  <div className="mt-2 space-y-1">
+                    <div className="text-[10px] font-mono text-[#00ffee] animate-pulse">
+                      &gt; SYNAPSES ACTIVE: {hasRealData ? (realData.length * 3.5).toLocaleString(undefined, {maximumFractionDigits: 0}) : "42,891"}
+                    </div>
+                    {clusters.length > 0 && (
+                      <div className="text-[10px] font-mono text-purple-400">
+                        &gt; CLUSTERS IDENTIFIED: {clusters.length}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -178,6 +191,18 @@ export default function MapExplorer() {
                   <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite]" />
                   <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite_1s]" />
                   <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite_2s]" />
+                  
+                  {/* Render Clusters */}
+                  {clusters.map((cluster, i) => (
+                    <div 
+                      key={i}
+                      className="absolute w-4 h-4 bg-purple-500 rounded-full animate-pulse shadow-[0_0_20px_#a855f7]"
+                      style={{
+                        top: `${50 + (cluster.centroid.lat - 25.7617) * 200}%`,
+                        left: `${50 + (cluster.centroid.lng - (-80.1918)) * 200}%`
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
             )}

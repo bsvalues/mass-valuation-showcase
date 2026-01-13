@@ -3,22 +3,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, Database, FileSpreadsheet, Upload, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Database, FileSpreadsheet, Upload, X, ArrowRightLeft } from "lucide-react";
 import Papa from "papaparse";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface DataIngestionPortalProps {
   onDataLoaded: (data: any[]) => void;
 }
 
+const REQUIRED_FIELDS = [
+  { key: 'pin', label: 'PIN / Parcel ID' },
+  { key: 'address', label: 'Address' },
+  { key: 'owner', label: 'Owner Name' },
+  { key: 'land_value', label: 'Land Value' },
+  { key: 'imp_value', label: 'Improvement Value' },
+  { key: 'total_value', label: 'Total Value' }
+];
+
 export function DataIngestionPortal({ onDataLoaded }: DataIngestionPortalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [uploadState, setUploadState] = useState<'idle' | 'parsing' | 'complete' | 'error'>('idle');
+  const [uploadState, setUploadState] = useState<'idle' | 'parsing' | 'mapping' | 'complete' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
   const [recordCount, setRecordCount] = useState(0);
   const [fileName, setFileName] = useState("");
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [rawResults, setRawResults] = useState<any[]>([]);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -33,12 +47,23 @@ export function DataIngestionPortal({ onDataLoaded }: DataIngestionPortalProps) 
       skipEmptyLines: true,
       complete: (results) => {
         setProgress(100);
-        setRecordCount(results.data.length);
-        setUploadState('complete');
-        onDataLoaded(results.data);
-        toast.success("Data Ingestion Complete", {
-          description: `Successfully parsed ${results.data.length.toLocaleString()} records from ${file.name}`
-        });
+        if (results.meta.fields) {
+          setCsvHeaders(results.meta.fields);
+          setRawResults(results.data);
+          setRecordCount(results.data.length);
+          setUploadState('mapping');
+          
+          // Auto-map fields if names match closely
+          const initialMapping: Record<string, string> = {};
+          REQUIRED_FIELDS.forEach(field => {
+            const match = results.meta.fields?.find(h => 
+              h.toLowerCase().includes(field.key.split('_')[0]) || 
+              h.toLowerCase() === field.key
+            );
+            if (match) initialMapping[field.key] = match;
+          });
+          setColumnMapping(initialMapping);
+        }
       },
       error: (error) => {
         setUploadState('error');
@@ -47,7 +72,23 @@ export function DataIngestionPortal({ onDataLoaded }: DataIngestionPortalProps) 
         });
       }
     });
-  }, [onDataLoaded]);
+  }, []);
+
+  const handleMappingComplete = () => {
+    const mappedData = rawResults.map(row => {
+      const newRow: any = {};
+      Object.entries(columnMapping).forEach(([systemKey, csvHeader]) => {
+        newRow[systemKey] = row[csvHeader];
+      });
+      return newRow;
+    });
+
+    onDataLoaded(mappedData);
+    setUploadState('complete');
+    toast.success("Data Ingestion Complete", {
+      description: `Successfully mapped and loaded ${mappedData.length.toLocaleString()} records.`
+    });
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -125,6 +166,47 @@ export function DataIngestionPortal({ onDataLoaded }: DataIngestionPortalProps) 
                 </div>
               )}
 
+              {uploadState === 'mapping' && (
+                <div className="w-full space-y-4 text-left">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-medium text-white">Map CSV Columns</h3>
+                    <span className="text-xs text-slate-400">{fileName}</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-2">
+                    {REQUIRED_FIELDS.map((field) => (
+                      <div key={field.key} className="space-y-2">
+                        <Label className="text-xs text-slate-400">{field.label}</Label>
+                        <Select 
+                          value={columnMapping[field.key] || ""} 
+                          onValueChange={(val) => setColumnMapping(prev => ({ ...prev, [field.key]: val }))}
+                        >
+                          <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10">
+                            <SelectValue placeholder="Select Column" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {csvHeaders.map(header => (
+                              <SelectItem key={header} value={header} className="text-xs">
+                                {header}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button 
+                    className="w-full mt-4 bg-[#00ffee] text-[#0b1020] hover:bg-[#00ffee]/90 font-bold"
+                    onClick={handleMappingComplete}
+                    disabled={Object.keys(columnMapping).length < REQUIRED_FIELDS.length}
+                  >
+                    <ArrowRightLeft className="w-4 h-4 mr-2" />
+                    Confirm Mapping & Import
+                  </Button>
+                </div>
+              )}
+
               {uploadState === 'complete' && (
                 <div className="flex flex-col items-center gap-4 relative">
                   <Button 
@@ -162,17 +244,16 @@ export function DataIngestionPortal({ onDataLoaded }: DataIngestionPortalProps) 
               )}
             </div>
 
-            <div className="bg-black/30 p-4 rounded-lg border border-white/5">
-              <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Required Schema</h4>
-              <div className="grid grid-cols-3 gap-2 text-xs font-mono text-slate-500">
-                <div className="bg-white/5 p-2 rounded">PIN / Parcel ID</div>
-                <div className="bg-white/5 p-2 rounded">Address</div>
-                <div className="bg-white/5 p-2 rounded">Owner Name</div>
-                <div className="bg-white/5 p-2 rounded">Land Value</div>
-                <div className="bg-white/5 p-2 rounded">Improvement Value</div>
-                <div className="bg-white/5 p-2 rounded">Total Value</div>
+            {uploadState !== 'mapping' && (
+              <div className="bg-black/30 p-4 rounded-lg border border-white/5">
+                <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Required Schema</h4>
+                <div className="grid grid-cols-3 gap-2 text-xs font-mono text-slate-500">
+                  {REQUIRED_FIELDS.map(f => (
+                    <div key={f.key} className="bg-white/5 p-2 rounded">{f.label}</div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -5,9 +5,74 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, ArrowRight, CheckCircle2, LineChart, RefreshCw, Sliders, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, LineChart, RefreshCw, Sliders, Zap, Save, History, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface Scenario {
+  id: string;
+  name: string;
+  date: string;
+  metrics: {
+    ratio: number;
+    cod: number;
+    prd: number;
+  };
+}
 
 export default function CalibrationStudio() {
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [newScenarioName, setNewScenarioName] = useState("");
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+
+  // Load scenarios from local storage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('terra_scenarios');
+    if (saved) {
+      setScenarios(JSON.parse(saved));
+    }
+  }, []);
+
+  const saveScenario = () => {
+    if (!newScenarioName) return;
+
+    const newScenario: Scenario = {
+      id: Date.now().toString(),
+      name: newScenarioName,
+      date: new Date().toLocaleDateString(),
+      metrics: {
+        ratio: 0.96,
+        cod: 8.4,
+        prd: 1.01
+      }
+    };
+
+    const updated = [...scenarios, newScenario];
+    setScenarios(updated);
+    localStorage.setItem('terra_scenarios', JSON.stringify(updated));
+    setNewScenarioName("");
+    setIsSaveDialogOpen(false);
+    toast.success("Scenario Saved", {
+      description: `"${newScenario.name}" has been stored in the local simulation matrix.`
+    });
+  };
+
+  const deleteScenario = (id: string) => {
+    const updated = scenarios.filter(s => s.id !== id);
+    setScenarios(updated);
+    localStorage.setItem('terra_scenarios', JSON.stringify(updated));
+    toast.info("Scenario Deleted");
+  };
+
+  const loadScenario = (scenario: Scenario) => {
+    toast.success("Scenario Loaded", {
+      description: `System recalibrated to "${scenario.name}" parameters.`
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -23,10 +88,34 @@ export default function CalibrationStudio() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="bg-[#00ffee]/10 text-[#00ffee] border-[#00ffee]/20 px-3 py-1">
-              <Zap className="w-3 h-3 mr-1 animate-pulse" />
-              Market Analyst Agent Active
-            </Badge>
+            <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-[#00ffee]/30 text-[#00ffee] hover:bg-[#00ffee]/10">
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Scenario
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-[#0b1020] border-[#00ffee]/30">
+                <DialogHeader>
+                  <DialogTitle className="text-[#00ffee]">Save Calibration Scenario</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Scenario Name</Label>
+                    <Input 
+                      placeholder="e.g., Aggressive 2026 Reval" 
+                      className="bg-white/5 border-white/10 text-white"
+                      value={newScenarioName}
+                      onChange={(e) => setNewScenarioName(e.target.value)}
+                    />
+                  </div>
+                  <Button className="w-full bg-[#00ffee] text-[#0b1020] font-bold" onClick={saveScenario}>
+                    Confirm Save
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <Button className="bg-[#00ffee] text-[#0b1020] hover:bg-[#00ffee]/90 font-bold active-recoil">
               <RefreshCw className="w-4 h-4 mr-2" />
               Run Auto-Harmonization
@@ -119,28 +208,78 @@ export default function CalibrationStudio() {
           </Card>
         </div>
 
-        {/* Calibration Controls */}
-        <Tabs defaultValue="cost" className="w-full">
-          <TabsList className="bg-white/5 border border-white/10 p-1">
-            <TabsTrigger value="cost">Cost Tables</TabsTrigger>
-            <TabsTrigger value="land">Land Models</TabsTrigger>
-            <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
-            <TabsTrigger value="modifiers">Neighborhood Modifiers</TabsTrigger>
-          </TabsList>
-          <TabsContent value="cost" className="mt-6">
-            <Card className="terra-card">
-              <CardHeader>
-                <CardTitle>Base Cost Calibration</CardTitle>
-                <CardDescription>Adjust base rates for construction types based on local market indices.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] flex items-center justify-center border border-dashed border-white/10 rounded-lg bg-black/20">
-                  <p className="text-slate-500">Interactive Cost Curve Editor Placeholder</p>
+        {/* Scenarios & Controls */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Saved Scenarios List */}
+          <Card className="terra-card lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <History className="w-5 h-5 text-purple-400" />
+                Saved Scenarios
+              </CardTitle>
+              <CardDescription>Load past calibration states.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {scenarios.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 text-sm">
+                  No scenarios saved yet.
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              ) : (
+                scenarios.map((scenario) => (
+                  <div key={scenario.id} className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-[#00ffee]">{scenario.name}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-slate-500 hover:text-red-400"
+                        onClick={(e) => { e.stopPropagation(); deleteScenario(scenario.id); }}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-400 mb-3">
+                      <span>{scenario.date}</span>
+                      <span className="font-mono">Ratio: {scenario.metrics.ratio}</span>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-white/5 hover:bg-[#00ffee]/20 text-white hover:text-[#00ffee] border border-white/10"
+                      onClick={() => loadScenario(scenario)}
+                    >
+                      Load Scenario
+                    </Button>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Calibration Controls */}
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="cost" className="w-full">
+              <TabsList className="bg-white/5 border border-white/10 p-1 w-full justify-start">
+                <TabsTrigger value="cost">Cost Tables</TabsTrigger>
+                <TabsTrigger value="land">Land Models</TabsTrigger>
+                <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
+                <TabsTrigger value="modifiers">Neighborhood Modifiers</TabsTrigger>
+              </TabsList>
+              <TabsContent value="cost" className="mt-6">
+                <Card className="terra-card">
+                  <CardHeader>
+                    <CardTitle>Base Cost Calibration</CardTitle>
+                    <CardDescription>Adjust base rates for construction types based on local market indices.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[300px] flex items-center justify-center border border-dashed border-white/10 rounded-lg bg-black/20">
+                      <p className="text-slate-500">Interactive Cost Curve Editor Placeholder</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
