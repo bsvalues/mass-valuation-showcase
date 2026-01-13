@@ -8,6 +8,7 @@ import { AdaptiveThemeProvider } from "./contexts/AdaptiveThemeContext";
 import Home from "./pages/Home";
 import Governance from "./pages/Governance";
 import CostMatrix from "./pages/CostMatrix";
+import MapExplorer from "./pages/MapExplorer";
 
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/governance"} component={Governance} />
       <Route path={"/cost-matrix"} component={CostMatrix} />
+      <Route path={"/map-explorer"} component={MapExplorer} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -11,6 +11,7 @@ import {
   Home,
   Layers,
   LayoutDashboard,
+  Map as MapIcon,
   Menu,
   Search,
   Settings,
@@ -33,7 +34,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Calculator, label: "Cost Matrix", href: "/cost-matrix" },
     { icon: LayoutDashboard, label: "Valuation Dashboard", href: "/dashboard" },
     { icon: BarChart3, label: "Market Analysis", href: "/analysis" },
-    { icon: Layers, label: "Map Explorer", href: "/map" },
+    { icon: MapIcon, label: "Map Explorer", href: "/map-explorer" },
     { icon: Box, label: "Models & Algorithms", href: "/models" },
     { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
   ];
