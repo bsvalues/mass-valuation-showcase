@@ -26,7 +26,8 @@ import {
   Sliders,
   Zap,
   Sun,
-  Moon
+  Moon,
+  Users
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -53,6 +54,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Shield, label: "Defense Studio", href: "/defense" },
     { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
     { icon: BrainCircuit, label: "The Neural Core", href: "/neural-core" },
+    { icon: Users, label: "User Management", href: "/admin/users" },
   ];
 
   return (

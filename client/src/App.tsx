@@ -20,6 +20,7 @@ import DefenseStudio from "./pages/DefenseStudio";
 import NeuralCore from "./pages/NeuralCore";
 import ModelsAlgorithms from "./pages/ModelsAlgorithms";
 import MarketAnalysis from "./pages/MarketAnalysis";
+import AdminUsers from "./pages/AdminUsers";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -35,6 +36,7 @@ function Router() {
       <Route path={"/analysis"} component={MarketAnalysis} />
       <Route path={"/defense"} component={DefenseStudio} />
       <Route path={"/neural-core"} component={NeuralCore} />
+      <Route path={"/admin/users"} component={AdminUsers} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

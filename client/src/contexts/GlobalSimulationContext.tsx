@@ -21,7 +21,7 @@ export function GlobalSimulationProvider({ children }: { children: ReactNode }) 
   const [systemResonance, setSystemResonance] = useState(12.000);
   const [realData, setRealData] = useState<any[]>([]);
 
-  const createParcelMutation = trpc.parcels.create.useMutation();
+  const bulkCreateParcelsMutation = trpc.parcels.bulkCreate.useMutation();
   const deleteAllParcelsMutation = trpc.parcels.deleteAll.useMutation();
   const { data: backendParcels, refetch: refetchParcels } = trpc.parcels.list.useQuery();
 
@@ -29,23 +29,23 @@ export function GlobalSimulationProvider({ children }: { children: ReactNode }) 
     // Clear existing data first
     await deleteAllParcelsMutation.mutateAsync();
     
-    // Upload new data to backend
-    for (const parcel of data) {
-      await createParcelMutation.mutateAsync({
-        parcelId: parcel.parcelId || parcel.id || String(Math.random()),
-        address: parcel.address,
-        latitude: String(parcel.latitude || parcel.lat || 0),
-        longitude: String(parcel.longitude || parcel.lng || 0),
-        landValue: parcel.landValue || parcel.land_value,
-        buildingValue: parcel.buildingValue || parcel.building_value,
-        totalValue: parcel.totalValue || parcel.total_value,
-        squareFeet: parcel.squareFeet || parcel.square_feet,
-        yearBuilt: parcel.yearBuilt || parcel.year_built,
-        propertyType: parcel.propertyType || parcel.property_type,
-        neighborhood: parcel.neighborhood,
-        cluster: parcel.cluster,
-      });
-    }
+    // Transform and upload data in bulk
+    const parcelsToUpload = data.map(parcel => ({
+      parcelId: parcel.parcelId || parcel.id || String(Math.random()),
+      address: parcel.address,
+      latitude: String(parcel.latitude || parcel.lat || 0),
+      longitude: String(parcel.longitude || parcel.lng || 0),
+      landValue: parcel.landValue || parcel.land_value,
+      buildingValue: parcel.buildingValue || parcel.building_value,
+      totalValue: parcel.totalValue || parcel.total_value,
+      squareFeet: parcel.squareFeet || parcel.square_feet,
+      yearBuilt: parcel.yearBuilt || parcel.year_built,
+      propertyType: parcel.propertyType || parcel.property_type,
+      neighborhood: parcel.neighborhood,
+      cluster: parcel.cluster,
+    }));
+    
+    await bulkCreateParcelsMutation.mutateAsync({ parcels: parcelsToUpload });
     
     // Refresh data from backend
     await refetchParcels();

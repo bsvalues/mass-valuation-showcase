@@ -113,6 +113,18 @@ export async function getParcelById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function bulkCreateParcels(parcelList: InsertParcel[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Process in batches of 1000 to avoid overwhelming the database
+  const batchSize = 1000;
+  for (let i = 0; i < parcelList.length; i += batchSize) {
+    const batch = parcelList.slice(i, i + batchSize);
+    await db.insert(parcels).values(batch);
+  }
+}
+
 export async function deleteAllParcels(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -151,4 +163,17 @@ export async function getAuditLogs(userId?: number) {
     return await db.select().from(auditLogs).where(eq(auditLogs.userId, userId));
   }
   return await db.select().from(auditLogs);
+}
+
+// Admin queries
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(users);
+}
+
+export async function updateUserRole(userId: number, role: "user" | "admin") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ role }).where(eq(users.id, userId));
 }
