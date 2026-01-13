@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Governance from "./pages/Governance";
 import CostMatrix from "./pages/CostMatrix";
 import MapExplorer from "./pages/MapExplorer";
+import CalibrationStudio from "./pages/CalibrationStudio";
 
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path={"/governance"} component={Governance} />
       <Route path={"/cost-matrix"} component={CostMatrix} />
       <Route path={"/map-explorer"} component={MapExplorer} />
+      <Route path={"/calibration"} component={CalibrationStudio} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

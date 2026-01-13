@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { AnimatedTerraLogo } from "./AnimatedTerraLogo";
+import { ResonanceScore } from "./ResonanceScore";
 import { VoiceCommandInterface } from "./VoiceCommandInterface";
 import {
   BarChart3,
@@ -16,6 +17,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  Sliders,
   Zap
 } from "lucide-react";
 import { useState } from "react";
@@ -31,6 +33,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/" },
+    { icon: Sliders, label: "Calibration Studio", href: "/calibration" },
     { icon: Calculator, label: "Cost Matrix", href: "/cost-matrix" },
     { icon: LayoutDashboard, label: "Valuation Dashboard", href: "/dashboard" },
     { icon: BarChart3, label: "Market Analysis", href: "/analysis" },
@@ -89,17 +92,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               })}
             </nav>
 
-            <div className="mt-12 px-3">
-              <div className="p-4 rounded-xl bg-[rgba(0,255,255,0.03)] border border-[rgba(0,255,255,0.1)] relative overflow-hidden group">
+            <div className="mt-12 px-3 flex flex-col items-center">
+              <div className="p-4 rounded-xl bg-[rgba(0,255,255,0.03)] border border-[rgba(0,255,255,0.1)] relative overflow-hidden group w-full flex flex-col items-center">
                 <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#00FFFF] to-transparent opacity-50" />
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between w-full mb-2">
                   <span className="text-[10px] uppercase tracking-widest text-cyan-400">System Vitality</span>
                   <span className="text-xs font-mono text-[#00FFFF]">12.000</span>
                 </div>
-                <div className="w-full bg-slate-800/50 h-1 rounded-full overflow-hidden">
-                  <div className="bg-gradient-to-r from-[#00FFFF] to-[#0080FF] h-full w-full animate-pulse" />
-                </div>
-                <div className="mt-3 flex items-center gap-2">
+                
+                <ResonanceScore score={12.000} className="w-24 h-24 my-2 scale-75" />
+                
+                <div className="mt-2 flex items-center gap-2 self-start">
                   <div className="w-2 h-2 rounded-full bg-[#00FF88] animate-pulse" />
                   <span className="text-[10px] text-slate-400">Quantum Core Active</span>
                 </div>

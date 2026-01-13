@@ -43,88 +43,57 @@
 }
 
 :root {
-  /* TerraFusion Brand Kit v4.1 Core Colors */
-  --terra-cyan: #00FFFF;
-  --terra-midnight: #0A0E1A;
-  --terra-blue: #0080FF;
-  --terra-slate: #1E293B;
-  
-  /* Semantic Colors */
-  --success-green: #00FF88;
-  --warning-amber: #FFAA00;
-  --error-red: #FF4444;
-  --info-purple: #8844FF;
+  /* TerraFusion Elite Palette - "Dark Mode Glass" */
+  --terra-midnight: #0b1020;
+  --terra-deep-space: #050810;
+  --terra-cyan: #00ffee;
+  --terra-cyan-glow: rgba(0, 255, 238, 0.5);
+  --terra-gold: #ffd700;
+  --terra-glass: rgba(11, 16, 32, 0.7);
+  --terra-glass-border: rgba(0, 255, 238, 0.2);
 
-  /* Shadcn Mapping */
-  --background: #0A0E1A; /* Terra Midnight */
-  --foreground: #F8FAFC; /* Gray 50 */
+  --primary: var(--terra-cyan);
+  --primary-foreground: var(--terra-midnight);
+  --sidebar-primary: var(--terra-cyan);
+  --sidebar-primary-foreground: var(--terra-midnight);
   
-  --card: rgba(15, 23, 42, 0.6); /* Glass effect base */
-  --card-foreground: #F8FAFC;
+  --chart-1: var(--terra-cyan);
+  --chart-2: var(--terra-gold);
+  --chart-3: #ff00ff; /* Magenta for "Ultimate Power" */
+  --chart-4: #00ff00; /* Green for "Fair" */
+  --chart-5: #ff0000; /* Red for "Drift" */
+
+  --radius: 0.75rem;
   
-  --popover: #0A0E1A;
-  --popover-foreground: #F8FAFC;
+  /* Default to Dark Mode values as base */
+  --background: var(--terra-midnight);
+  --foreground: #e2e8f0;
+  --card: var(--terra-glass);
+  --card-foreground: #e2e8f0;
+  --popover: var(--terra-midnight);
+  --popover-foreground: #e2e8f0;
+  --secondary: rgba(255, 255, 255, 0.1);
+  --secondary-foreground: #e2e8f0;
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: #94a3b8;
+  --accent: var(--terra-cyan-glow);
+  --accent-foreground: var(--terra-midnight);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: var(--terra-glass-border);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: var(--terra-cyan);
   
-  --primary: #00FFFF; /* Terra Cyan */
-  --primary-foreground: #0A0E1A;
-  
-  --secondary: rgba(0, 255, 255, 0.1);
-  --secondary-foreground: #00FFFF;
-  
-  --muted: rgba(30, 41, 59, 0.5);
-  --muted-foreground: #94A3B8;
-  
-  --accent: rgba(0, 255, 255, 0.1);
-  --accent-foreground: #00FFFF;
-  
-  --destructive: #FF4444;
-  --destructive-foreground: #FFFFFF;
-  
-  --border: rgba(0, 255, 255, 0.2);
-  --input: rgba(30, 41, 59, 0.5);
-  --ring: rgba(0, 255, 255, 0.5);
-  
-  --radius: 0.5rem; /* 8px per brand kit */
-  
-  /* Sidebar specific */
-  --sidebar: #0A0E1A;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #00FFFF;
-  --sidebar-primary-foreground: #0A0E1A;
-  --sidebar-accent: rgba(0, 255, 255, 0.1);
-  --sidebar-accent-foreground: #00FFFF;
-  --sidebar-border: rgba(0, 255, 255, 0.1);
-  --sidebar-ring: #00FFFF;
-  
-  /* Charts */
-  --chart-1: #00FFFF;
-  --chart-2: #0080FF;
-  --chart-3: #00FF88;
-  --chart-4: #8844FF;
-  --chart-5: #FFAA00;
+  --sidebar: var(--terra-deep-space);
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-accent: var(--terra-cyan-glow);
+  --sidebar-accent-foreground: var(--terra-midnight);
+  --sidebar-border: var(--terra-glass-border);
+  --sidebar-ring: var(--terra-cyan);
 }
 
 .dark {
-  /* Same as root since TerraFusion is dark-first */
-  --background: #0A0E1A;
-  --foreground: #F8FAFC;
-  --card: rgba(15, 23, 42, 0.6);
-  --card-foreground: #F8FAFC;
-  --popover: #0A0E1A;
-  --popover-foreground: #F8FAFC;
-  --primary: #00FFFF;
-  --primary-foreground: #0A0E1A;
-  --secondary: rgba(0, 255, 255, 0.1);
-  --secondary-foreground: #00FFFF;
-  --muted: rgba(30, 41, 59, 0.5);
-  --muted-foreground: #94A3B8;
-  --accent: rgba(0, 255, 255, 0.1);
-  --accent-foreground: #00FFFF;
-  --destructive: #FF4444;
-  --destructive-foreground: #FFFFFF;
-  --border: rgba(0, 255, 255, 0.2);
-  --input: rgba(30, 41, 59, 0.5);
-  --ring: rgba(0, 255, 255, 0.5);
+  /* Inherits root values which are already dark */
 }
 
 @layer base {
@@ -133,22 +102,14 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background-image: linear-gradient(135deg, #0A0E1A 0%, #1E293B 100%);
-    min-height: 100vh;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(0, 255, 238, 0.15), transparent 40%),
+      radial-gradient(circle at 0% 100%, rgba(11, 16, 32, 1), transparent 60%);
+    background-attachment: fixed;
   }
   
-  /* Typography Overrides */
-  h1, .h1 {
-    font-family: 'SF Pro Display', -apple-system, sans-serif;
-    letter-spacing: -0.02em;
-  }
-  
-  h2, .h2 {
-    font-family: 'SF Pro Display', -apple-system, sans-serif;
-    letter-spacing: -0.01em;
-  }
-  
-  code, .code {
+  /* Typography - JetBrains Mono for numbers */
+  .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
 }
@@ -160,94 +121,104 @@
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
-    max-width: 1440px; /* Brand kit max-width */
   }
 
-  /* Brand Kit Card Style */
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      max-width: 1400px; /* Wider for "God Mode" view */
+    }
+  }
+
+  /* Quantum Glass Card */
   .terra-card {
-    @apply bg-card/60 backdrop-blur-xl border border-[rgba(0,255,255,0.2)] rounded-2xl transition-all duration-300;
+    @apply bg-[rgba(11,16,32,0.7)] backdrop-blur-xl border border-[rgba(0,255,238,0.2)] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
   }
-  
-  .terra-card:hover {
-    @apply border-[rgba(0,255,255,0.4)] shadow-[0_10px_30px_rgba(0,255,255,0.2)] -translate-y-0.5;
-  }
-  
-  /* Brand Kit Button Styles */
-  .btn-terra-primary {
-    background: linear-gradient(135deg, #00FFFF 0%, #0080FF 100%);
-    @apply text-[#0A0E1A] font-semibold uppercase tracking-wider hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,255,255,0.3)] transition-all duration-300;
-  }
-  
-  .btn-terra-secondary {
-    @apply bg-transparent text-[#00FFFF] border border-[#00FFFF] hover:bg-[rgba(0,255,255,0.1)] hover:shadow-[0_0_20px_rgba(0,255,255,0.3)] transition-all duration-300;
-  }
-  
-  /* Text Gradients */
-  .text-gradient-primary {
-    background: linear-gradient(135deg, #00FFFF 0%, #0080FF 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  
-  .text-gradient-aurora {
-    background: linear-gradient(90deg, #00FFFF, #00FF88, #8844FF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-}
 
-@layer utilities {
-  .ease-golden {
-    transition-timing-function: cubic-bezier(0.618, 0, 0.382, 1);
+  /* Neon Cyan Pulse */
+  .terra-pulse {
+    animation: pulse-cyan 2s infinite;
   }
-  
-  .animate-spin-slow {
-    animation: spin 12s linear infinite;
-  }
-  
-  .animate-spin-reverse-slow {
-    animation: spin 15s linear infinite reverse;
-  }
-  
-  .animate-pulse-core {
-    animation: pulse-glow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-}
 
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.5));
+  @keyframes pulse-cyan {
+    0% { box-shadow: 0 0 0 0 rgba(0, 255, 238, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 255, 238, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 255, 238, 0); }
   }
-  50% {
-    opacity: 0.7;
-    transform: scale(0.95);
-    filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.2));
-  }
-}
 
-@layer utilities {
+  /* Golden Ratio Easing */
+  .terra-transition {
+    transition: all 0.6s cubic-bezier(0.618, 0, 0.382, 1);
+  }
+  
+  /* Visual Haptics */
   .active-recoil:active {
-    transform: scale(0.96);
-    transition-duration: 50ms;
-  }
-  
-  .hover-lift {
-    transition: transform 0.3s cubic-bezier(0.618, 0, 0.382, 1), box-shadow 0.3s cubic-bezier(0.618, 0, 0.382, 1);
-  }
-  
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px -10px rgba(0, 255, 255, 0.3);
+    transform: scale(0.98);
+    transition: transform 0.05s cubic-bezier(0.618, 0, 0.382, 1);
   }
   
   .click-pulse:active::after {
     content: '';
     position: absolute;
-    inset: 0;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+    transform: translate(-50%, -50%) scale(0);
+    animation: ripple 0.4s linear;
     border-radius: inherit;
-    background-color: rgba(0, 255, 255, 0.2);
-    animation: ping 0.2s cubic-bezier(0, 0, 0.2, 1);
+    pointer-events: none;
+  }
+  
+  @keyframes ripple {
+    to {
+      transform: translate(-50%, -50%) scale(2);
+      opacity: 0;
+    }
+  }
+  
+  /* Logo Animation */
+  .logo-ring-outer {
+    animation: spin-slow 20s linear infinite;
+    transform-origin: center;
+  }
+  
+  .logo-ring-inner {
+    animation: spin-reverse 15s linear infinite;
+    transform-origin: center;
+  }
+  
+  .logo-core {
+    animation: pulse-core 3s ease-in-out infinite;
+    transform-origin: center;
+  }
+  
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes spin-reverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+  
+  @keyframes pulse-core {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 8px var(--terra-cyan)); }
   }
 }
