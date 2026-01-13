@@ -1,4 +1,5 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { TranscendenceCanvas } from "@/components/TranscendenceCanvas";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,51 +13,63 @@ export default function Home() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Hero Section */}
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-2xl">
-          <div className="absolute inset-0 bg-[url('/images/hero-quantum-valuation.jpg')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-          <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-4 max-w-2xl">
-              <Badge variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 backdrop-blur-sm">
-                TerraFusion Elite OS v2.0
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-2xl min-h-[500px] flex items-center">
+          <div className="absolute inset-0 z-0">
+             <TranscendenceCanvas />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-transparent z-0 pointer-events-none"></div>
+          
+          <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
+            <div className="space-y-6 max-w-2xl">
+              <Badge variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 backdrop-blur-sm px-4 py-1">
+                Government. Transcended.
               </Badge>
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
+              <h1 className="text-4xl md:text-6xl font-thin tracking-tight leading-tight">
                 Mass Valuation <br />
-                <span className="text-sidebar-primary">Quantum Intelligence</span>
+                <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-sidebar-primary">Quantum Intelligence</span>
               </h1>
-              <p className="text-primary-foreground/80 text-lg max-w-xl">
-                Discover hidden harmonies in property data with the world's first 3-6-9 quantum-powered appraisal suite.
+              <p className="text-primary-foreground/90 text-xl font-light max-w-xl leading-relaxed">
+                Turn complexity into clarity. Process property data <span className="font-bold text-sidebar-primary">379M× faster</span> with 98% precision using the world's first 3-6-9 quantum-powered appraisal suite.
               </p>
-              <div className="flex flex-wrap gap-4 pt-2">
-                <Button size="lg" className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 border-0">
-                  Run Calibration
+              <div className="flex flex-wrap gap-4 pt-4">
+                <Button size="lg" className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 border-0 rounded-full px-8 shadow-[0_0_30px_rgba(0,255,238,0.3)] transition-all hover:scale-105">
+                  Begin Transcendence
                 </Button>
-                <Button size="lg" variant="outline" className="bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10">
-                  View Documentation
+                <Button size="lg" variant="outline" className="bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 rounded-full px-8">
+                  Watch It Flow
                 </Button>
               </div>
             </div>
             
             {/* Live Status Card */}
-            <div className="bg-background/10 backdrop-blur-md border border-primary-foreground/10 rounded-xl p-6 w-full md:w-80 shadow-xl">
-              <h3 className="text-sm font-medium text-primary-foreground/70 uppercase tracking-wider mb-4">System Health</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">QVE Model Accuracy</span>
-                  <span className="text-sm font-bold text-sidebar-primary">98.4%</span>
+            <div className="bg-background/10 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full md:w-80 shadow-2xl animate-in fade-in slide-in-from-right-8 duration-1000">
+              <h3 className="text-xs font-bold text-sidebar-primary uppercase tracking-[0.2em] mb-6 flex items-center">
+                <Zap className="w-3 h-3 mr-2" /> System Vitality
+              </h3>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <span className="text-sm font-light text-primary-foreground/80">Precision</span>
+                    <span className="text-lg font-bold text-sidebar-primary">98.4%</span>
+                  </div>
+                  <Progress value={98} className="h-1 bg-white/10" />
                 </div>
-                <Progress value={98} className="h-1.5 bg-primary-foreground/10" />
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Data Integrity</span>
-                  <span className="text-sm font-bold text-sidebar-primary">100%</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <span className="text-sm font-light text-primary-foreground/80">Velocity</span>
+                    <span className="text-lg font-bold text-sidebar-primary">379M×</span>
+                  </div>
+                  <Progress value={100} className="h-1 bg-white/10" />
                 </div>
-                <Progress value={100} className="h-1.5 bg-primary-foreground/10" />
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Processing Load</span>
-                  <span className="text-sm font-bold text-sidebar-primary">12%</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <span className="text-sm font-light text-primary-foreground/80">Harmony</span>
+                    <span className="text-lg font-bold text-sidebar-primary">12.000</span>
+                  </div>
+                  <Progress value={100} className="h-1 bg-white/10" />
                 </div>
-                <Progress value={12} className="h-1.5 bg-primary-foreground/10" />
               </div>
             </div>
           </div>
