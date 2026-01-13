@@ -22,6 +22,7 @@ export function TranscendenceCanvas() {
 
     // Vertex shader
     const vertexShaderSource = `
+      precision mediump float;
       attribute vec2 a_position;
       uniform vec2 u_resolution;
       uniform float u_time;
