@@ -3,32 +3,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Bot, Gavel, Shield, Zap } from "lucide-react";
-import { useState } from "react";
+import { Bot, Gavel, Shield, Zap, Save, RotateCcw } from "lucide-react";
+import { useAgentPersistence, AgentProfile } from "@/hooks/useAgentPersistence";
+import { toast } from "sonner";
 
-interface AgentProfile {
-  id: string;
-  name: string;
-  role: string;
-  icon: any;
-  color: string;
-  aggression: number; // 0-100
-  riskTolerance: number; // 0-100
-  autonomy: boolean;
-}
+const ICON_MAP = {
+  'Bot': Bot,
+  'Gavel': Gavel,
+  'Shield': Shield,
+  'Zap': Zap
+};
 
 export function AgentPersonalityTuner() {
-  const [agents, setAgents] = useState<AgentProfile[]>([
-    { id: 'market', name: 'Market Analyst', role: 'Valuation Logic', icon: Bot, color: 'text-blue-400', aggression: 65, riskTolerance: 40, autonomy: true },
-    { id: 'defense', name: 'Legal Defense', role: 'Appeal Strategy', icon: Gavel, color: 'text-purple-400', aggression: 85, riskTolerance: 20, autonomy: true },
-    { id: 'risk', name: 'Risk Sentinel', role: 'Compliance Check', icon: Shield, color: 'text-green-400', aggression: 30, riskTolerance: 10, autonomy: true },
-    { id: 'swarm', name: 'Swarm Commander', role: 'Spatial Logic', icon: Zap, color: 'text-amber-400', aggression: 75, riskTolerance: 60, autonomy: true },
-  ]);
+  const { agents, saveAgents, resetAgents } = useAgentPersistence();
 
   const updateAgent = (id: string, field: keyof AgentProfile, value: any) => {
-    setAgents(prev => prev.map(agent => 
+    const newAgents = agents.map(agent => 
       agent.id === id ? { ...agent, [field]: value } : agent
-    ));
+    );
+    saveAgents(newAgents);
+  };
+
+  const handleSync = () => {
+    toast.success("Agent Matrix Synchronized", {
+      description: "Personality profiles have been persisted to the Neural Core."
+    });
+  };
+
+  const handleReset = () => {
+    resetAgents();
+    toast.info("Agent Matrix Reset", {
+      description: "Factory default personality profiles restored."
+    });
   };
 
   return (
@@ -46,7 +52,10 @@ export function AgentPersonalityTuner() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-md bg-black/30 ${agent.color}`}>
-                  <agent.icon className="w-5 h-5" />
+                  {(() => {
+                    const Icon = ICON_MAP[agent.iconName];
+                    return <Icon className="w-5 h-5" />;
+                  })()}
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white">{agent.name}</h4>
@@ -97,8 +106,21 @@ export function AgentPersonalityTuner() {
           </div>
         ))}
         
-        <div className="pt-4 flex justify-end">
-          <Button className="bg-[#00ffee]/20 text-[#00ffee] hover:bg-[#00ffee]/30 border border-[#00ffee]/50">
+        <div className="pt-4 flex justify-end gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleReset}
+            className="border-white/10 text-slate-400 hover:text-white hover:bg-white/5"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Reset Defaults
+          </Button>
+          <Button 
+            onClick={handleSync}
+            className="bg-[#00ffee]/20 text-[#00ffee] hover:bg-[#00ffee]/30 border border-[#00ffee]/50"
+          >
+            <Save className="w-4 h-4 mr-2" />
             Sync Personality Matrix
           </Button>
         </div>

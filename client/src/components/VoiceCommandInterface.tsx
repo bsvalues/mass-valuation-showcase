@@ -4,39 +4,54 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Mic, MicOff } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 export function VoiceCommandInterface() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
+  const { 
+    isListening, 
+    transcript, 
+    startListening, 
+    stopListening, 
+    resetTranscript,
+    isSupported 
+  } = useSpeechRecognition();
   const { executeCommand, setIsOpen: setGodModeOpen } = useGodMode();
 
+  // Auto-start listening when dialog opens
   useEffect(() => {
     if (isOpen) {
-      setIsListening(true);
-      setTranscript("Listening...");
-      
-      // Simulate voice recognition
-      const timer = setTimeout(() => {
-        const command = "/run-reval --scope=county";
-        setTranscript("Run county-wide revaluation...");
-        
-        setTimeout(() => {
-          setIsListening(false);
-          setTimeout(() => {
-            setIsOpen(false);
-            setGodModeOpen(true);
-            executeCommand(command);
-          }, 1000);
-        }, 2000);
-      }, 1500);
-      
-      return () => clearTimeout(timer);
+      resetTranscript();
+      startListening();
     } else {
-      setIsListening(false);
-      setTranscript("");
+      stopListening();
     }
-  }, [isOpen, executeCommand, setGodModeOpen]);
+  }, [isOpen, startListening, stopListening, resetTranscript]);
+
+  // Process command when listening stops and we have a transcript
+  useEffect(() => {
+    if (!isListening && transcript && isOpen) {
+      const processCommand = (text: string) => {
+        const lowerText = text.toLowerCase();
+        if (lowerText.includes("revaluation") || lowerText.includes("reval")) return "/run-reval --scope=county";
+        if (lowerText.includes("deploy") || lowerText.includes("agent")) return "/deploy-agent --target=legal";
+        if (lowerText.includes("status") || lowerText.includes("report")) return "/status";
+        if (lowerText.includes("calibrate") || lowerText.includes("tune")) return "/calibrate";
+        return `/unknown-command "${text}"`;
+      };
+
+      const command = processCommand(transcript);
+      
+      // Small delay for user to see what was heard
+      const timer = setTimeout(() => {
+        setIsOpen(false);
+        setGodModeOpen(true);
+        executeCommand(command);
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isListening, transcript, isOpen, setIsOpen, setGodModeOpen, executeCommand]);
 
   return (
     <>
@@ -78,10 +93,10 @@ export function VoiceCommandInterface() {
                 "text-2xl font-light tracking-tight transition-all duration-500",
                 isListening ? "text-primary" : "text-muted-foreground"
               )}>
-                {isListening ? "Listening..." : "Processing"}
+                {!isSupported ? "Browser Not Supported" : (isListening ? "Listening..." : "Processing")}
               </h3>
               <p className="text-lg font-mono text-primary/80 h-8">
-                {transcript !== "Listening..." && transcript}
+                {transcript}
               </p>
             </div>
           </div>

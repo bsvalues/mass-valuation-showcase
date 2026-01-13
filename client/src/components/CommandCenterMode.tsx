@@ -6,17 +6,41 @@ import { useState } from "react";
 export function CommandCenterMode() {
   const [isOpen, setIsOpen] = useState(false);
 
-  const openWindow = (path: string, title: string) => {
-    const width = 800;
-    const height = 600;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
+  const openWindow = (path: string, title: string, coords?: { w: number, h: number, x: number, y: number }) => {
+    const width = coords?.w || 800;
+    const height = coords?.h || 600;
+    const left = coords ? coords.x : (window.screen.width - width) / 2;
+    const top = coords ? coords.y : (window.screen.height - height) / 2;
     
     window.open(
       path, 
       title, 
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`
     );
+  };
+
+  const activatePreset = (preset: 'standard' | 'crisis' | 'wall') => {
+    const screenW = window.screen.width;
+    const screenH = window.screen.height;
+
+    if (preset === 'standard') {
+      // Standard Ops: Dashboard + Map
+      openWindow('/map-explorer', 'Map Explorer', { w: screenW * 0.4, h: screenH * 0.8, x: screenW * 0.6, y: 0 });
+    } else if (preset === 'crisis') {
+      // Crisis Response: Neural Core + Defense + Map
+      openWindow('/neural-core', 'Neural Core', { w: screenW * 0.3, h: screenH * 0.5, x: 0, y: 0 });
+      openWindow('/defense', 'Defense Studio', { w: screenW * 0.3, h: screenH * 0.5, x: 0, y: screenH * 0.5 });
+      openWindow('/map-explorer', 'Map Explorer', { w: screenW * 0.7, h: screenH, x: screenW * 0.3, y: 0 });
+    } else if (preset === 'wall') {
+      // Full Wall: All Modules
+      const qW = screenW / 2;
+      const qH = screenH / 2;
+      openWindow('/map-explorer', 'Map Explorer', { w: qW, h: qH, x: 0, y: 0 });
+      openWindow('/mass-valuation', 'Mass Valuation', { w: qW, h: qH, x: qW, y: 0 });
+      openWindow('/neural-core', 'Neural Core', { w: qW, h: qH, x: 0, y: qH });
+      openWindow('/defense', 'Defense Studio', { w: qW, h: qH, x: qW, y: qH });
+    }
+    setIsOpen(false);
   };
 
   return (
@@ -82,15 +106,30 @@ export function CommandCenterMode() {
           </div>
 
           <div className="bg-black/30 p-4 rounded-lg border border-white/5">
-            <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Preset Layouts</h4>
+            <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Battle Station Presets</h4>
             <div className="flex gap-2">
-              <Button size="sm" variant="secondary" className="flex-1 text-xs">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="flex-1 text-xs hover:bg-[#00ffee]/20 hover:text-[#00ffee] transition-colors"
+                onClick={() => activatePreset('standard')}
+              >
                 Standard Ops
               </Button>
-              <Button size="sm" variant="secondary" className="flex-1 text-xs">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="flex-1 text-xs hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                onClick={() => activatePreset('crisis')}
+              >
                 Crisis Response
               </Button>
-              <Button size="sm" variant="secondary" className="flex-1 text-xs">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="flex-1 text-xs hover:bg-purple-500/20 hover:text-purple-400 transition-colors"
+                onClick={() => activatePreset('wall')}
+              >
                 Full Wall
               </Button>
             </div>
