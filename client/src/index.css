@@ -43,21 +43,22 @@
 }
 
 :root {
-  /* TerraFusion Elite Palette - "Dark Mode Glass" */
-  --terra-midnight: #0b1020;
+  /* TerraFusion OS Design Language */
+  --terra-midnight: #0a0e1a;
   --terra-deep-space: #050810;
-  --terra-cyan: #00ffee;
-  --terra-cyan-glow: rgba(0, 255, 238, 0.5);
+  --terra-cyan: #00d9d9;
+  --terra-cyan-bright: #00ffee;
+  --terra-cyan-glow: rgba(0, 217, 217, 0.4);
   --terra-gold: #ffd700;
   --terra-glass: rgba(11, 16, 32, 0.7);
   --terra-glass-border: rgba(0, 255, 238, 0.2);
 
-  --primary: var(--terra-cyan);
+  --primary: var(--terra-cyan-bright);
   --primary-foreground: var(--terra-midnight);
-  --sidebar-primary: var(--terra-cyan);
+  --sidebar-primary: var(--terra-cyan-bright);
   --sidebar-primary-foreground: var(--terra-midnight);
   
-  --chart-1: var(--terra-cyan);
+  --chart-1: var(--terra-cyan-bright);
   --chart-2: var(--terra-gold);
   --chart-3: #ff00ff; /* Magenta for "Ultimate Power" */
   --chart-4: #00ff00; /* Green for "Fair" */
@@ -82,14 +83,14 @@
   --destructive-foreground: #ffffff;
   --border: var(--terra-glass-border);
   --input: rgba(255, 255, 255, 0.1);
-  --ring: var(--terra-cyan);
+  --ring: var(--terra-cyan-bright);
   
   --sidebar: var(--terra-deep-space);
   --sidebar-foreground: #e2e8f0;
   --sidebar-accent: var(--terra-cyan-glow);
   --sidebar-accent-foreground: var(--terra-midnight);
   --sidebar-border: var(--terra-glass-border);
-  --sidebar-ring: var(--terra-cyan);
+  --sidebar-ring: var(--terra-cyan-bright);
 }
 
 .dark {
@@ -103,8 +104,8 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     background-image: 
-      radial-gradient(circle at 50% 0%, rgba(0, 255, 238, 0.15), transparent 40%),
-      radial-gradient(circle at 0% 100%, rgba(11, 16, 32, 1), transparent 60%);
+      radial-gradient(circle at 50% 0%, rgba(0, 217, 217, 0.12), transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(10, 14, 26, 1), transparent 60%);
     background-attachment: fixed;
   }
   
@@ -220,5 +221,18 @@
   @keyframes pulse-core {
     0%, 100% { transform: scale(1); opacity: 0.8; }
     50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 8px var(--terra-cyan)); }
+  }
+  
+  /* TerraFusion Logo Animations */
+  .animate-spin-slow {
+    animation: spin-slow 20s linear infinite;
+  }
+  
+  .animate-spin-reverse-slow {
+    animation: spin-reverse 15s linear infinite;
+  }
+  
+  .animate-pulse-core {
+    animation: pulse-core 3s ease-in-out infinite;
   }
 }

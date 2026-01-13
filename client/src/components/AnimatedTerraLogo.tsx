@@ -23,27 +23,46 @@ export function AnimatedTerraLogo({ className, size = 40 }: AnimatedTerraLogoPro
       >
         <defs>
           <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00ffff" />
-            <stop offset="100%" stopColor="#0080ff" />
+            <stop offset="0%" stopColor="#00ffee" />
+            <stop offset="50%" stopColor="#00d9d9" />
+            <stop offset="100%" stopColor="#00a8a8" />
           </linearGradient>
+          <radialGradient id="coreGlow" cx="50%" cy="50%">
+            <stop offset="0%" stopColor="#00ffee" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#00d9d9" stopOpacity="0" />
+          </radialGradient>
         </defs>
 
-        {/* Outer Ring - Slow Rotation */}
+        {/* Spherical Grid Structure - Outer */}
         <g className="origin-center animate-spin-slow">
-          <circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGradient)" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="10 5" />
-          <circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGradient)" strokeWidth="0.5" strokeOpacity="0.1" />
+          {/* Horizontal grid lines */}
+          <ellipse cx="50" cy="50" rx="45" ry="10" fill="none" stroke="#00d9d9" strokeWidth="0.5" strokeOpacity="0.4" />
+          <ellipse cx="50" cy="50" rx="45" ry="20" fill="none" stroke="#00d9d9" strokeWidth="0.5" strokeOpacity="0.3" />
+          <ellipse cx="50" cy="50" rx="45" ry="30" fill="none" stroke="#00d9d9" strokeWidth="0.5" strokeOpacity="0.25" />
+          <ellipse cx="50" cy="50" rx="45" ry="40" fill="none" stroke="#00d9d9" strokeWidth="0.5" strokeOpacity="0.2" />
+          {/* Outer sphere */}
+          <circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGradient)" strokeWidth="1" strokeOpacity="0.5" />
         </g>
 
-        {/* Middle Ring - Reverse Rotation */}
+        {/* Vertical Grid Lines - Reverse Rotation */}
         <g className="origin-center animate-spin-reverse-slow">
-          <ellipse cx="50" cy="50" rx="35" ry="15" fill="none" stroke="#00ffff" strokeWidth="1" strokeOpacity="0.5" transform="rotate(45 50 50)" />
-          <ellipse cx="50" cy="50" rx="35" ry="15" fill="none" stroke="#00ffff" strokeWidth="1" strokeOpacity="0.5" transform="rotate(-45 50 50)" />
+          <ellipse cx="50" cy="50" rx="45" ry="45" fill="none" stroke="#00ffee" strokeWidth="0.5" strokeOpacity="0.4" transform="rotate(0 50 50)" />
+          <ellipse cx="50" cy="50" rx="45" ry="45" fill="none" stroke="#00ffee" strokeWidth="0.5" strokeOpacity="0.4" transform="rotate(30 50 50)" />
+          <ellipse cx="50" cy="50" rx="45" ry="45" fill="none" stroke="#00ffee" strokeWidth="0.5" strokeOpacity="0.4" transform="rotate(60 50 50)" />
+          <ellipse cx="50" cy="50" rx="45" ry="45" fill="none" stroke="#00ffee" strokeWidth="0.5" strokeOpacity="0.4" transform="rotate(90 50 50)" />
         </g>
 
-        {/* Inner Core - Pulsing */}
+        {/* Quantum Core - Pulsing Energy */}
         <g className="origin-center animate-pulse-core">
-          <circle cx="50" cy="50" r="12" fill="url(#logoGradient)" />
-          <circle cx="50" cy="50" r="6" fill="#fff" fillOpacity="0.8" />
+          {/* Core glow */}
+          <circle cx="50" cy="50" r="18" fill="url(#coreGlow)" opacity="0.6" />
+          {/* Core sphere */}
+          <circle cx="50" cy="50" r="10" fill="url(#logoGradient)" />
+          {/* Inner spiral */}
+          <path d="M 50 40 Q 55 45 50 50 Q 45 55 50 60" fill="none" stroke="#fff" strokeWidth="1.5" strokeOpacity="0.8" />
+          <path d="M 50 40 Q 45 45 50 50 Q 55 55 50 60" fill="none" stroke="#fff" strokeWidth="1.5" strokeOpacity="0.8" />
+          {/* Center point */}
+          <circle cx="50" cy="50" r="3" fill="#ffffff" opacity="0.9" />
         </g>
       </svg>
     </div>

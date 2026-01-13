@@ -28,14 +28,14 @@ export default function Home() {
           <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
             <div className="space-y-6 max-w-2xl">
               <Badge variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 backdrop-blur-sm px-4 py-1">
-                Government. Transcended.
+                Native to TerraFusion OS
               </Badge>
               <h1 className="text-4xl md:text-6xl font-thin tracking-tight leading-tight">
-                Mass Valuation <br />
-                <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-sidebar-primary">Quantum Intelligence</span>
+                TerraForge <br />
+                <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-sidebar-primary">Quantum Valuation Engine</span>
               </h1>
               <p className="text-primary-foreground/90 text-xl font-light max-w-xl leading-relaxed">
-                Turn complexity into clarity. Process property data <span className="font-bold text-sidebar-primary">379M× faster</span> with 98% precision using the world's first 3-6-9 quantum-powered appraisal suite.
+                The forge where property values are crafted, calibrated, and crystallized. Process mass appraisals with <span className="font-bold text-sidebar-primary">quantum precision</span> using market-calibrated AI and the sacred 3-6-9 framework.
               </p>
               <div className="flex flex-wrap gap-4 pt-4">
                 <Button size="lg" className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 border-0 rounded-full px-8 shadow-[0_0_30px_rgba(0,255,238,0.3)] transition-all hover:scale-105">

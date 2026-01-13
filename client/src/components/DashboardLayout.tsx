@@ -71,8 +71,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="h-20 flex items-center px-6 border-b border-[rgba(0,255,255,0.1)] bg-[rgba(0,255,255,0.02)]">
             <AnimatedTerraLogo size={48} className="mr-3" />
             <div>
-              <h1 className="font-['SF_Pro_Display'] font-light text-2xl tracking-tight text-gradient-primary">TERRAFUSION</h1>
-              <p className="text-[10px] text-cyan-400/70 uppercase tracking-[0.2em]">Quantum Gov OS</p>
+              <h1 className="font-['SF_Pro_Display'] font-light text-2xl tracking-tight text-gradient-primary">TERRAFORGE</h1>
+              <p className="text-[10px] text-cyan-400/70 uppercase tracking-[0.2em]">Native to TerraFusion OS</p>
             </div>
           </div>
 
