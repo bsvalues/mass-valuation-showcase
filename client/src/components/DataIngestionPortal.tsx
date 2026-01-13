@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle2, Database, FileSpreadsheet, Upload, X, ArrowRightLeft } from "lucide-react";
+import { AlertCircle, CheckCircle2, Database, FileSpreadsheet, Upload, X, ArrowRightLeft, Download } from "lucide-react";
 import Papa from "papaparse";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -90,6 +90,27 @@ export function DataIngestionPortal({ onDataLoaded }: DataIngestionPortalProps) 
     });
   };
 
+  const handleExport = () => {
+    if (rawResults.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const csv = Papa.unparse(rawResults);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Data Exported", {
+      description: "Dataset downloaded successfully."
+    });
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -109,15 +130,29 @@ export function DataIngestionPortal({ onDataLoaded }: DataIngestionPortalProps) 
 
   return (
     <>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="rounded-full w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary active-recoil"
-        onClick={() => setIsOpen(true)}
-        title="Data Ingestion Portal"
-      >
-        <Database className="w-5 h-5" />
-      </Button>
+      <div className="flex gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary active-recoil"
+          onClick={() => setIsOpen(true)}
+          title="Data Ingestion Portal"
+        >
+          <Database className="w-5 h-5" />
+        </Button>
+        
+        {recordCount > 0 && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full w-10 h-10 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 active-recoil"
+            onClick={handleExport}
+            title="Export Dataset"
+          >
+            <Download className="w-5 h-5" />
+          </Button>
+        )}
+      </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-xl bg-[#0b1020]/95 border border-[#00ffee]/30 backdrop-blur-xl">

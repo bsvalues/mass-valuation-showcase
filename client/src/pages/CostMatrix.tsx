@@ -14,7 +14,22 @@ import { useState } from "react";
 export default function CostMatrix() {
   const [baseRate, setBaseRate] = useState(145.50);
   const [marketFactor, setMarketFactor] = useState(1.05);
-  
+  const [editMode, setEditMode] = useState<string | null>(null);
+  const [matrixData, setMatrixData] = useState([
+    { code: "RES-101", desc: "Single Family - Ranch", quality: "Q3 - Average", base: 142.00, trend: "+2.1%" },
+    { code: "RES-102", desc: "Single Family - 2 Story", quality: "Q3 - Average", base: 138.50, trend: "+1.8%" },
+    { code: "RES-103", desc: "Single Family - Custom", quality: "Q4 - Good", base: 185.00, trend: "+3.5%" },
+    { code: "RES-104", desc: "Single Family - Luxury", quality: "Q5 - Excellent", base: 245.00, trend: "+4.2%" },
+    { code: "RES-201", desc: "Duplex / Triplex", quality: "Q3 - Average", base: 125.00, trend: "+1.5%" },
+    { code: "RES-301", desc: "Townhouse - End Unit", quality: "Q3 - Average", base: 135.00, trend: "+2.0%" },
+  ]);
+
+  const handleBaseRateChange = (code: string, newValue: number) => {
+    setMatrixData(prev => prev.map(row => 
+      row.code === code ? { ...row, base: newValue } : row
+    ));
+  };
+
   // Simulated impact calculation
   const totalValuation = 42500000000; // $42.5B
   const projectedImpact = (baseRate * marketFactor * 1000000).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -188,14 +203,7 @@ export default function CostMatrix() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {[
-                      { code: "RES-101", desc: "Single Family - Ranch", quality: "Q3 - Average", base: 142.00, trend: "+2.1%" },
-                      { code: "RES-102", desc: "Single Family - 2 Story", quality: "Q3 - Average", base: 138.50, trend: "+1.8%" },
-                      { code: "RES-103", desc: "Single Family - Custom", quality: "Q4 - Good", base: 185.00, trend: "+3.5%" },
-                      { code: "RES-104", desc: "Single Family - Luxury", quality: "Q5 - Excellent", base: 245.00, trend: "+4.2%" },
-                      { code: "RES-201", desc: "Duplex / Triplex", quality: "Q3 - Average", base: 125.00, trend: "+1.5%" },
-                      { code: "RES-301", desc: "Townhouse - End Unit", quality: "Q3 - Average", base: 135.00, trend: "+2.0%" },
-                    ].map((row) => (
+                    {matrixData.map((row) => (
                       <TableRow key={row.code}>
                         <TableCell className="font-mono font-medium">{row.code}</TableCell>
                         <TableCell>{row.desc}</TableCell>
@@ -203,7 +211,23 @@ export default function CostMatrix() {
                           <Badge variant="secondary">{row.quality}</Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-muted-foreground">
-                          ${row.base.toFixed(2)}
+                          {editMode === row.code ? (
+                            <Input 
+                              type="number" 
+                              value={row.base} 
+                              onChange={(e) => handleBaseRateChange(row.code, Number(e.target.value))}
+                              className="w-24 text-right h-8"
+                              autoFocus
+                              onBlur={() => setEditMode(null)}
+                            />
+                          ) : (
+                            <span 
+                              className="cursor-pointer hover:text-white border-b border-dashed border-transparent hover:border-white/50"
+                              onClick={() => setEditMode(row.code)}
+                            >
+                              ${row.base.toFixed(2)}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right font-mono font-bold text-primary">
                           ${(row.base * (baseRate / 145.5) * marketFactor).toFixed(2)}
@@ -212,8 +236,13 @@ export default function CostMatrix() {
                           {row.trend}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Settings2 className="w-4 h-4" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => setEditMode(editMode === row.code ? null : row.code)}
+                          >
+                            {editMode === row.code ? <Save className="w-4 h-4 text-green-400" /> : <Settings2 className="w-4 h-4" />}
                           </Button>
                         </TableCell>
                       </TableRow>
