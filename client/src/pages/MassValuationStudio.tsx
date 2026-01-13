@@ -5,9 +5,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, BarChart3, CheckCircle2, Factory, Layers, Play, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, CheckCircle2, Factory, Layers, Play, Zap, Search, Home } from "lucide-react";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function MassValuationStudio() {
+  const [subjectParcel, setSubjectParcel] = useState("");
+  const [comps, setComps] = useState<any[]>([]);
+
+  const findComps = () => {
+    // Simulate finding comps
+    const mockComps = [
+      { id: "10294", address: "124 Maple St", sqft: 2400, year: 2015, dist: "0.1 mi", price: 450000, score: 98 },
+      { id: "10301", address: "128 Maple St", sqft: 2350, year: 2014, dist: "0.2 mi", price: 445000, score: 95 },
+      { id: "10455", address: "45 Oak Ave", sqft: 2500, year: 2016, dist: "0.4 mi", price: 460000, score: 92 },
+      { id: "10112", address: "12 Pine Ln", sqft: 2200, year: 2012, dist: "0.5 mi", price: 425000, score: 88 },
+      { id: "10567", address: "88 Elm Dr", sqft: 2600, year: 2018, dist: "0.8 mi", price: 480000, score: 85 },
+    ];
+    setComps(mockComps);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -124,7 +142,7 @@ export default function MassValuationStudio() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs uppercase tracking-wider text-slate-500">
                     <span>CPU Load (WASM)</span>
-                    <span className="text-[#00ffee]">12%</span>
+                    <span className="text--[#00ffee]">12%</span>
                   </div>
                   <Progress value={12} className="h-1 bg-white/10 [&>div]:bg-[#00ffee]" />
                 </div>
@@ -152,6 +170,70 @@ export default function MassValuationStudio() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Automated Comp Finder */}
+        <Card className="terra-card">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Home className="w-5 h-5 text-purple-400" />
+              Automated Comparable Sales Finder
+            </CardTitle>
+            <CardDescription>Instantly find the top 5 comparable sales for any subject property.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex gap-4">
+              <Input 
+                placeholder="Enter Subject Parcel ID (e.g., 10293)" 
+                className="bg-black/20 border-white/10"
+                value={subjectParcel}
+                onChange={(e) => setSubjectParcel(e.target.value)}
+              />
+              <Button className="bg-purple-500 hover:bg-purple-600 text-white" onClick={findComps}>
+                <Search className="w-4 h-4 mr-2" />
+                Find Comps
+              </Button>
+            </div>
+
+            {comps.length > 0 && (
+              <div className="rounded-md border border-white/10 overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-white/5">
+                    <TableRow>
+                      <TableHead className="text-slate-400">Parcel ID</TableHead>
+                      <TableHead className="text-slate-400">Address</TableHead>
+                      <TableHead className="text-slate-400">Sq. Ft.</TableHead>
+                      <TableHead className="text-slate-400">Year Built</TableHead>
+                      <TableHead className="text-slate-400">Distance</TableHead>
+                      <TableHead className="text-right text-slate-400">Sale Price</TableHead>
+                      <TableHead className="text-right text-slate-400">Similarity</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {comps.map((comp) => (
+                      <TableRow key={comp.id} className="hover:bg-white/5">
+                        <TableCell className="font-mono text-white">{comp.id}</TableCell>
+                        <TableCell className="text-slate-300">{comp.address}</TableCell>
+                        <TableCell className="text-slate-300">{comp.sqft}</TableCell>
+                        <TableCell className="text-slate-300">{comp.year}</TableCell>
+                        <TableCell className="text-slate-300">{comp.dist}</TableCell>
+                        <TableCell className="text-right font-mono text-[#00ffee]">${comp.price.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className={`
+                            ${comp.score >= 95 ? 'text-green-400 border-green-500/30 bg-green-500/10' : 
+                              comp.score >= 90 ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : 
+                              'text-amber-400 border-amber-500/30 bg-amber-500/10'}
+                          `}>
+                            {comp.score}% Match
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

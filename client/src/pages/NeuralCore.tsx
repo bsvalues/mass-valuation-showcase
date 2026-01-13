@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Activity, Bot, BrainCircuit, Cpu, FileText, Gavel, Globe, MessageSquare, Shield, Terminal, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Activity, Bot, BrainCircuit, Cpu, FileText, Gavel, Globe, MessageSquare, Shield, Terminal, Zap, Send, User } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Input } from "@/components/ui/input";
 
 interface AgentLog {
   id: string;
@@ -16,6 +17,13 @@ interface AgentLog {
   type: 'info' | 'warning' | 'success' | 'error';
 }
 
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'system';
+  text: string;
+  timestamp: string;
+}
+
 export default function NeuralCore() {
   const [logs, setLogs] = useState<AgentLog[]>([
     { id: '1', agent: 'Swarm Commander', message: 'Detected anomaly in Neighborhood 42: Land value deviation > 5%', timestamp: '10:42:01', type: 'warning' },
@@ -23,6 +31,54 @@ export default function NeuralCore() {
     { id: '3', agent: 'Risk Sentinel', message: 'Verifying compliance with IAAO Standard 6. PRD is within range (1.02).', timestamp: '10:42:08', type: 'success' },
     { id: '4', agent: 'Legal Defense', message: 'Drafting defense packet for Appeal #2026-042. Evidence strength: High.', timestamp: '10:42:12', type: 'info' },
   ]);
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { id: '1', sender: 'system', text: 'Valuation Assistant initialized. I can query the parcel database, analyze outliers, or summarize market trends. How can I help?', timestamp: new Date().toLocaleTimeString() }
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const handleSendMessage = () => {
+    if (!inputMessage.trim()) return;
+
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      sender: 'user',
+      text: inputMessage,
+      timestamp: new Date().toLocaleTimeString()
+    };
+
+    setChatMessages(prev => [...prev, userMsg]);
+    setInputMessage("");
+
+    // Simulate AI response
+    setTimeout(() => {
+      let responseText = "I'm processing that request...";
+      const lowerInput = userMsg.text.toLowerCase();
+
+      if (lowerInput.includes("outlier") || lowerInput.includes("anomaly")) {
+        responseText = "I've scanned the dataset. Found 24 parcels with valuation deviations > 3 standard deviations from the neighborhood mean. High concentration in Sector 4.";
+      } else if (lowerInput.includes("commercial") || lowerInput.includes("business")) {
+        responseText = "Filtering for Commercial properties... Found 1,204 records. Average price per sq.ft is $245.00, trending up 4.2% year-over-year.";
+      } else if (lowerInput.includes("value") || lowerInput.includes("worth")) {
+        responseText = "Based on the current calibration (Base Rate: $145.50), the total assessed value of the jurisdiction is projected at $42.5 Billion.";
+      } else {
+        responseText = "I can help you analyze valuation data. Try asking about 'outliers', 'commercial trends', or 'total value'.";
+      }
+
+      const systemMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: 'system',
+        text: responseText,
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setChatMessages(prev => [...prev, systemMsg]);
+    }, 1000);
+  };
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
 
   // Simulate live agent activity
   useEffect(() => {
@@ -178,9 +234,51 @@ export default function NeuralCore() {
           <div className="lg:col-span-2">
              <AgentPersonalityTuner />
           </div>
-          <div className="space-y-6">
-             {/* System Directives moved here or kept separate */}
-          </div>
+          
+          {/* Valuation Assistant Chat */}
+          <Card className="terra-card flex flex-col h-[500px]">
+            <CardHeader>
+              <CardTitle className="text-[#00ffee] flex items-center gap-2">
+                <Bot className="w-5 h-5" />
+                Valuation Assistant
+              </CardTitle>
+              <CardDescription>Ask questions about your data.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
+              <ScrollArea className="flex-1 pr-4">
+                <div className="space-y-4">
+                  {chatMessages.map((msg) => (
+                    <div key={msg.id} className={`flex gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                        msg.sender === 'user' ? 'bg-primary/20 text-primary' : 'bg-[#00ffee]/10 text-[#00ffee]'
+                      }`}>
+                        {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                      </div>
+                      <div className={`rounded-lg p-3 max-w-[80%] text-sm ${
+                        msg.sender === 'user' ? 'bg-primary/10 text-white' : 'bg-white/5 text-slate-300'
+                      }`}>
+                        <p>{msg.text}</p>
+                        <span className="text-[10px] opacity-50 mt-1 block">{msg.timestamp}</span>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={chatEndRef} />
+                </div>
+              </ScrollArea>
+              <div className="flex gap-2 mt-auto pt-2 border-t border-white/10">
+                <Input 
+                  placeholder="Ask about outliers, trends..." 
+                  className="bg-black/20 border-white/10"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                />
+                <Button size="icon" className="bg-[#00ffee] text-black hover:bg-[#00ffee]/80" onClick={handleSendMessage}>
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* System Directives */}
