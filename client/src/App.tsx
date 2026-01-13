@@ -19,6 +19,7 @@ import MassValuationStudio from "./pages/MassValuationStudio";
 import DefenseStudio from "./pages/DefenseStudio";
 import NeuralCore from "./pages/NeuralCore";
 import ModelsAlgorithms from "./pages/ModelsAlgorithms";
+import MarketAnalysis from "./pages/MarketAnalysis";
 
 
 function Router() {
@@ -31,6 +32,7 @@ function Router() {
       <Route path={"/models"} component={ModelsAlgorithms} />
       <Route path={"/calibration"} component={CalibrationStudio} />
       <Route path={"/mass-valuation"} component={MassValuationStudio} />
+      <Route path={"/analysis"} component={MarketAnalysis} />
       <Route path={"/defense"} component={DefenseStudio} />
       <Route path={"/neural-core"} component={NeuralCore} />
       <Route path={"/404"} component={NotFound} />
