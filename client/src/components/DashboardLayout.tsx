@@ -7,6 +7,7 @@ import { VoiceCommandInterface } from "./VoiceCommandInterface";
 import {
   BarChart3,
   Box,
+  BrainCircuit,
   Calculator,
   ChevronRight,
   Factory,
@@ -43,6 +44,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Box, label: "Models & Algorithms", href: "/models" },
     { icon: Shield, label: "Defense Studio", href: "/defense" },
     { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
+    { icon: BrainCircuit, label: "The Neural Core", href: "/neural-core" },
   ];
 
   return (
