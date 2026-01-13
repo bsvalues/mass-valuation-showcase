@@ -1,3 +1,4 @@
+import { useGodMode } from "@/contexts/GodModeContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,7 @@ export function VoiceCommandInterface() {
   const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const { executeCommand, setIsOpen: setGodModeOpen } = useGodMode();
 
   useEffect(() => {
     if (isOpen) {
@@ -16,10 +18,16 @@ export function VoiceCommandInterface() {
       
       // Simulate voice recognition
       const timer = setTimeout(() => {
-        setTranscript("Show me residential properties in Benton County...");
+        const command = "/run-reval --scope=county";
+        setTranscript("Run county-wide revaluation...");
+        
         setTimeout(() => {
           setIsListening(false);
-          setTimeout(() => setIsOpen(false), 1500);
+          setTimeout(() => {
+            setIsOpen(false);
+            setGodModeOpen(true);
+            executeCommand(command);
+          }, 1000);
         }, 2000);
       }, 1500);
       
@@ -28,7 +36,7 @@ export function VoiceCommandInterface() {
       setIsListening(false);
       setTranscript("");
     }
-  }, [isOpen]);
+  }, [isOpen, executeCommand, setGodModeOpen]);
 
   return (
     <>

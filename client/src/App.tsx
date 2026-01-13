@@ -1,4 +1,5 @@
 import { GodModeTerminal } from "@/components/GodModeTerminal";
+import { GodModeProvider } from "@/contexts/GodModeContext";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -47,11 +48,13 @@ function App() {
         // switchable
       >
         <AdaptiveThemeProvider>
-        <TooltipProvider>
-          <GodModeTerminal />
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+          <GodModeProvider>
+            <TooltipProvider>
+              <GodModeTerminal />
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </GodModeProvider>
         </AdaptiveThemeProvider>
       </ThemeProvider>
     </ErrorBoundary>

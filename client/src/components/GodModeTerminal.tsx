@@ -1,15 +1,11 @@
+import { useGodMode } from "@/contexts/GodModeContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { Terminal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export function GodModeTerminal() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, setIsOpen, executeCommand, history } = useGodMode();
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState<string[]>([
-    "> TerraFusion Sovereign OS v4.1.0",
-    "> God Mode Terminal Initialized...",
-    "> Type /help for available commands."
-  ]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,7 +21,7 @@ export function GodModeTerminal() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, setIsOpen]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -37,26 +33,7 @@ export function GodModeTerminal() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const cmd = input.trim();
-    setHistory(prev => [...prev, `> ${cmd}`]);
-    
-    // Simulate command execution
-    setTimeout(() => {
-      let response = "";
-      if (cmd.startsWith("/run-reval")) {
-        response = "Initiating County-Wide Revaluation... [Rust Core: ACTIVE]";
-      } else if (cmd.startsWith("/deploy-agent")) {
-        response = "Deploying Autonomous Agent... [Target: " + (cmd.split(" ")[1] || "Unknown") + "]";
-      } else if (cmd === "/help") {
-        response = "Available Commands: /run-reval, /deploy-agent, /status, /calibrate, /override-lock";
-      } else if (cmd === "/status") {
-        response = "System Vitality: 12.000 | Resonance: 8.400 | Agents: 4 Active";
-      } else {
-        response = `Command not recognized: ${cmd.split(" ")[0]}`;
-      }
-      setHistory(prev => [...prev, `< ${response}`]);
-    }, 200);
-
+    executeCommand(input.trim());
     setInput("");
   };
 

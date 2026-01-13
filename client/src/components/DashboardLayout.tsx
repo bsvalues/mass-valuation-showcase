@@ -3,6 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { AnimatedTerraLogo } from "./AnimatedTerraLogo";
 import { ResonanceScore } from "./ResonanceScore";
+import { CommandCenterMode } from "./CommandCenterMode";
 import { VoiceCommandInterface } from "./VoiceCommandInterface";
 import {
   BarChart3,
@@ -159,6 +160,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Zap className="w-3 h-3 mr-1.5 fill-current" />
               System Operational
             </div>
+            <CommandCenterMode />
             <VoiceCommandInterface />
             <Button variant="outline" size="sm" className="hidden sm:flex active-recoil hover-lift">
               Export Report

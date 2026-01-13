@@ -1,3 +1,4 @@
+import { AgentPersonalityTuner } from "@/components/AgentPersonalityTuner";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,7 +133,7 @@ export default function NeuralCore() {
           </Card>
 
           {/* Live Neural Stream */}
-          <Card className="terra-card flex flex-col h-[500px]">
+          <Card className="terra-card flex flex-col h-full">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Terminal className="w-5 h-5 text-[#00ffee]" />
@@ -171,6 +172,15 @@ export default function NeuralCore() {
               </ScrollArea>
             </CardContent>
           </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+             <AgentPersonalityTuner />
+          </div>
+          <div className="space-y-6">
+             {/* System Directives moved here or kept separate */}
+          </div>
         </div>
 
         {/* System Directives */}
