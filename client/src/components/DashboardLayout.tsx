@@ -3,6 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { AnimatedTerraLogo } from "./AnimatedTerraLogo";
 import { ResonanceScore } from "./ResonanceScore";
+import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
 import { CommandCenterMode } from "./CommandCenterMode";
 import { VoiceCommandInterface } from "./VoiceCommandInterface";
 import {
@@ -34,6 +35,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [location] = useLocation();
+  const { systemResonance, isRevalRunning } = useGlobalSimulation();
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/" },
@@ -103,14 +105,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#00FFFF] to-transparent opacity-50" />
                 <div className="flex items-center justify-between w-full mb-2">
                   <span className="text-[10px] uppercase tracking-widest text-cyan-400">System Vitality</span>
-                  <span className="text-xs font-mono text-[#00FFFF]">12.000</span>
+                  <span className="text-xs font-mono text-[#00FFFF]">{systemResonance.toFixed(3)}</span>
                 </div>
                 
-                <ResonanceScore score={12.000} className="w-24 h-24 my-2 scale-75" />
+                <ResonanceScore score={systemResonance} className="w-24 h-24 my-2 scale-75" />
                 
                 <div className="mt-2 flex items-center gap-2 self-start">
-                  <div className="w-2 h-2 rounded-full bg-[#00FF88] animate-pulse" />
-                  <span className="text-[10px] text-slate-400">Quantum Core Active</span>
+                  <div className={`w-2 h-2 rounded-full ${isRevalRunning ? "bg-amber-400 animate-ping" : "bg-[#00FF88] animate-pulse"}`} />
+                  <span className="text-[10px] text-slate-400">{isRevalRunning ? "PROCESSING..." : "Quantum Core Active"}</span>
                 </div>
               </div>
             </div>

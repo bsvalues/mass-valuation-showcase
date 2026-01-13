@@ -1,5 +1,8 @@
 import { GodModeTerminal } from "@/components/GodModeTerminal";
+import { IgnitionSequence } from "@/components/IgnitionSequence";
+import { useState } from "react";
 import { GodModeProvider } from "@/contexts/GodModeContext";
+import { GlobalSimulationProvider } from "@/contexts/GlobalSimulationContext";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -41,6 +44,12 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  const [ignited, setIgnited] = useState(false);
+
+  if (!ignited) {
+    return <IgnitionSequence onComplete={() => setIgnited(true)} />;
+  }
+
   return (
     <ErrorBoundary>
       <ThemeProvider
@@ -48,13 +57,15 @@ function App() {
         // switchable
       >
         <AdaptiveThemeProvider>
-          <GodModeProvider>
-            <TooltipProvider>
+          <GlobalSimulationProvider>
+            <GodModeProvider>
+              <TooltipProvider>
               <GodModeTerminal />
               <Toaster />
               <Router />
-            </TooltipProvider>
-          </GodModeProvider>
+              </TooltipProvider>
+            </GodModeProvider>
+          </GlobalSimulationProvider>
         </AdaptiveThemeProvider>
       </ThemeProvider>
     </ErrorBoundary>

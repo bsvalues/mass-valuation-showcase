@@ -1,4 +1,5 @@
 import { useGodMode } from "@/contexts/GodModeContext";
+import { useSystemVoice } from "@/hooks/useSystemVoice";
 import { AnimatePresence, motion } from "framer-motion";
 import { Terminal, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -29,9 +30,20 @@ export function GodModeTerminal() {
     }
   }, [isOpen]);
 
+  const { speak } = useSystemVoice();
+
   const handleCommand = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+
+    // Speak the command confirmation
+    if (input.includes("reval")) {
+      speak("Initiating county-wide revaluation protocols.");
+    } else if (input.includes("deploy")) {
+      speak("Deploying agent swarm.");
+    } else {
+      speak("Command executing.");
+    }
 
     executeCommand(input.trim());
     setInput("");
