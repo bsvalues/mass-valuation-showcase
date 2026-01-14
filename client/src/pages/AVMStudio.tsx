@@ -74,6 +74,15 @@ export default function AVMStudio() {
         const evaluation = evaluateRandomForest(model, test, tStats);
         setTrainingProgress(100);
 
+        // Store feature importance with names
+        const featureNames = ['Square Feet', 'Year Built', 'Land Value', 'Building Value'];
+        setFeatureImportance(
+          featureImportance.map((importance, i) => ({
+            feature: featureNames[i],
+            importance,
+          }))
+        );
+
         setModelResults({
           ...evaluation,
           trainingTime,
@@ -269,6 +278,45 @@ export default function AVMStudio() {
             <div className="mt-4 p-4 bg-gray-900 rounded-lg">
               <div className="text-sm text-gray-400">Training Time</div>
               <div className="text-lg text-white">{(modelResults.trainingTime / 1000).toFixed(2)}s</div>
+            </div>
+          </div>
+        )}
+
+        {/* Feature Importance */}
+        {featureImportance && modelType === 'randomForest' && (
+          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-xl font-semibold text-cyan-400">Feature Importance</h2>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">
+              Shows which property attributes most influence the valuation predictions.
+            </p>
+            <div className="space-y-3">
+              {featureImportance
+                .sort((a, b) => b.importance - a.importance)
+                .map((item, idx) => {
+                  const percentage = (item.importance * 100).toFixed(1);
+                  return (
+                    <div key={idx}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-white font-medium">{item.feature}</span>
+                        <span className="text-cyan-400">{percentage}%</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div
+                          className="bg-gradient-to-r from-cyan-500 to-blue-500 h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+            <div className="mt-4 p-3 bg-cyan-900/20 border border-cyan-400/30 rounded-lg">
+              <p className="text-xs text-gray-300">
+                <strong className="text-cyan-400">Interpretation:</strong> Higher percentages indicate features that have greater influence on property value predictions. For example, if "Square Feet" shows 40%, it means this attribute contributes most significantly to the model's valuation decisions.
+              </p>
             </div>
           </div>
         )}
