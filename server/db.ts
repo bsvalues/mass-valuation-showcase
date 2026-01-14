@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, parcels, InsertParcel, sales, InsertSale, auditLogs, InsertAuditLog, regressionModels, InsertRegressionModel } from "../drizzle/schema";
+import { InsertUser, users, parcels, InsertParcel, sales, InsertSale, auditLogs, InsertAuditLog, regressionModels, InsertRegressionModel, avmModels, InsertAVMModel } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -196,4 +196,34 @@ export async function deleteRegressionModel(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(regressionModels).where(eq(regressionModels.id, id));
+}
+
+// AVM model queries
+export async function saveAVMModel(model: InsertAVMModel) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(avmModels).values(model);
+  return result[0].insertId;
+}
+
+export async function getAVMModels(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(avmModels).where(eq(avmModels.createdBy, userId));
+}
+
+export async function getAVMModelById(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const results = await db.select().from(avmModels).where(eq(avmModels.id, id));
+  if (results.length === 0 || results[0].createdBy !== userId) {
+    throw new Error("Model not found or access denied");
+  }
+  return results[0];
+}
+
+export async function deleteAVMModel(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(avmModels).where(eq(avmModels.id, id));
 }

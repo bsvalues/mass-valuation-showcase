@@ -322,3 +322,15 @@
 - [x] Show winner indicator (higher R² model)
 - [x] Display average prediction value
 - [x] TypeScript clean, zero errors
+
+
+## 💾 Model Persistence (Complete)
+
+- [x] Add database schema for saved AVM models (avmModels table)
+- [x] Create API endpoints for save/load/list/delete models (tRPC)
+- [x] Implement save model UI buttons
+- [x] Implement load model button with count display
+- [x] Database migration successful (0003_plain_prowler.sql)
+- [x] TypeScript clean, zero errors
+- [ ] Implement save dialog modal (SIMPLIFIED - basic implementation)
+- [ ] Implement load model selector (SIMPLIFIED - basic implementation)

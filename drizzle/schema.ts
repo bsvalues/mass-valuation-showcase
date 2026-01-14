@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -106,3 +106,29 @@ export const regressionModels = mysqlTable("regressionModels", {
 
 export type RegressionModel = typeof regressionModels.$inferSelect;
 export type InsertRegressionModel = typeof regressionModels.$inferInsert;
+
+/**
+ * AVM models table - stores saved machine learning valuation models
+ */
+export const avmModels = mysqlTable("avmModels", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description"),
+  modelType: mysqlEnum("modelType", ["randomForest", "neuralNetwork"]).notNull(),
+  serializedModel: longtext("serializedModel").notNull(), // JSON serialized model
+  featureStats: text("featureStats").notNull(), // JSON feature normalization stats
+  targetStats: text("targetStats").notNull(), // JSON target normalization stats
+  // Performance metrics
+  mae: varchar("mae", { length: 32 }),
+  rmse: varchar("rmse", { length: 32 }),
+  r2: varchar("r2", { length: 32 }),
+  mape: varchar("mape", { length: 32 }),
+  trainingTime: int("trainingTime"), // milliseconds
+  trainingDataSize: int("trainingDataSize"), // number of parcels used
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AVMModel = typeof avmModels.$inferSelect;
+export type InsertAVMModel = typeof avmModels.$inferInsert;

@@ -202,6 +202,75 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+  avmModels: router({
+    save: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        modelType: z.enum(["randomForest", "neuralNetwork"]),
+        serializedModel: z.string(),
+        featureStats: z.object({
+          mean: z.record(z.string(), z.number()),
+          std: z.record(z.string(), z.number()),
+        }),
+        targetStats: z.object({
+          mean: z.number(),
+          std: z.number(),
+        }),
+        mae: z.number(),
+        rmse: z.number(),
+        r2: z.number(),
+        mape: z.number(),
+        trainingTime: z.number(),
+        trainingDataSize: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const modelId = await db.saveAVMModel({
+          name: input.name,
+          description: input.description || null,
+          modelType: input.modelType,
+          serializedModel: input.serializedModel,
+          featureStats: JSON.stringify(input.featureStats),
+          targetStats: JSON.stringify(input.targetStats),
+          mae: String(input.mae),
+          rmse: String(input.rmse),
+          r2: String(input.r2),
+          mape: String(input.mape),
+          trainingTime: input.trainingTime,
+          trainingDataSize: input.trainingDataSize,
+          createdBy: ctx.user.id,
+        });
+        await db.createAuditLog({
+          userId: ctx.user.id,
+          action: "SAVE_AVM_MODEL",
+          entityType: "avmModel",
+          entityId: String(modelId),
+          details: `Saved ${input.modelType} model: ${input.name}`,
+        });
+        return { success: true, modelId };
+      }),
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getAVMModels(ctx.user.id);
+    }),
+    load: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return await db.getAVMModelById(input.id, ctx.user.id);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteAVMModel(input.id, ctx.user.id);
+        await db.createAuditLog({
+          userId: ctx.user.id,
+          action: "DELETE_AVM_MODEL",
+          entityType: "avmModel",
+          entityId: String(input.id),
+          details: "Deleted AVM model",
+        });
+        return { success: true };
+      }),
+  }),
   admin: router({
     listUsers: adminProcedure.query(async () => {
       return await db.getAllUsers();

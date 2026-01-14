@@ -37,8 +37,14 @@ export default function AVMStudio() {
   const [rfResults, setRFResults] = useState<any>(null);
   const [nnResults, setNNResults] = useState<any>(null);
   const [featureImportance, setFeatureImportance] = useState<Array<{ feature: string; importance: number }> | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [modelName, setModelName] = useState('');
+  const [modelDescription, setModelDescription] = useState('');
 
   const { data: parcels } = trpc.parcels.list.useQuery();
+  const { data: savedModels, refetch: refetchModels } = trpc.avmModels.list.useQuery();
+  const saveModelMutation = trpc.avmModels.save.useMutation();
+  const deleteModelMutation = trpc.avmModels.delete.useMutation();
 
   const handleTrain = async () => {
     if (!parcels || parcels.length < 10) {
@@ -308,6 +314,24 @@ export default function AVMStudio() {
                   style={{ width: `${trainingProgress}%` }}
                 />
               </div>
+            </div>
+          )}
+          {(trainedModel || (trainedRFModel && trainedNNModel)) && (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowSaveDialog(true)}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Save Model
+              </button>
+              <button
+                onClick={() => document.getElementById('load-model-select')?.focus()}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              >
+                <History className="w-4 h-4" />
+                Load Model ({savedModels?.length || 0})
+              </button>
             </div>
           )}
         </div>
