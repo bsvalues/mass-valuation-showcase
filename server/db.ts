@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, parcels, InsertParcel, sales, InsertSale, auditLogs, InsertAuditLog } from "../drizzle/schema";
+import { InsertUser, users, parcels, InsertParcel, sales, InsertSale, auditLogs, InsertAuditLog, regressionModels, InsertRegressionModel } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -176,4 +176,24 @@ export async function updateUserRole(userId: number, role: "user" | "admin") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
+// Regression model queries
+export async function saveRegressionModel(model: InsertRegressionModel) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(regressionModels).values(model);
+  return result[0].insertId;
+}
+
+export async function getRegressionModels(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(regressionModels).where(eq(regressionModels.createdBy, userId));
+}
+
+export async function deleteRegressionModel(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(regressionModels).where(eq(regressionModels.id, id));
 }

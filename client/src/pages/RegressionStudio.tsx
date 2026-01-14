@@ -5,15 +5,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { multipleRegression, generateDiagnosticPlots, type RegressionResult } from "@/lib/regression";
-import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp } from "lucide-react";
+import { multipleRegression, generateDiagnosticPlots, calculateCorrelationMatrix, type RegressionResult } from "@/lib/regression";
+import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, LineChart, ReferenceLine } from "recharts";
 
 export default function RegressionStudio() {
   const [selectedVariables, setSelectedVariables] = useState<string[]>(["squareFeet", "yearBuilt"]);
   const [regressionResult, setRegressionResult] = useState<RegressionResult | null>(null);
   const [diagnosticPlots, setDiagnosticPlots] = useState<any>(null);
+  const [correlationMatrix, setCorrelationMatrix] = useState<{ variables: string[]; matrix: number[][] } | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [modelName, setModelName] = useState("");
+  const [modelDescription, setModelDescription] = useState("");
+  
+  // Toast notifications handled via alerts for now
+  const saveModelMutation = trpc.regressionModels.save.useMutation();
+  const { data: savedModels, refetch: refetchModels } = trpc.regressionModels.list.useQuery();
+  const deleteModelMutation = trpc.regressionModels.delete.useMutation();
 
   // Mock data for demonstration
   const mockData = {
@@ -54,6 +68,10 @@ export default function RegressionStudio() {
     const result = multipleRegression(mockData.totalValue, X);
     setRegressionResult(result);
     setDiagnosticPlots(generateDiagnosticPlots(result));
+    
+    // Calculate correlation matrix for all selected variables
+    const corrMatrix = calculateCorrelationMatrix(X);
+    setCorrelationMatrix(corrMatrix);
   };
 
   const formatNumber = (num: number, decimals: number = 4) => {
@@ -146,6 +164,53 @@ export default function RegressionStudio() {
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Run Regression Analysis
               </Button>
+
+              {regressionResult && (
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => {
+                      const modelData = {
+                        name: `Model_${new Date().toISOString().split('T')[0]}`,
+                        description: `Regression model with variables: ${selectedVariables.join(', ')}`,
+                        dependentVariable: 'totalValue',
+                        independentVariables: selectedVariables,
+                        coefficients: regressionResult.coefficients,
+                        intercept: regressionResult.intercept,
+                        rSquared: regressionResult.rSquared,
+                        adjustedRSquared: regressionResult.adjustedRSquared,
+                        fStatistic: regressionResult.fStatistic,
+                        fPValue: regressionResult.fPValue,
+                      };
+                      saveModelMutation.mutate(modelData, {
+                        onSuccess: () => {
+                          alert('Model saved successfully!');
+                          refetchModels();
+                        },
+                        onError: (error) => {
+                          alert(`Failed to save model: ${error.message}`);
+                        },
+                      });
+                    }}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Model
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      alert('PDF export functionality - integrate with PDF library');
+                      // TODO: Implement PDF export using jsPDF or similar
+                    }}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export to PDF
+                  </Button>
+                </div>
+              )}
 
               {selectedVariables.length === 0 && (
                 <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
@@ -495,6 +560,79 @@ export default function RegressionStudio() {
                       </CardContent>
                     </Card>
                   </div>
+                )}
+
+                {/* Correlation Matrix Heatmap */}
+                {correlationMatrix && (
+                  <Card className="col-span-full">
+                    <CardHeader>
+                      <CardTitle>Correlation Matrix</CardTitle>
+                      <CardDescription>Pearson correlation coefficients between variables</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="border border-white/10 p-2"></th>
+                              {correlationMatrix.variables.map((varName) => (
+                                <th key={varName} className="border border-white/10 p-2 text-sm font-medium">
+                                  {availableVariables.find(v => v.name === varName)?.label || varName}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {correlationMatrix.variables.map((rowVar, i) => (
+                              <tr key={rowVar}>
+                                <td className="border border-white/10 p-2 text-sm font-medium">
+                                  {availableVariables.find(v => v.name === rowVar)?.label || rowVar}
+                                </td>
+                                {correlationMatrix.variables.map((colVar, j) => {
+                                  const corr = correlationMatrix.matrix[i][j];
+                                  const absCorr = Math.abs(corr);
+                                  
+                                  // Color intensity based on correlation strength
+                                  const getColor = (value: number) => {
+                                    if (value > 0) {
+                                      // Positive correlation: cyan
+                                      const intensity = Math.round(value * 255);
+                                      return `rgba(0, 255, 238, ${value * 0.8})`;
+                                    } else {
+                                      // Negative correlation: red
+                                      const intensity = Math.round(Math.abs(value) * 255);
+                                      return `rgba(255, 100, 100, ${Math.abs(value) * 0.8})`;
+                                    }
+                                  };
+
+                                  return (
+                                    <td
+                                      key={colVar}
+                                      className="border border-white/10 p-2 text-center font-mono text-sm"
+                                      style={{ backgroundColor: getColor(corr) }}
+                                    >
+                                      {corr.toFixed(3)}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="mt-4 flex items-center gap-6 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(0, 255, 238, 0.8)' }}></div>
+                          <span>Positive correlation</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(255, 100, 100, 0.8)' }}></div>
+                          <span>Negative correlation</span>
+                        </div>
+                        <p>|r| &gt; 0.7 indicates strong correlation</p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </>
             )}

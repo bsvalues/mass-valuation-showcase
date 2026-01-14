@@ -15,6 +15,13 @@
       "when": 1768346014045,
       "tag": "0001_fixed_gorgon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768350959984,
+      "tag": "0002_crazy_hedge_knight",
+      "breakpoints": true
     }
   ]
 }

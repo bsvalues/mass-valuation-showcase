@@ -84,3 +84,25 @@ export const auditLogs = mysqlTable("auditLogs", {
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+/**
+ * Regression models table - stores saved regression analysis models
+ */
+export const regressionModels = mysqlTable("regressionModels", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description"),
+  dependentVariable: varchar("dependentVariable", { length: 64 }).notNull(),
+  independentVariables: text("independentVariables").notNull(), // JSON array of variable names
+  coefficients: text("coefficients").notNull(), // JSON object with coefficients
+  rSquared: varchar("rSquared", { length: 32 }),
+  adjustedRSquared: varchar("adjustedRSquared", { length: 32 }),
+  fStatistic: varchar("fStatistic", { length: 32 }),
+  fPValue: varchar("fPValue", { length: 32 }),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type RegressionModel = typeof regressionModels.$inferSelect;
+export type InsertRegressionModel = typeof regressionModels.$inferInsert;

@@ -126,6 +126,59 @@ export const appRouter = router({
       return await db.getAuditLogs(ctx.user.id);
     }),
   }),
+  regressionModels: router({
+    save: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        dependentVariable: z.string(),
+        independentVariables: z.array(z.string()),
+        coefficients: z.record(z.string(), z.number()),
+        intercept: z.number(),
+        rSquared: z.number(),
+        adjustedRSquared: z.number(),
+        fStatistic: z.number(),
+        fPValue: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const modelId = await db.saveRegressionModel({
+          name: input.name,
+          description: input.description || null,
+          dependentVariable: input.dependentVariable,
+          independentVariables: JSON.stringify(input.independentVariables),
+          coefficients: JSON.stringify({ ...input.coefficients, intercept: input.intercept }),
+          rSquared: String(input.rSquared),
+          adjustedRSquared: String(input.adjustedRSquared),
+          fStatistic: String(input.fStatistic),
+          fPValue: String(input.fPValue),
+          createdBy: ctx.user.id,
+        });
+        await db.createAuditLog({
+          userId: ctx.user.id,
+          action: "SAVE_REGRESSION_MODEL",
+          entityType: "regressionModel",
+          entityId: String(modelId),
+          details: `Saved model: ${input.name}`,
+        });
+        return { success: true, modelId };
+      }),
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getRegressionModels(ctx.user.id);
+    }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteRegressionModel(input.id, ctx.user.id);
+        await db.createAuditLog({
+          userId: ctx.user.id,
+          action: "DELETE_REGRESSION_MODEL",
+          entityType: "regressionModel",
+          entityId: String(input.id),
+          details: "Deleted regression model",
+        });
+        return { success: true };
+      }),
+  }),
   admin: router({
     listUsers: adminProcedure.query(async () => {
       return await db.getAllUsers();

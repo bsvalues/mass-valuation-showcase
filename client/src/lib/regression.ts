@@ -420,6 +420,55 @@ export function generateDiagnosticPlots(result: RegressionResult) {
 }
 
 /**
+ * Calculate correlation matrix for variables
+ */
+export function calculateCorrelationMatrix(X: { [variable: string]: number[] }): {
+  variables: string[];
+  matrix: number[][];
+} {
+  const variables = Object.keys(X);
+  const n = variables.length;
+  const matrix: number[][] = [];
+
+  for (let i = 0; i < n; i++) {
+    matrix[i] = [];
+    for (let j = 0; j < n; j++) {
+      if (i === j) {
+        matrix[i][j] = 1;
+      } else {
+        matrix[i][j] = calculateCorrelation(X[variables[i]], X[variables[j]]);
+      }
+    }
+  }
+
+  return { variables, matrix };
+}
+
+/**
+ * Calculate Pearson correlation coefficient between two variables
+ */
+function calculateCorrelation(x: number[], y: number[]): number {
+  const n = x.length;
+  const meanX = x.reduce((sum, val) => sum + val, 0) / n;
+  const meanY = y.reduce((sum, val) => sum + val, 0) / n;
+
+  let numerator = 0;
+  let sumSqX = 0;
+  let sumSqY = 0;
+
+  for (let i = 0; i < n; i++) {
+    const dx = x[i] - meanX;
+    const dy = y[i] - meanY;
+    numerator += dx * dy;
+    sumSqX += dx * dx;
+    sumSqY += dy * dy;
+  }
+
+  const denominator = Math.sqrt(sumSqX * sumSqY);
+  return denominator === 0 ? 0 : numerator / denominator;
+}
+
+/**
  * Calculate normal distribution quantile (inverse CDF)
  */
 function normalQuantile(p: number): number {
