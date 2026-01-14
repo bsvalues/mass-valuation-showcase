@@ -61,11 +61,44 @@ export default function AVMStudio() {
       setTrainingProgress(20);
       const { train, test } = trainTestSplit(vectors, 0.3, true);
 
-      // Train model
+      // Train model(s)
       setTrainingProgress(30);
       const startTime = performance.now();
 
-      if (modelType === 'randomForest') {
+      if (comparisonMode) {
+        // Train both models for comparison
+        const { model: rfModel, trainingTime: rfTime, featureImportance } = await trainRandomForest(train, DEFAULT_RF_CONFIG);
+        setTrainedRFModel(rfModel);
+        setTrainingProgress(50);
+
+        const { model: nnModel, trainingTime: nnTime } = await trainNeuralNetwork(
+          train,
+          DEFAULT_NN_CONFIG,
+          (progress) => {
+            setTrainingProgress(50 + (progress.iterations / DEFAULT_NN_CONFIG.iterations) * 20);
+          }
+        );
+        setTrainedNNModel(nnModel);
+        setTrainingProgress(70);
+
+        // Evaluate both
+        const rfEval = evaluateRandomForest(rfModel, test, tStats);
+        const nnEval = evaluateNeuralNetwork(nnModel, test, tStats);
+        setTrainingProgress(100);
+
+        // Store feature importance
+        const featureNames = ['Square Feet', 'Year Built', 'Land Value', 'Building Value'];
+        setFeatureImportance(
+          featureImportance.map((importance, i) => ({
+            feature: featureNames[i],
+            importance,
+          }))
+        );
+
+        setRFResults({ ...rfEval, trainingTime: rfTime });
+        setNNResults({ ...nnEval, trainingTime: nnTime });
+        setModelResults(null); // Clear single model results
+      } else if (modelType === 'randomForest') {
         const { model, trainingTime, featureImportance } = await trainRandomForest(train, DEFAULT_RF_CONFIG);
         setTrainedModel(model);
         setTrainingProgress(70);
@@ -118,9 +151,16 @@ export default function AVMStudio() {
   };
 
   const handlePredict = () => {
-    if (!trainedModel || !featureStats || !targetStats) {
-      alert('Please train a model first');
-      return;
+    if (comparisonMode) {
+      if (!trainedRFModel || !trainedNNModel || !featureStats || !targetStats) {
+        alert('Please train both models first');
+        return;
+      }
+    } else {
+      if (!trainedModel || !featureStats || !targetStats) {
+        alert('Please train a model first');
+        return;
+      }
     }
 
     const sqft = parseFloat(predictionInput.squareFeet);
@@ -145,7 +185,17 @@ export default function AVMStudio() {
 
     // Predict
     let prediction: number;
-    if (modelType === 'randomForest') {
+    let rfPrediction: number | null = null;
+    let nnPrediction: number | null = null;
+
+    if (comparisonMode) {
+      // Get predictions from both models
+      const rfResult = predictRandomForest(trainedRFModel!, normalizedFeatures, targetStats);
+      const nnResult = predictNeuralNetwork(trainedNNModel!, normalizedFeatures, targetStats);
+      rfPrediction = rfResult.prediction;
+      nnPrediction = nnResult.prediction;
+      prediction = (rfPrediction + nnPrediction) / 2; // Average for history
+    } else if (modelType === 'randomForest') {
       const result = predictRandomForest(trainedModel as RandomForestRegression, normalizedFeatures, targetStats);
       prediction = result.prediction;
     } else {
@@ -159,7 +209,12 @@ export default function AVMStudio() {
       upper: prediction * 1.1,
     };
 
-    setPredictionResult(prediction);
+    setPredictionResult(comparisonMode ? null : prediction);
+    if (comparisonMode) {
+      // Store comparison predictions separately
+      (window as any).lastRFPrediction = rfPrediction;
+      (window as any).lastNNPrediction = nnPrediction;
+    }
 
     // Add to history
     setPredictionHistory(prev => [{
@@ -208,6 +263,20 @@ export default function AVMStudio() {
               <p className="text-sm text-gray-400">Deep learning model. Captures complex patterns.</p>
             </button>
           </div>
+          <div className="mt-4 p-4 bg-gray-900 rounded-lg">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={comparisonMode}
+                onChange={(e) => setComparisonMode(e.target.checked)}
+                className="w-5 h-5 rounded border-gray-600 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-gray-900"
+              />
+              <div>
+                <div className="text-white font-medium">Comparison Mode</div>
+                <div className="text-sm text-gray-400">Train both models and compare predictions side-by-side</div>
+              </div>
+            </label>
+          </div>
         </div>
 
         {/* Training Configuration */}
@@ -243,8 +312,83 @@ export default function AVMStudio() {
           )}
         </div>
 
+        {/* Comparison Results */}
+        {comparisonMode && rfResults && nnResults && (
+          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold text-cyan-400 mb-4">Model Comparison</h2>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Random Forest */}
+              <div className="bg-gray-900 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <TreeDeciduous className="w-5 h-5 text-green-400" />
+                  <h3 className="text-lg font-semibold text-white">Random Forest</h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">MAE</span>
+                    <span className="text-white font-medium">${(rfResults.mae / 1000).toFixed(1)}K</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">RMSE</span>
+                    <span className="text-white font-medium">${(rfResults.rmse / 1000).toFixed(1)}K</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">R²</span>
+                    <span className="text-white font-medium">{rfResults.r2.toFixed(3)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">MAPE</span>
+                    <span className="text-white font-medium">{rfResults.mape.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-gray-700">
+                    <span className="text-sm text-gray-400">Training Time</span>
+                    <span className="text-cyan-400 font-medium">{(rfResults.trainingTime / 1000).toFixed(2)}s</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Neural Network */}
+              <div className="bg-gray-900 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Brain className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-lg font-semibold text-white">Neural Network</h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">MAE</span>
+                    <span className="text-white font-medium">${(nnResults.mae / 1000).toFixed(1)}K</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">RMSE</span>
+                    <span className="text-white font-medium">${(nnResults.rmse / 1000).toFixed(1)}K</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">R²</span>
+                    <span className="text-white font-medium">{nnResults.r2.toFixed(3)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">MAPE</span>
+                    <span className="text-white font-medium">{nnResults.mape.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-gray-700">
+                    <span className="text-sm text-gray-400">Training Time</span>
+                    <span className="text-cyan-400 font-medium">{(nnResults.trainingTime / 1000).toFixed(2)}s</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Winner Indicator */}
+            <div className="mt-4 p-3 bg-cyan-900/20 border border-cyan-400/30 rounded-lg">
+              <p className="text-sm text-gray-300">
+                <strong className="text-cyan-400">Comparison:</strong> {rfResults.r2 > nnResults.r2 ? 'Random Forest' : 'Neural Network'} achieved higher R² ({Math.max(rfResults.r2, nnResults.r2).toFixed(3)}), indicating better overall fit.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Model Results */}
-        {modelResults && (
+        {modelResults && !comparisonMode && (
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-cyan-400">Model Performance</h2>
@@ -377,7 +521,48 @@ export default function AVMStudio() {
               <Sparkles className="w-5 h-5" />
               Predict Value
             </button>
-            {predictionResult !== null && (
+            {comparisonMode && (window as any).lastRFPrediction && (window as any).lastNNPrediction && (
+              <div className="mt-6 p-6 bg-gradient-to-br from-cyan-900/30 to-blue-900/30 border border-cyan-400/50 rounded-lg">
+                <div className="text-center mb-4">
+                  <div className="text-sm text-cyan-400 mb-2">Comparison Predictions</div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TreeDeciduous className="w-4 h-4 text-green-400" />
+                      <div className="text-xs text-gray-400">Random Forest</div>
+                    </div>
+                    <div className="text-2xl font-bold text-white">
+                      ${((window as any).lastRFPrediction).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                  <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Brain className="w-4 h-4 text-purple-400" />
+                      <div className="text-xs text-gray-400">Neural Network</div>
+                    </div>
+                    <div className="text-2xl font-bold text-white">
+                      ${((window as any).lastNNPrediction).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-cyan-900/20 border border-cyan-400/30 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-400">Difference:</span>
+                    <span className="text-sm font-medium text-white">
+                      ${Math.abs((window as any).lastRFPrediction - (window as any).lastNNPrediction).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs text-gray-400">Average:</span>
+                    <span className="text-sm font-medium text-cyan-400">
+                      ${(((window as any).lastRFPrediction + (window as any).lastNNPrediction) / 2).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {predictionResult !== null && !comparisonMode && (
               <div className="mt-6 p-6 bg-gradient-to-br from-cyan-900/30 to-blue-900/30 border border-cyan-400/50 rounded-lg">
                 <div className="text-center">
                   <div className="text-sm text-cyan-400 mb-2">Predicted Total Value</div>

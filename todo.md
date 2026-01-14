@@ -309,3 +309,16 @@
 - [x] Sort features by importance (highest first)
 - [x] Add interpretation guide for users
 - [x] TypeScript clean, zero errors
+
+
+## 🔀 Model Comparison Mode (Complete)
+
+- [x] Add comparison mode toggle switch in UI
+- [x] Train both RF and NN models simultaneously when enabled
+- [x] Store both trained models in state (trainedRFModel, trainedNNModel)
+- [x] Display both model performance metrics side-by-side (rfResults, nnResults)
+- [x] Show dual predictions when making predictions (RF vs NN)
+- [x] Add difference/variance indicator between predictions
+- [x] Show winner indicator (higher R² model)
+- [x] Display average prediction value
+- [x] TypeScript clean, zero errors
