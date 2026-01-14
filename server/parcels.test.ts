@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
@@ -32,12 +32,28 @@ function createAuthContext(): { ctx: TrpcContext } {
 }
 
 describe("parcels API", () => {
+  beforeEach(async () => {
+    // Clean up test data before each test
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    try {
+      const parcels = await caller.parcels.list();
+      // Note: In a real scenario, we'd delete test parcels here
+      // For now, tests should use unique IDs or handle duplicates
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+  });
+
   it("creates a parcel successfully", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
+    // Use timestamp to ensure unique test ID
+    const uniqueId = `TEST-${Date.now()}`;
+
     const result = await caller.parcels.create({
-      parcelId: "TEST-001",
+      parcelId: uniqueId,
       address: "123 Test St",
       latitude: "40.7128",
       longitude: "-74.0060",

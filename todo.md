@@ -145,3 +145,32 @@
 - [ ] Ensure consistent error handling patterns
 - [ ] Review and optimize bundle size
 - [ ] Add more comprehensive unit tests
+
+
+## 📊 Advanced Analytics & Regression Tools (Completed)
+
+### Statistical Analysis
+- [x] Implement multiple linear regression engine
+- [x] Calculate R-squared and adjusted R-squared
+- [x] Compute p-values for coefficients
+- [x] Generate confidence intervals (95%, 99%)
+- [x] Calculate standard errors for coefficients
+- [x] Implement F-statistic for overall model significance
+- [x] Add residual analysis (normality, homoscedasticity)
+- [x] Detect multicollinearity (VIF - Variance Inflation Factor)
+
+### Diagnostic Visualizations
+- [x] Residual vs Fitted plot (data generation)
+- [x] Q-Q plot for normality testing (data generation)
+- [x] Scale-Location plot (homoscedasticity)
+- [x] Residuals vs Leverage plot (influential points)
+- [ ] Correlation matrix heatmap
+- [ ] Coefficient plot with confidence intervals
+
+### User Interface
+- [x] Create Regression Studio page
+- [x] Variable selection interface
+- [x] Model summary statistics display
+- [x] Interactive diagnostic plots (4 plots: Residuals vs Fitted, Q-Q, Scale-Location, Residuals vs Leverage)
+- [ ] Export regression results to PDF
+- [ ] Save/load regression models

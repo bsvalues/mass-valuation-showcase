@@ -21,6 +21,7 @@ import NeuralCore from "./pages/NeuralCore";
 import ModelsAlgorithms from "./pages/ModelsAlgorithms";
 import MarketAnalysis from "./pages/MarketAnalysis";
 import AdminUsers from "./pages/AdminUsers";
+import RegressionStudio from "./pages/RegressionStudio";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -31,6 +32,7 @@ function Router() {
       <Route path={"/cost-matrix"} component={CostMatrix} />
       <Route path={"/map-explorer"} component={MapExplorer} />
       <Route path={"/models"} component={ModelsAlgorithms} />
+      <Route path={"/regression"} component={RegressionStudio} />
       <Route path={"/calibration"} component={CalibrationStudio} />
       <Route path={"/mass-valuation"} component={MassValuationStudio} />
       <Route path={"/analysis"} component={MarketAnalysis} />
