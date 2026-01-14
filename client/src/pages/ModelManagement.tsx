@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { trpc } from '../lib/trpc';
-import { Trash2, Download, Brain, TreeDeciduous, Calendar, TrendingUp, Edit, X, Tag } from 'lucide-react';
+import { Trash2, Download, Brain, TreeDeciduous, Calendar, TrendingUp, Edit, X, Tag, Search } from 'lucide-react';
 
 export default function ModelManagement() {
   const { data: savedModels, refetch } = trpc.avmModels.list.useQuery();
@@ -9,6 +9,7 @@ export default function ModelManagement() {
   const updateNotesTagsMutation = trpc.avmModels.updateNotesTags.useMutation();
   const [selectedModels, setSelectedModels] = useState<number[]>([]);
   const [editingModel, setEditingModel] = useState<{ id: number; name: string; notes: string; tags: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleDelete = async (id: number, name: string) => {
     if (confirm(`Are you sure you want to delete "${name}"?`)) {
@@ -45,12 +46,50 @@ export default function ModelManagement() {
 
   const selectedModelData = savedModels?.filter(m => selectedModels.includes(m.id));
 
+  // Filter models based on search query
+  const filteredModels = savedModels?.filter(model => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      model.name.toLowerCase().includes(query) ||
+      (model.notes && model.notes.toLowerCase().includes(query)) ||
+      (model.tags && model.tags.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <DashboardLayout>
       <div className="p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Model Management</h1>
           <p className="text-gray-400">View, compare, and manage your saved AVM models</p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by model name, notes, or tags..."
+              className="w-full pl-12 pr-12 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+          {searchQuery && filteredModels && (
+            <div className="mt-2 text-sm text-gray-400">
+              Found {filteredModels.length} model{filteredModels.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            </div>
+          )}
         </div>
 
         {/* Model List Table */}
@@ -66,6 +105,12 @@ export default function ModelManagement() {
             <div className="text-center py-12">
               <div className="text-gray-500 mb-2">No saved models yet</div>
               <div className="text-sm text-gray-600">Train and save a model in AVM Studio to get started</div>
+            </div>
+          ) : !filteredModels || filteredModels.length === 0 ? (
+            <div className="text-center py-12">
+              <Search className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+              <div className="text-gray-500 mb-2">No models found</div>
+              <div className="text-sm text-gray-600">Try a different search term or clear the search</div>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -85,7 +130,7 @@ export default function ModelManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {savedModels.map((model) => (
+                  {filteredModels.map((model) => (
                     <tr key={model.id} className="border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
                       <td className="py-3 px-4">
                         <input
