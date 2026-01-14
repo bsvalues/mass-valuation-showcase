@@ -23,6 +23,7 @@ import MarketAnalysis from "./pages/MarketAnalysis";
 import AdminUsers from "./pages/AdminUsers";
 import RegressionStudio from "./pages/RegressionStudio";
 import AVMStudio from "./pages/AVMStudio";
+import ModelManagement from "./pages/ModelManagement";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -35,6 +36,7 @@ function Router() {
       <Route path={"/models"} component={ModelsAlgorithms} />
       <Route path={"/regression"} component={RegressionStudio} />
       <Route path={"/avm-studio"} component={AVMStudio} />
+      <Route path={"/model-management"} component={ModelManagement} />
       <Route path={"/calibration"} component={CalibrationStudio} />
       <Route path={"/mass-valuation"} component={MassValuationStudio} />
       <Route path={"/analysis"} component={MarketAnalysis} />

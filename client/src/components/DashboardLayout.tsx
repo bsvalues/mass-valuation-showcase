@@ -55,6 +55,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Box, label: "Models & Algorithms", href: "/models" },
     { icon: TrendingUp, label: "Regression Studio", href: "/regression" },
     { icon: Brain, label: "AVM Studio", href: "/avm-studio" },
+    { icon: Layers, label: "Model Management", href: "/model-management" },
     { icon: Shield, label: "Defense Studio", href: "/defense" },
     { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
     { icon: BrainCircuit, label: "The Neural Core", href: "/neural-core" },
