@@ -1,40 +1,137 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Brain, TreeDeciduous, TrendingUp, Play, Download } from 'lucide-react';
+import { Brain, TreeDeciduous, TrendingUp, Play, Download, Sparkles } from 'lucide-react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { trpc } from '../lib/trpc';
+import { preprocessData, trainTestSplit, type FeatureVector, type FeatureStats } from '../lib/ml/features';
+import { trainRandomForest, evaluateRandomForest, predictRandomForest, type RandomForestConfig, DEFAULT_RF_CONFIG } from '../lib/ml/randomForest';
+import { trainNeuralNetwork, evaluateNeuralNetwork, predictNeuralNetwork, type NeuralNetworkConfig, DEFAULT_NN_CONFIG } from '../lib/ml/neuralNetwork';
+import type { RandomForestRegression } from 'ml-random-forest';
+import type * as brain from 'brain.js';
 
 export default function AVMStudio() {
   const [modelType, setModelType] = useState<'randomForest' | 'neuralNetwork'>('randomForest');
   const [isTraining, setIsTraining] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState(0);
   const [modelResults, setModelResults] = useState<any>(null);
+  const [trainedModel, setTrainedModel] = useState<RandomForestRegression | brain.NeuralNetwork<number[], number[]> | null>(null);
+  const [featureStats, setFeatureStats] = useState<FeatureStats[] | null>(null);
+  const [targetStats, setTargetStats] = useState<FeatureStats | null>(null);
+  const [predictionInput, setPredictionInput] = useState({
+    squareFeet: '',
+    yearBuilt: '',
+    landValue: '',
+    buildingValue: '',
+  });
+  const [predictionResult, setPredictionResult] = useState<number | null>(null);
 
   const { data: parcels } = trpc.parcels.list.useQuery();
 
   const handleTrain = async () => {
+    if (!parcels || parcels.length < 10) {
+      alert('Need at least 10 parcels to train model');
+      return;
+    }
+
     setIsTraining(true);
     setTrainingProgress(0);
-    
-    // Simulate training progress
-    const interval = setInterval(() => {
-      setTrainingProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsTraining(false);
-          // Mock results
-          setModelResults({
-            mae: 45000,
-            rmse: 67000,
-            r2: 0.87,
-            mape: 12.5,
-            trainingTime: 2500,
-          });
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 250);
+    setPredictionResult(null);
+
+    try {
+      // Preprocess data
+      setTrainingProgress(10);
+      const { vectors, stats, targetStats: tStats } = preprocessData(parcels);
+      setFeatureStats(stats);
+      setTargetStats(tStats);
+
+      // Split data
+      setTrainingProgress(20);
+      const { train, test } = trainTestSplit(vectors, 0.3, true);
+
+      // Train model
+      setTrainingProgress(30);
+      const startTime = performance.now();
+
+      if (modelType === 'randomForest') {
+        const { model, trainingTime, featureImportance } = await trainRandomForest(train, DEFAULT_RF_CONFIG);
+        setTrainedModel(model);
+        setTrainingProgress(70);
+
+        // Evaluate
+        const evaluation = evaluateRandomForest(model, test, tStats);
+        setTrainingProgress(100);
+
+        setModelResults({
+          ...evaluation,
+          trainingTime,
+        });
+      } else {
+        const { model, trainingTime, finalError, iterations } = await trainNeuralNetwork(
+          train,
+          DEFAULT_NN_CONFIG,
+          (progress) => {
+            setTrainingProgress(30 + (progress.iterations / DEFAULT_NN_CONFIG.iterations) * 40);
+          }
+        );
+        setTrainedModel(model);
+        setTrainingProgress(70);
+
+        // Evaluate
+        const evaluation = evaluateNeuralNetwork(model, test, tStats);
+        setTrainingProgress(100);
+
+        setModelResults({
+          ...evaluation,
+          trainingTime,
+          finalError,
+          iterations,
+        });
+      }
+    } catch (error) {
+      console.error('Training error:', error);
+      alert('Training failed: ' + (error as Error).message);
+    } finally {
+      setIsTraining(false);
+    }
+  };
+
+  const handlePredict = () => {
+    if (!trainedModel || !featureStats || !targetStats) {
+      alert('Please train a model first');
+      return;
+    }
+
+    const sqft = parseFloat(predictionInput.squareFeet);
+    const year = parseFloat(predictionInput.yearBuilt);
+    const land = parseFloat(predictionInput.landValue);
+    const building = parseFloat(predictionInput.buildingValue);
+
+    if (isNaN(sqft) || isNaN(year) || isNaN(land) || isNaN(building)) {
+      alert('Please fill in all fields with valid numbers');
+      return;
+    }
+
+    // Create feature vector (must match training features)
+    const features = [sqft, year, land, building];
+
+    // Normalize features
+    const normalizedFeatures = features.map((value, i) => {
+      const { min, max } = featureStats[i];
+      if (max === min) return 0;
+      return (value - min) / (max - min);
+    });
+
+    // Predict
+    let prediction: number;
+    if (modelType === 'randomForest') {
+      const result = predictRandomForest(trainedModel as RandomForestRegression, normalizedFeatures, targetStats);
+      prediction = result.prediction;
+    } else {
+      const result = predictNeuralNetwork(trainedModel as brain.NeuralNetwork<number[], number[]>, normalizedFeatures, targetStats);
+      prediction = result.prediction;
+    }
+
+    setPredictionResult(prediction);
   };
 
   return (
@@ -145,6 +242,91 @@ export default function AVMStudio() {
               <div className="text-sm text-gray-400">Training Time</div>
               <div className="text-lg text-white">{(modelResults.trainingTime / 1000).toFixed(2)}s</div>
             </div>
+          </div>
+        )}
+
+        {/* Prediction Interface */}
+        {trainedModel && modelResults && (
+          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-xl font-semibold text-cyan-400">Predict Property Value</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Square Feet</label>
+                <input
+                  type="number"
+                  value={predictionInput.squareFeet}
+                  onChange={(e) => setPredictionInput({ ...predictionInput, squareFeet: e.target.value })}
+                  placeholder="e.g., 2000"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Year Built</label>
+                <input
+                  type="number"
+                  value={predictionInput.yearBuilt}
+                  onChange={(e) => setPredictionInput({ ...predictionInput, yearBuilt: e.target.value })}
+                  placeholder="e.g., 2010"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Land Value ($)</label>
+                <input
+                  type="number"
+                  value={predictionInput.landValue}
+                  onChange={(e) => setPredictionInput({ ...predictionInput, landValue: e.target.value })}
+                  placeholder="e.g., 150000"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Building Value ($)</label>
+                <input
+                  type="number"
+                  value={predictionInput.buildingValue}
+                  onChange={(e) => setPredictionInput({ ...predictionInput, buildingValue: e.target.value })}
+                  placeholder="e.g., 350000"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+            </div>
+            <button
+              onClick={handlePredict}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <Sparkles className="w-5 h-5" />
+              Predict Value
+            </button>
+            {predictionResult !== null && (
+              <div className="mt-6 p-6 bg-gradient-to-br from-cyan-900/30 to-blue-900/30 border border-cyan-400/50 rounded-lg">
+                <div className="text-center">
+                  <div className="text-sm text-cyan-400 mb-2">Predicted Total Value</div>
+                  <div className="text-4xl font-bold text-white mb-2">
+                    ${predictionResult.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    Model: {modelType === 'randomForest' ? 'Random Forest' : 'Neural Network'}
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-cyan-400/30">
+                  <div className="text-xs text-gray-400 mb-2">Input Features:</div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="text-gray-400">Square Feet:</div>
+                    <div className="text-white text-right">{predictionInput.squareFeet}</div>
+                    <div className="text-gray-400">Year Built:</div>
+                    <div className="text-white text-right">{predictionInput.yearBuilt}</div>
+                    <div className="text-gray-400">Land Value:</div>
+                    <div className="text-white text-right">${parseFloat(predictionInput.landValue).toLocaleString()}</div>
+                    <div className="text-gray-400">Building Value:</div>
+                    <div className="text-white text-right">${parseFloat(predictionInput.buildingValue).toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
