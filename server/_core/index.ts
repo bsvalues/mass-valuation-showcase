@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { initializeWebSocket } from "../websocket";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -57,8 +58,16 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  // Initialize WebSocket server
+  const io = initializeWebSocket(server);
+  console.log('[WebSocket] Real-time collaboration enabled');
+
+  // Store io instance globally for use in routers
+  (global as any).io = io;
+
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    console.log(`[TerraForge] Quantum Valuation Engine ONLINE`);
   });
 }
 

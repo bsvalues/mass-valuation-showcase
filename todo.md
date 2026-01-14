@@ -185,3 +185,55 @@
 - [x] Create PDF export button (placeholder for PDF library integration)
 - [x] Add model management UI (backend delete API ready)
 - [x] Test all regression completion features
+
+
+## 🔄 Real-Time Collaboration with WebSockets (In Progress - Elite Protocol)
+
+**Protocol:** TerraFusion Elite Government OS Engineering Agent  
+**Approach:** Test-First, Evidence-Based, Zero Incomplete Work
+
+### Phase 1: Evidence Gathering & Analysis
+- [x] Technology selection (Socket.IO chosen with evidence)
+- [x] Architecture design (event-driven, room-based)
+- [x] Baseline metrics documented
+- [x] Risk analysis completed
+
+### Phase 2: Test Suite Design (BEFORE Implementation)
+- [x] Create server/websocket.test.ts (31 unit tests) ✓ EXCEEDS TARGET
+- [x] Verify tests FAIL initially (31/31 FAILING) ✓ TDD RED PHASE CONFIRMED
+- [ ] Create client/src/hooks/useWebSocket.test.ts (10+ unit tests)
+- [ ] Create server/websocket.integration.test.ts (15+ integration tests)
+- [ ] Create e2e/realtime-collaboration.spec.ts (10+ E2E tests)
+- [ ] Create performance/websocket.perf.test.ts (10+ performance tests)
+
+### Phase 3: Feature Implementation (Partial - Core Infrastructure Complete)
+- [x] Install Socket.IO dependencies (socket.io, socket.io-client, jsonwebtoken)
+- [x] Create WebSocket server module with authentication
+- [x] Implement JWT authentication middleware for WebSocket
+- [x] Integrate WebSocket server with Express HTTP server
+- [x] Create useWebSocket custom hook with React Query integration
+- [x] Create useWebSocketRoom helper hook
+- [x] Add WebSocket broadcasts to parcel operations (create, delete, bulk)
+- [ ] Add WebSocket broadcasts to calibration operations (DEFERRED)
+- [ ] Add WebSocket broadcasts to regression operations (DEFERRED)
+- [ ] Add real-time indicators to UI (DEFERRED)
+- [ ] Add user presence system (DEFERRED)
+- [x] TypeScript errors fixed (zero errors)
+
+### Phase 4: Recursive Testing Loop
+- [ ] Run all new WebSocket tests (65+ tests)
+- [ ] Run all existing tests (12 tests) - MUST ALL PASS
+- [ ] Fix any regressions immediately
+- [ ] Performance regression testing
+- [ ] Memory leak testing
+
+### Phase 5: Verification & Documentation
+- [ ] Verify all 77+ tests passing
+- [ ] Measure and document performance metrics
+- [ ] Update README.md
+- [ ] Update API documentation
+- [ ] Create architecture diagrams
+- [ ] Document agent self-reference notes
+- [ ] Final checkpoint with full test evidence
+
+**Target:** 77+ tests passing, 90%+ WebSocket coverage, zero regressions, production-ready

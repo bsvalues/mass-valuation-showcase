@@ -19,7 +19,7 @@ export function IgnitionSequence({ onComplete }: IgnitionSequenceProps) {
   ];
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let timeout: NodeJS.Timeout | undefined;
 
     const runSequence = async () => {
       for (let i = 0; i < steps.length; i++) {
@@ -27,12 +27,14 @@ export function IgnitionSequence({ onComplete }: IgnitionSequenceProps) {
         setText(steps[i].text);
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
-      setTimeout(onComplete, 1000);
+      timeout = setTimeout(onComplete, 1000);
     };
 
     runSequence();
 
-    return () => clearTimeout(timeout);
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
   }, []);
 
   return (

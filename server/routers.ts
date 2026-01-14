@@ -5,6 +5,8 @@ import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
+import { broadcastToAll } from "./websocket";
+import type { Server as SocketIOServer } from "socket.io";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -56,6 +58,13 @@ export const appRouter = router({
           entityId: input.parcelId,
           details: JSON.stringify(input),
         });
+        
+        // Broadcast parcel update to all connected clients
+        const io: SocketIOServer = (global as any).io;
+        if (io) {
+          broadcastToAll(io, 'parcel:updated', { parcel: input, action: 'created' }, ctx.user.id.toString());
+        }
+        
         return { success: true };
       }),
     deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
@@ -65,6 +74,13 @@ export const appRouter = router({
         action: "DELETE_ALL_PARCELS",
         entityType: "parcel",
       });
+      
+      // Broadcast parcel deletion to all connected clients
+      const io: SocketIOServer = (global as any).io;
+      if (io) {
+        broadcastToAll(io, 'parcel:deleted', { action: 'deleted_all' }, ctx.user.id.toString());
+      }
+      
       return { success: true };
     }),
     bulkCreate: protectedProcedure
@@ -92,6 +108,13 @@ export const appRouter = router({
           entityType: "parcel",
           details: `Uploaded ${input.parcels.length} parcels`,
         });
+        
+        // Broadcast bulk parcel update to all connected clients
+        const io: SocketIOServer = (global as any).io;
+        if (io) {
+          broadcastToAll(io, 'parcel:updated', { count: input.parcels.length, action: 'bulk_created' }, ctx.user.id.toString());
+        }
+        
         return { success: true, count: input.parcels.length };
       }),
   }),
