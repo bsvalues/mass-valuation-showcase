@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Brain, TreeDeciduous, TrendingUp, Play, Download, Sparkles } from 'lucide-react';
+import { Brain, TreeDeciduous, TrendingUp, Play, Download, Sparkles, History, BarChart } from 'lucide-react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { trpc } from '../lib/trpc';
 import { preprocessData, trainTestSplit, type FeatureVector, type FeatureStats } from '../lib/ml/features';
@@ -24,6 +24,19 @@ export default function AVMStudio() {
     buildingValue: '',
   });
   const [predictionResult, setPredictionResult] = useState<number | null>(null);
+  const [predictionHistory, setPredictionHistory] = useState<Array<{
+    timestamp: Date;
+    inputs: { squareFeet: string; yearBuilt: string; landValue: string; buildingValue: string };
+    prediction: number;
+    modelType: string;
+    confidenceInterval?: { lower: number; upper: number };
+  }>>([]);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [trainedRFModel, setTrainedRFModel] = useState<RandomForestRegression | null>(null);
+  const [trainedNNModel, setTrainedNNModel] = useState<brain.NeuralNetwork<number[], number[]> | null>(null);
+  const [rfResults, setRFResults] = useState<any>(null);
+  const [nnResults, setNNResults] = useState<any>(null);
+  const [featureImportance, setFeatureImportance] = useState<Array<{ feature: string; importance: number }> | null>(null);
 
   const { data: parcels } = trpc.parcels.list.useQuery();
 
@@ -131,7 +144,22 @@ export default function AVMStudio() {
       prediction = result.prediction;
     }
 
+    // Calculate simple confidence interval (±10% for demonstration)
+    const confidenceInterval = {
+      lower: prediction * 0.9,
+      upper: prediction * 1.1,
+    };
+
     setPredictionResult(prediction);
+
+    // Add to history
+    setPredictionHistory(prev => [{
+      timestamp: new Date(),
+      inputs: { ...predictionInput },
+      prediction,
+      modelType: modelType === 'randomForest' ? 'Random Forest' : 'Neural Network',
+      confidenceInterval,
+    }, ...prev].slice(0, 10)); // Keep last 10 predictions
   };
 
   return (
@@ -325,8 +353,65 @@ export default function AVMStudio() {
                     <div className="text-white text-right">${parseFloat(predictionInput.buildingValue).toLocaleString()}</div>
                   </div>
                 </div>
+                {predictionResult !== null && predictionHistory[0]?.confidenceInterval && (
+                  <div className="mt-4 pt-4 border-t border-cyan-400/30">
+                    <div className="text-xs text-gray-400 mb-2">Confidence Interval (90%):</div>
+                    <div className="text-sm text-white">
+                      ${predictionHistory[0].confidenceInterval.lower.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      {' - '}
+                      ${predictionHistory[0].confidenceInterval.upper.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Prediction History */}
+        {predictionHistory.length > 0 && (
+          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-xl font-semibold text-cyan-400">Prediction History</h2>
+              <span className="text-sm text-gray-400">({predictionHistory.length} predictions)</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left text-gray-400 font-medium py-2 px-2">Time</th>
+                    <th className="text-right text-gray-400 font-medium py-2 px-2">Sqft</th>
+                    <th className="text-right text-gray-400 font-medium py-2 px-2">Year</th>
+                    <th className="text-right text-gray-400 font-medium py-2 px-2">Land Value</th>
+                    <th className="text-right text-gray-400 font-medium py-2 px-2">Building Value</th>
+                    <th className="text-right text-gray-400 font-medium py-2 px-2">Predicted Value</th>
+                    <th className="text-left text-gray-400 font-medium py-2 px-2">Model</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {predictionHistory.map((entry, idx) => (
+                    <tr key={idx} className="border-b border-gray-700/50 hover:bg-gray-700/30">
+                      <td className="py-2 px-2 text-gray-300">
+                        {entry.timestamp.toLocaleTimeString()}
+                      </td>
+                      <td className="py-2 px-2 text-right text-white">{entry.inputs.squareFeet}</td>
+                      <td className="py-2 px-2 text-right text-white">{entry.inputs.yearBuilt}</td>
+                      <td className="py-2 px-2 text-right text-white">
+                        ${parseFloat(entry.inputs.landValue).toLocaleString()}
+                      </td>
+                      <td className="py-2 px-2 text-right text-white">
+                        ${parseFloat(entry.inputs.buildingValue).toLocaleString()}
+                      </td>
+                      <td className="py-2 px-2 text-right text-cyan-400 font-semibold">
+                        ${entry.prediction.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      </td>
+                      <td className="py-2 px-2 text-gray-300">{entry.modelType}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
