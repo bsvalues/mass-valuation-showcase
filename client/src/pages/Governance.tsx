@@ -16,7 +16,7 @@ interface AuditEntry {
 }
 
 export default function Governance() {
-  const { data: backendLogs } = trpc.auditLogs.list.useQuery();
+  const { data: backendLogs, isLoading } = trpc.auditLogs.list.useQuery();
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
 
   useEffect(() => {
@@ -38,6 +38,24 @@ export default function Governance() {
       setAuditLog(mockLog);
     }
   }, [backendLogs]);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Governance & Audit</h1>
+              <p className="text-muted-foreground mt-1">Loading audit logs...</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -141,7 +159,16 @@ export default function Governance() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {auditLog.map((log) => (
+                  {auditLog.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2">
+                        <History className="w-8 h-8 opacity-50" />
+                        <p>No audit logs recorded yet</p>
+                        <p className="text-sm">System actions will appear here automatically</p>
+                      </div>
+                    </div>
+                  ) : (
+                    auditLog.map((log) => (
                     <div key={log.id} className="flex items-center justify-between p-3 bg-black/20 rounded border border-white/5">
                       <div className="flex items-center gap-3">
                         <History className="w-4 h-4 text-slate-500" />
@@ -160,7 +187,8 @@ export default function Governance() {
                         </Badge>
                       </div>
                     </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>

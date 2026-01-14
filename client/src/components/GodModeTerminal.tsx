@@ -38,11 +38,11 @@ export function GodModeTerminal() {
 
     // Speak the command confirmation
     if (input.includes("reval")) {
-      speak("Initiating county-wide revaluation protocols.");
+      speak("TerraForge: Initiating county-wide revaluation protocols.");
     } else if (input.includes("deploy")) {
-      speak("Deploying agent swarm.");
+      speak("TerraForge: Deploying valuation agent swarm.");
     } else {
-      speak("Command executing.");
+      speak("TerraForge: Command executing.");
     }
 
     executeCommand(input.trim());

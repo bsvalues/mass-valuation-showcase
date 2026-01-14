@@ -11,11 +11,11 @@ export function IgnitionSequence({ onComplete }: IgnitionSequenceProps) {
   const [text, setText] = useState("");
 
   const steps = [
-    { time: 500, text: "INITIALIZING QUANTUM CORE..." },
-    { time: 1500, text: "LOADING AGENT MATRIX..." },
-    { time: 2500, text: "ESTABLISHING RESONANCE..." },
+    { time: 500, text: "INITIALIZING TERRAFORGE..." },
+    { time: 1500, text: "LOADING QUANTUM VALUATION ENGINE..." },
+    { time: 2500, text: "ESTABLISHING MARKET CALIBRATION..." },
     { time: 3500, text: "SYNCHRONIZING 3-6-9 PROTOCOLS..." },
-    { time: 4500, text: "SYSTEM ONLINE." },
+    { time: 4500, text: "TERRAFORGE ONLINE." },
   ];
 
   useEffect(() => {

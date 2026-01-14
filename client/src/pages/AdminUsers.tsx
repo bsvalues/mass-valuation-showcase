@@ -22,7 +22,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export default function AdminUsers() {
-  const { data: users, refetch } = trpc.admin.listUsers.useQuery();
+  const { data: users, refetch, isLoading } = trpc.admin.listUsers.useQuery();
   const updateRoleMutation = trpc.admin.updateUserRole.useMutation();
   const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
 
@@ -38,6 +38,24 @@ export default function AdminUsers() {
       setUpdatingUserId(null);
     }
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+              <p className="text-muted-foreground">Loading users...</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -111,7 +129,17 @@ export default function AdminUsers() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users?.map((user: any) => (
+                {!users || users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2">
+                        <Users className="w-8 h-8 opacity-50" />
+                        <p>No users found</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  users?.map((user: any) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name || "—"}</TableCell>
                     <TableCell>{user.email || "—"}</TableCell>
@@ -149,7 +177,8 @@ export default function AdminUsers() {
                       </Select>
                     </TableCell>
                   </TableRow>
-                ))}
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
