@@ -257,6 +257,23 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         return await db.getAVMModelById(input.id, ctx.user.id);
       }),
+    updateNotesTags: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        notes: z.string().optional(),
+        tags: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateAVMModelNotesTags(input.id, ctx.user.id, input.notes || null, input.tags || null);
+        await db.createAuditLog({
+          userId: ctx.user.id,
+          action: "UPDATE_AVM_MODEL_NOTES",
+          entityType: "avmModel",
+          entityId: String(input.id),
+          details: "Updated model notes/tags",
+        });
+        return { success: true };
+      }),
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {

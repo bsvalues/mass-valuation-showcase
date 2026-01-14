@@ -125,6 +125,8 @@ export const avmModels = mysqlTable("avmModels", {
   mape: varchar("mape", { length: 32 }),
   trainingTime: int("trainingTime"), // milliseconds
   trainingDataSize: int("trainingDataSize"), // number of parcels used
+  notes: text("notes"), // User notes/description
+  tags: varchar("tags", { length: 512 }), // Comma-separated tags
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

@@ -222,6 +222,17 @@ export async function getAVMModelById(id: number, userId: number) {
   return results[0];
 }
 
+export async function updateAVMModelNotesTags(id: number, userId: number, notes: string | null, tags: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Verify ownership
+  const results = await db.select().from(avmModels).where(eq(avmModels.id, id));
+  if (results.length === 0 || results[0].createdBy !== userId) {
+    throw new Error("Model not found or access denied");
+  }
+  await db.update(avmModels).set({ notes, tags }).where(eq(avmModels.id, id));
+}
+
 export async function deleteAVMModel(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

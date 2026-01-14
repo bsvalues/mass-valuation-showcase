@@ -349,3 +349,17 @@
 - [x] Add route to App.tsx
 - [x] Empty state for no saved models
 - [x] TypeScript clean, zero errors
+
+
+## 🏷️ Model Notes & Tags (Complete)
+
+- [x] Add notes and tags columns to avmModels schema
+- [x] Create update API endpoint for notes/tags (updateNotesTags mutation)
+- [x] Build edit modal with textarea for notes
+- [x] Add tag input with comma-separated values
+- [x] Add edit button (cyan Edit icon) to each model row
+- [x] Save/Cancel buttons in modal
+- [x] Database migration successful (0004_bright_secret_warriors.sql)
+- [x] TypeScript clean, zero errors
+- [ ] Display tags as badges in table (DEFERRED)
+- [ ] Add tag filtering/search functionality (DEFERRED)

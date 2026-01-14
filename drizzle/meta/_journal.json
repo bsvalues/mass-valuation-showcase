@@ -29,6 +29,13 @@
       "when": 1768357433684,
       "tag": "0003_plain_prowler",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1768358051282,
+      "tag": "0004_bright_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

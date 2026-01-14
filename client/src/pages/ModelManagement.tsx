@@ -1,18 +1,40 @@
 import { useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { trpc } from '../lib/trpc';
-import { Trash2, Download, Brain, TreeDeciduous, Calendar, TrendingUp } from 'lucide-react';
+import { Trash2, Download, Brain, TreeDeciduous, Calendar, TrendingUp, Edit, X, Tag } from 'lucide-react';
 
 export default function ModelManagement() {
   const { data: savedModels, refetch } = trpc.avmModels.list.useQuery();
   const deleteModelMutation = trpc.avmModels.delete.useMutation();
+  const updateNotesTagsMutation = trpc.avmModels.updateNotesTags.useMutation();
   const [selectedModels, setSelectedModels] = useState<number[]>([]);
+  const [editingModel, setEditingModel] = useState<{ id: number; name: string; notes: string; tags: string } | null>(null);
 
   const handleDelete = async (id: number, name: string) => {
     if (confirm(`Are you sure you want to delete "${name}"?`)) {
       await deleteModelMutation.mutateAsync({ id });
       refetch();
     }
+  };
+
+  const handleEditNotesTags = (model: any) => {
+    setEditingModel({
+      id: model.id,
+      name: model.name,
+      notes: model.notes || '',
+      tags: model.tags || '',
+    });
+  };
+
+  const handleSaveNotesTags = async () => {
+    if (!editingModel) return;
+    await updateNotesTagsMutation.mutateAsync({
+      id: editingModel.id,
+      notes: editingModel.notes,
+      tags: editingModel.tags,
+    });
+    refetch();
+    setEditingModel(null);
   };
 
   const toggleModelSelection = (id: number) => {
@@ -118,6 +140,13 @@ export default function ModelManagement() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <button
+                            onClick={() => handleEditNotesTags(model)}
+                            className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20 rounded transition-colors"
+                            title="Edit notes & tags"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => handleDelete(model.id, model.name)}
                             className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition-colors"
                             title="Delete model"
@@ -212,6 +241,71 @@ export default function ModelManagement() {
           </div>
         )}
       </div>
+
+      {/* Edit Notes & Tags Modal */}
+      {editingModel && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-cyan-400/30 rounded-lg p-6 w-full max-w-2xl mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Edit Notes & Tags</h2>
+              <button
+                onClick={() => setEditingModel(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Model Name</label>
+                <div className="text-white font-semibold">{editingModel.name}</div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
+                <textarea
+                  value={editingModel.notes}
+                  onChange={(e) => setEditingModel({ ...editingModel, notes: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan-400 transition-colors"
+                  rows={4}
+                  placeholder="Add descriptive notes about this model..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <Tag className="w-4 h-4 inline mr-1" />
+                  Tags (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={editingModel.tags}
+                  onChange={(e) => setEditingModel({ ...editingModel, tags: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan-400 transition-colors"
+                  placeholder="e.g., production, high-accuracy, residential"
+                />
+                <p className="text-xs text-gray-500 mt-1">Separate tags with commas for better organization</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                onClick={handleSaveNotesTags}
+                className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setEditingModel(null)}
+                className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
