@@ -170,3 +170,19 @@ export const importErrors = mysqlTable("importErrors", {
 
 export type ImportError = typeof importErrors.$inferSelect;
 export type InsertImportError = typeof importErrors.$inferInsert;
+
+/**
+ * Import templates table - stores reusable column mapping templates
+ */
+export const importTemplates = mysqlTable("importTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  description: text("description"),
+  mapping: text("mapping").notNull(), // JSON string of column mapping
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ImportTemplate = typeof importTemplates.$inferSelect;
+export type InsertImportTemplate = typeof importTemplates.$inferInsert;

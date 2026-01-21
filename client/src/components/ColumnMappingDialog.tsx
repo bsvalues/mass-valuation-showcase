@@ -27,6 +27,7 @@ interface ColumnMappingDialogProps {
   totalRows: number;
   onConfirm: (mapping: Record<string, string>) => void;
   onPreview: (mapping: Record<string, string>) => void;
+  onSaveTemplate: (mapping: Record<string, string>) => void;
   onCancel: () => void;
 }
 
@@ -55,6 +56,7 @@ export function ColumnMappingDialog({
   totalRows,
   onConfirm,
   onPreview,
+  onSaveTemplate,
   onCancel,
 }: ColumnMappingDialogProps) {
   const [mapping, setMapping] = useState<Record<string, string>>(detectedMapping);
@@ -210,9 +212,19 @@ export function ColumnMappingDialog({
         </div>
 
         <DialogFooter className="flex items-center justify-between">
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => onSaveTemplate(mapping)}
+              disabled={!isValid}
+              className="border-green-500/30 text-green-400 hover:bg-green-500/10"
+            >
+              Save as Template
+            </Button>
+          </div>
           <div className="flex gap-2">
             <Button
               variant="outline"

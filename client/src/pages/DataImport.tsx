@@ -10,6 +10,7 @@ import { Upload, FileText, CheckCircle2, XCircle, Clock, Loader2, AlertCircle } 
 import { toast } from 'sonner';
 import { ColumnMappingDialog } from '@/components/ColumnMappingDialog';
 import { DataPreviewDialog } from '@/components/DataPreviewDialog';
+import { SaveTemplateDialog } from '@/components/SaveTemplateDialog';
 
 export default function DataImport() {
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -17,6 +18,7 @@ export default function DataImport() {
   const [isUploading, setIsUploading] = useState(false);
   const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [currentMapping, setCurrentMapping] = useState<Record<string, string>>({});
   const [previewData, setPreviewData] = useState<{
     headers: string[];
@@ -31,6 +33,7 @@ export default function DataImport() {
   const uploadToS3Mutation = trpc.dataImport.uploadToS3.useMutation();
   const parsePreviewMutation = trpc.dataImport.parsePreview.useMutation();
   const processFileMutation = trpc.dataImport.processFile.useMutation();
+  const saveTemplateMutation = trpc.dataImport.saveTemplate.useMutation();
   const { data: jobs, refetch: refetchJobs } = trpc.dataImport.listJobs.useQuery({ page: 1, pageSize: 10 });
   const { data: currentJob } = trpc.dataImport.getJobStatus.useQuery(
     { jobId: currentJobId! },
@@ -167,6 +170,35 @@ export default function DataImport() {
       setPreviewData(null);
       setCurrentMapping({});
     }
+  };
+  
+  const handleSaveTemplate = (mapping: Record<string, string>) => {
+    setCurrentMapping(mapping);
+    setMappingDialogOpen(false);
+    setSaveTemplateDialogOpen(true);
+  };
+  
+  const handleTemplateSave = async (name: string, description: string) => {
+    try {
+      await saveTemplateMutation.mutateAsync({
+        name,
+        description,
+        mapping: currentMapping,
+      });
+      
+      setSaveTemplateDialogOpen(false);
+      setMappingDialogOpen(true);
+      toast.success('Template saved successfully!');
+      
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      toast.error(`Failed to save template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+  
+  const handleTemplateSaveCancel = () => {
+    setSaveTemplateDialogOpen(false);
+    setMappingDialogOpen(true);
   };
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -382,6 +414,7 @@ export default function DataImport() {
           totalRows={previewData.totalRows}
           onConfirm={handleMappingConfirm}
           onPreview={handleMappingPreview}
+          onSaveTemplate={handleSaveTemplate}
           onCancel={handleMappingCancel}
         />
       )}
@@ -399,6 +432,14 @@ export default function DataImport() {
           onConfirm={handlePreviewConfirm}
         />
       )}
+      
+      {/* Save Template Dialog */}
+      <SaveTemplateDialog
+        open={saveTemplateDialogOpen}
+        onOpenChange={setSaveTemplateDialogOpen}
+        onSave={handleTemplateSave}
+        onCancel={handleTemplateSaveCancel}
+      />
     </div>
   );
 }

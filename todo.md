@@ -449,13 +449,13 @@
 - [x] Add back/confirm navigation buttons
 
 ### Feature #3: Import Templates
-- [ ] Add importTemplates database table
-- [ ] Create saveTemplate tRPC endpoint
-- [ ] Create loadTemplate tRPC endpoint
-- [ ] Create listTemplates tRPC endpoint
-- [ ] Add template selector dropdown in DataImport
-- [ ] Add "Save as Template" button in ColumnMappingDialog
-- [ ] Add template management UI (rename, delete)
+- [x] Add importTemplates database table
+- [x] Create saveTemplate tRPC endpoint
+- [x] Create loadTemplate tRPC endpoint
+- [x] Create listTemplates tRPC endpoint
+- [x] Add template selector dropdown in DataImport
+- [x] Add "Save as Template" button in ColumnMappingDialog
+- [x] Add template management UI (rename, delete)
 
 ### Feature #4: Real-Time Collaboration
 - [ ] Complete WebSocket test implementation (65+ tests)

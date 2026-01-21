@@ -514,6 +514,98 @@ export const appRouter = router({
         
         return { success: true };
       }),
+    
+    // Template Management
+    saveTemplate: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        mapping: z.record(z.string(), z.string()),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { importTemplates } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        const result = await db.insert(importTemplates).values({
+          name: input.name,
+          description: input.description || null,
+          mapping: JSON.stringify(input.mapping),
+          createdBy: ctx.user.id,
+        });
+        
+        const templateId = result[0]?.insertId || 0;
+        
+        return { templateId, success: true };
+      }),
+    
+    listTemplates: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { importTemplates } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq, desc } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        const templates = await db.select()
+          .from(importTemplates)
+          .where(eq(importTemplates.createdBy, ctx.user.id))
+          .orderBy(desc(importTemplates.createdAt));
+        
+        return templates.map(t => ({
+          ...t,
+          mapping: JSON.parse(t.mapping) as Record<string, string>,
+        }));
+      }),
+    
+    loadTemplate: protectedProcedure
+      .input(z.object({ templateId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { importTemplates } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        const template = await db.select()
+          .from(importTemplates)
+          .where(eq(importTemplates.id, input.templateId))
+          .limit(1);
+        
+        if (!template.length || template[0].createdBy !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
+        }
+        
+        return {
+          ...template[0],
+          mapping: JSON.parse(template[0].mapping) as Record<string, string>,
+        };
+      }),
+    
+    deleteTemplate: protectedProcedure
+      .input(z.object({ templateId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { importTemplates } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Verify ownership
+        const template = await db.select()
+          .from(importTemplates)
+          .where(eq(importTemplates.id, input.templateId))
+          .limit(1);
+        
+        if (!template.length || template[0].createdBy !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
+        }
+        
+        await db.delete(importTemplates).where(eq(importTemplates.id, input.templateId));
+        
+        return { success: true };
+      }),
   }),
   
   admin: router({
