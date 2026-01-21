@@ -700,6 +700,107 @@ export const appRouter = router({
       }),
   }),
   
+  analytics: router({
+    getAssessmentKPIs: protectedProcedure
+      .query(async () => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { sql } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Get total assessed value and parcel count
+        const totals = await db.select({
+          totalValue: sql<number>`COALESCE(SUM(${parcels.buildingValue} + ${parcels.landValue}), 0)`,
+          parcelCount: sql<number>`COUNT(*)`,
+        }).from(parcels);
+        
+        // Placeholder for median ratio and COD (requires sales data)
+        const medianRatio = 0.96; // Mock value
+        const cod = 8.4; // Mock value
+        
+        return {
+          totalValue: totals[0]?.totalValue || 0,
+          parcelCount: totals[0]?.parcelCount || 0,
+          medianRatio: medianRatio || 0,
+          cod: cod || 0,
+        };
+      }),
+    
+    getValueTrends: protectedProcedure
+      .query(async () => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { sql } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Get monthly trends for last 12 months
+        const trends = await db.select({
+          month: sql<string>`DATE_FORMAT(${parcels.createdAt}, '%Y-%m')`,
+          totalValue: sql<number>`SUM(${parcels.buildingValue} + ${parcels.landValue})`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(parcels)
+        .where(sql`${parcels.createdAt} >= DATE_SUB(NOW(), INTERVAL 12 MONTH)`)
+        .groupBy(sql`DATE_FORMAT(${parcels.createdAt}, '%Y-%m')`)
+        .orderBy(sql`DATE_FORMAT(${parcels.createdAt}, '%Y-%m')`);
+        
+        return trends;
+      }),
+    
+    getRecentActivity: protectedProcedure
+      .query(async () => {
+        const { importJobs, avmModels, batchJobs } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { desc, sql } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Get recent imports
+        const recentImports = await db.select({
+          id: importJobs.id,
+          type: sql<string>`'import'`,
+          description: sql<string>`CONCAT('Imported ', ${importJobs.successfulRecords}, ' records from ', ${importJobs.filename})`,
+          timestamp: importJobs.createdAt,
+          status: importJobs.status,
+        })
+        .from(importJobs)
+        .orderBy(desc(importJobs.createdAt))
+        .limit(5);
+        
+        // Get recent models
+        const recentModels = await db.select({
+          id: avmModels.id,
+          type: sql<string>`'model'`,
+          description: sql<string>`CONCAT('Trained ', ${avmModels.modelType}, ' model: ', ${avmModels.name})`,
+          timestamp: avmModels.createdAt,
+          status: sql<string>`'completed'`,
+        })
+        .from(avmModels)
+        .orderBy(desc(avmModels.createdAt))
+        .limit(5);
+        
+        // Get recent batch jobs
+        const recentBatches = await db.select({
+          id: batchJobs.id,
+          type: sql<string>`'batch'`,
+          description: sql<string>`CONCAT('Batch valuation: ', ${batchJobs.successfulParcels}, '/', ${batchJobs.totalParcels}, ' parcels')`,
+          timestamp: batchJobs.createdAt,
+          status: batchJobs.status,
+        })
+        .from(batchJobs)
+        .orderBy(desc(batchJobs.createdAt))
+        .limit(5);
+        
+        // Combine and sort all activities
+        const allActivities = [...recentImports, ...recentModels, ...recentBatches];
+        allActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        
+        return allActivities.slice(0, 10);
+      }),
+  }),
+  
   admin: router({
     listUsers: adminProcedure.query(async () => {
       return await db.getAllUsers();

@@ -26,6 +26,7 @@ import AVMStudio from "./pages/AVMStudio";
 import ModelManagement from "./pages/ModelManagement";
 import DataImport from "./pages/DataImport";
 import BatchValuation from "./pages/BatchValuation";
+import DashboardAnalytics from "@/pages/DashboardAnalytics";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
