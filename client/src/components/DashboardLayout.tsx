@@ -29,7 +29,8 @@ import {
   Zap,
   Sun,
   Moon,
-  Users
+  Users,
+  Upload
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -56,6 +57,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: TrendingUp, label: "Regression Studio", href: "/regression" },
     { icon: Brain, label: "AVM Studio", href: "/avm-studio" },
     { icon: Layers, label: "Model Management", href: "/model-management" },
+    { icon: Upload, label: "Data Import", href: "/data-import" },
     { icon: Shield, label: "Defense Studio", href: "/defense" },
     { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
     { icon: BrainCircuit, label: "The Neural Core", href: "/neural-core" },

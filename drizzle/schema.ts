@@ -134,3 +134,39 @@ export const avmModels = mysqlTable("avmModels", {
 
 export type AVMModel = typeof avmModels.$inferSelect;
 export type InsertAVMModel = typeof avmModels.$inferInsert;
+
+/**
+ * Import jobs table - tracks file upload and processing status
+ */
+export const importJobs = mysqlTable("importJobs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  filename: varchar("filename", { length: 255 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileFormat: varchar("fileFormat", { length: 50 }).notNull(),
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed", "partial"]).default("pending").notNull(),
+  totalRecords: int("totalRecords").default(0),
+  successfulRecords: int("successfulRecords").default(0),
+  failedRecords: int("failedRecords").default(0),
+  errorSummary: text("errorSummary"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+});
+
+export type ImportJob = typeof importJobs.$inferSelect;
+export type InsertImportJob = typeof importJobs.$inferInsert;
+
+/**
+ * Import errors table - logs validation and parsing errors for failed records
+ */
+export const importErrors = mysqlTable("importErrors", {
+  id: int("id").autoincrement().primaryKey(),
+  jobId: int("jobId").notNull(),
+  rowNumber: int("rowNumber").notNull(),
+  errorMessage: text("errorMessage").notNull(),
+  rawData: text("rawData"), // JSON string of the raw record
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ImportError = typeof importErrors.$inferSelect;
+export type InsertImportError = typeof importErrors.$inferInsert;

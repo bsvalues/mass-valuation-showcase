@@ -288,6 +288,168 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+  
+  dataImport: router({
+    uploadFile: protectedProcedure
+      .input(z.object({
+        filename: z.string(),
+        fileFormat: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import('./storage');
+        const { importJobs } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Generate S3 file key
+        const timestamp = Date.now();
+        const fileKey = `imports/${ctx.user.id}/${timestamp}-${input.filename}`;
+        
+        // Create import job record
+        const result = await db.insert(importJobs).values({
+          userId: ctx.user.id,
+          filename: input.filename,
+          fileUrl: `placeholder-${fileKey}`, // Will be updated after S3 upload
+          fileFormat: input.fileFormat,
+          status: 'pending',
+        });
+        
+        // Get the inserted job ID from result
+        const jobId = result[0]?.insertId || 0;
+        
+        // Return job ID and file key for client-side upload
+        return { 
+          jobId, 
+          fileKey,
+        };
+      }),
+    
+    processFile: protectedProcedure
+      .input(z.object({
+        jobId: z.number(),
+        fileUrl: z.string(),
+        customMapping: z.object({
+          parcelId: z.string().optional(),
+          address: z.string().optional(),
+          sqft: z.string().optional(),
+          yearBuilt: z.string().optional(),
+          landValue: z.string().optional(),
+          buildingValue: z.string().optional(),
+          salePrice: z.string().optional(),
+        }).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { processImportJob } = await import('./lib/fileProcessing/importer');
+        const { importJobs } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Update job with actual file URL
+        await db.update(importJobs).set({ fileUrl: input.fileUrl }).where(eq(importJobs.id, input.jobId));
+        
+        // Trigger async processing (don't await to avoid timeout)
+        processImportJob(input.jobId, input.customMapping).catch(err => {
+          console.error(`Failed to process import job ${input.jobId}:`, err);
+        });
+        
+        return { success: true, message: 'Processing started' };
+      }),
+    
+    getJobStatus: protectedProcedure
+      .input(z.object({ jobId: z.number() }))
+      .query(async ({ input }) => {
+        const { importJobs } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return null;
+        
+        const results = await db.select()
+          .from(importJobs)
+          .where(eq(importJobs.id, input.jobId))
+          .limit(1);
+        
+        return results[0] || null;
+      }),
+    
+    listJobs: protectedProcedure
+      .input(z.object({
+        page: z.number().default(1),
+        pageSize: z.number().default(20),
+      }))
+      .query(async ({ ctx, input }) => {
+        const { importJobs } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq, desc } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return [];
+        
+        const offset = (input.page - 1) * input.pageSize;
+        
+        const jobs = await db.select()
+          .from(importJobs)
+          .where(eq(importJobs.userId, ctx.user.id))
+          .orderBy(desc(importJobs.createdAt))
+          .limit(input.pageSize)
+          .offset(offset);
+        
+        return jobs;
+      }),
+    
+    getJobErrors: protectedProcedure
+      .input(z.object({
+        jobId: z.number(),
+        page: z.number().default(1),
+        pageSize: z.number().default(50),
+      }))
+      .query(async ({ input }) => {
+        const { importErrors } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq, asc } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) return [];
+        
+        const offset = (input.page - 1) * input.pageSize;
+        
+        const errors = await db.select()
+          .from(importErrors)
+          .where(eq(importErrors.jobId, input.jobId))
+          .orderBy(asc(importErrors.rowNumber))
+          .limit(input.pageSize)
+          .offset(offset);
+        
+        return errors;
+      }),
+    
+    deleteJob: protectedProcedure
+      .input(z.object({ jobId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { importJobs } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Verify ownership
+        const job = await db.select()
+          .from(importJobs)
+          .where(eq(importJobs.id, input.jobId))
+          .limit(1);
+        
+        if (!job.length || job[0].userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
+        }
+        
+        // Delete job (cascade will delete errors)
+        await db.delete(importJobs).where(eq(importJobs.id, input.jobId));
+        
+        return { success: true };
+      }),
+  }),
+  
   admin: router({
     listUsers: adminProcedure.query(async () => {
       return await db.getAllUsers();
