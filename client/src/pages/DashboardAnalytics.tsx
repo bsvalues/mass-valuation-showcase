@@ -2,13 +2,13 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Home, TrendingUp, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { PropertyHeatmap } from "@/components/PropertyHeatmap";
+import { PropertyHeatmapWithFilters } from "@/components/PropertyHeatmapWithFilters";
 
 export default function DashboardAnalytics() {
   const { data: kpis, isLoading: kpisLoading } = trpc.analytics.getAssessmentKPIs.useQuery();
   const { data: trends, isLoading: trendsLoading } = trpc.analytics.getValueTrends.useQuery();
   const { data: activities, isLoading: activitiesLoading } = trpc.analytics.getRecentActivity.useQuery();
-  const { data: heatmapData, isLoading: heatmapLoading } = trpc.analytics.getPropertyHeatmapData.useQuery();
+  // Heatmap data fetching is now handled by PropertyHeatmapWithFilters component
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -190,10 +190,7 @@ export default function DashboardAnalytics() {
       </Card>
 
       {/* Property Value Heatmap */}
-      <PropertyHeatmap 
-        properties={heatmapData || []} 
-        isLoading={heatmapLoading}
-      />
+      <PropertyHeatmapWithFilters />
 
       {/* Recent Activity Timeline */}
       <Card>

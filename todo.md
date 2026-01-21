@@ -576,3 +576,17 @@
 - [x] Insert property records with coordinates (batch insert 500 at a time)
 - [x] Verify data imported successfully (parcels table populated)
 - [x] Test heatmap with real Benton County data (working perfectly!)
+
+## 🎛️ Heatmap Interactive Filters
+
+- [x] Get unique property types from database for dropdown options
+- [x] Add property type dropdown filter (single-select with "All Types")
+- [x] Add value range slider (min/max with live preview)
+- [x] Add year built range filter
+- [x] Update tRPC endpoint to accept filter parameters (propertyTypes, minValue, maxValue, minYear, maxYear)
+- [x] Wire filters to heatmap data query (Apply Filters button)
+- [x] Create PropertyHeatmapWithFilters component
+- [x] Add "Reset Filters" button functionality
+- [x] Show active filter count badge
+- [x] Test filter combinations in browser (working perfectly)
+- [x] Write tests for filter logic (19 tests passing)

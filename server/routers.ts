@@ -801,23 +801,64 @@ export const appRouter = router({
       }),
     
     getPropertyHeatmapData: protectedProcedure
-      .query(async () => {
+      .input(z.object({
+        propertyTypes: z.array(z.string()).optional(),
+        minValue: z.number().optional(),
+        maxValue: z.number().optional(),
+        minYear: z.number().optional(),
+        maxYear: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
         const { parcels } = await import('../drizzle/schema');
         const { getDb } = await import('./db');
         const db = await getDb();
         if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
         
-        // Fetch properties with coordinates and values for Benton County, WA
-        // Filter for properties with valid lat/lng and non-zero values
-        const properties = await db.select({
+        // Build query with filters
+        let query = db.select({
           latitude: parcels.latitude,
           longitude: parcels.longitude,
           value: parcels.buildingValue,
+          propertyType: parcels.propertyType,
+          yearBuilt: parcels.yearBuilt,
         })
-        .from(parcels)
-        .limit(1000); // Limit to 1000 points for performance
+        .from(parcels);
         
-        // Filter out null/invalid coordinates and calculate total value
+        // Apply filters if provided
+        const filters = input || {};
+        const { sql, and, gte, lte, inArray, isNotNull } = await import('drizzle-orm');
+        
+        const conditions = [
+          isNotNull(parcels.latitude),
+          isNotNull(parcels.longitude),
+          isNotNull(parcels.buildingValue),
+        ];
+        
+        if (filters.propertyTypes && filters.propertyTypes.length > 0) {
+          conditions.push(inArray(parcels.propertyType, filters.propertyTypes));
+        }
+        
+        if (filters.minValue !== undefined) {
+          conditions.push(gte(parcels.buildingValue, filters.minValue));
+        }
+        
+        if (filters.maxValue !== undefined) {
+          conditions.push(lte(parcels.buildingValue, filters.maxValue));
+        }
+        
+        if (filters.minYear !== undefined) {
+          conditions.push(gte(parcels.yearBuilt, filters.minYear));
+        }
+        
+        if (filters.maxYear !== undefined) {
+          conditions.push(lte(parcels.yearBuilt, filters.maxYear));
+        }
+        
+        query = query.where(and(...conditions)) as any;
+        
+        const properties = await query.limit(1000); // Limit to 1000 points for performance
+        
+        // Map to heatmap format
         return properties
           .filter(p => p.latitude && p.longitude && p.value)
           .map(p => ({
@@ -825,6 +866,50 @@ export const appRouter = router({
             longitude: parseFloat(p.longitude!),
             value: (p.value || 0),
           }));
+      }),
+    
+    getPropertyFilterOptions: protectedProcedure
+      .query(async () => {        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { sql } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Get unique property types
+        const propertyTypes = await db.selectDistinct({ propertyType: parcels.propertyType })
+          .from(parcels)
+          .where(sql`${parcels.propertyType} IS NOT NULL`);
+        
+        // Get value range
+        const valueRange = await db.select({
+          minValue: sql<number>`MIN(${parcels.buildingValue})`,
+          maxValue: sql<number>`MAX(${parcels.buildingValue})`,
+        })
+        .from(parcels)
+        .where(sql`${parcels.buildingValue} IS NOT NULL`);
+        
+        // Get year range
+        const yearRange = await db.select({
+          minYear: sql<number>`MIN(${parcels.yearBuilt})`,
+          maxYear: sql<number>`MAX(${parcels.yearBuilt})`,
+        })
+        .from(parcels)
+        .where(sql`${parcels.yearBuilt} IS NOT NULL`);
+        
+        return {
+          propertyTypes: propertyTypes
+            .map(p => p.propertyType)
+            .filter((t): t is string => !!t)
+            .sort(),
+          valueRange: {
+            min: valueRange[0]?.minValue || 0,
+            max: valueRange[0]?.maxValue || 1000000,
+          },
+          yearRange: {
+            min: yearRange[0]?.minYear || 1900,
+            max: yearRange[0]?.maxYear || new Date().getFullYear(),
+          },
+        };
       }),
   }),
   
