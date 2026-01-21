@@ -8,14 +8,25 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, CheckCircle2, XCircle, Clock, Loader2, AlertCircle } from 'lucide-react';
 // Removed direct server import - using tRPC API instead
 import { toast } from 'sonner';
+import { ColumnMappingDialog } from '@/components/ColumnMappingDialog';
 
 export default function DataImport() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [currentJobId, setCurrentJobId] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    headers: string[];
+    detectedMapping: Record<string, string>;
+    sampleRows: Record<string, any>[];
+    totalRows: number;
+    jobId: number;
+    fileUrl: string;
+  } | null>(null);
   
   const uploadFileMutation = trpc.dataImport.uploadFile.useMutation();
   const uploadToS3Mutation = trpc.dataImport.uploadToS3.useMutation();
+  const parsePreviewMutation = trpc.dataImport.parsePreview.useMutation();
   const processFileMutation = trpc.dataImport.processFile.useMutation();
   const { data: jobs, refetch: refetchJobs } = trpc.dataImport.listJobs.useQuery({ page: 1, pageSize: 10 });
   const { data: currentJob } = trpc.dataImport.getJobStatus.useQuery(
@@ -50,16 +61,26 @@ export default function DataImport() {
         
         setUploadProgress(70);
         
-        // Step 3: Trigger processing
-        await processFileMutation.mutateAsync({ 
-          jobId, 
+        // Step 3: Parse file and get preview
+        const preview = await parsePreviewMutation.mutateAsync({
           fileUrl,
+          fileFormat: fileExtension,
         });
         
         setUploadProgress(100);
-        setCurrentJobId(jobId);
         
-        toast.success(`File "${file.name}" uploaded successfully. Processing started.`);
+        // Show column mapping dialog
+        setPreviewData({
+          headers: preview.headers,
+          detectedMapping: preview.detectedMapping as Record<string, string>,
+          sampleRows: preview.sampleRows,
+          totalRows: preview.totalRows,
+          jobId,
+          fileUrl,
+        });
+        setMappingDialogOpen(true);
+        
+        toast.success(`File "${file.name}" uploaded successfully. Review column mappings.`);
         
         // Refresh job list
         refetchJobs();
@@ -67,12 +88,44 @@ export default function DataImport() {
       } catch (error) {
         console.error('Upload failed:', error);
         toast.error(`Failed to upload "${file.name}": ${error instanceof Error ? error.message : 'Unknown error'}`);
-      } finally {
         setIsUploading(false);
         setTimeout(() => setUploadProgress(0), 2000);
       }
     }
-  }, [uploadFileMutation, processFileMutation, refetchJobs]);
+  }, [uploadFileMutation, uploadToS3Mutation, parsePreviewMutation, refetchJobs]);
+  
+  const handleMappingConfirm = async (mapping: Record<string, string>) => {
+    if (!previewData) return;
+    
+    try {
+      setMappingDialogOpen(false);
+      setIsUploading(true);
+      
+      // Process file with custom mapping
+      await processFileMutation.mutateAsync({
+        jobId: previewData.jobId,
+        fileUrl: previewData.fileUrl,
+        customMapping: mapping,
+      });
+      
+      setCurrentJobId(previewData.jobId);
+      toast.success('File processing started with custom mappings.');
+      refetchJobs();
+      
+    } catch (error) {
+      console.error('Processing failed:', error);
+      toast.error(`Failed to process file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUploading(false);
+      setPreviewData(null);
+    }
+  };
+  
+  const handleMappingCancel = () => {
+    setMappingDialogOpen(false);
+    setPreviewData(null);
+    toast.info('Import cancelled.');
+  };
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -275,6 +328,20 @@ export default function DataImport() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Column Mapping Dialog */}
+      {previewData && (
+        <ColumnMappingDialog
+          open={mappingDialogOpen}
+          onOpenChange={setMappingDialogOpen}
+          headers={previewData.headers}
+          detectedMapping={previewData.detectedMapping}
+          sampleRows={previewData.sampleRows}
+          totalRows={previewData.totalRows}
+          onConfirm={handleMappingConfirm}
+          onCancel={handleMappingCancel}
+        />
+      )}
     </div>
   );
 }

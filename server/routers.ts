@@ -343,6 +343,54 @@ export const appRouter = router({
         return { url };
       }),
     
+    parsePreview: protectedProcedure
+      .input(z.object({
+        fileUrl: z.string(),
+        fileFormat: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { parseCSV } = await import('./lib/fileProcessing/csvParser');
+        const { parseExcel } = await import('./lib/fileProcessing/excelParser');
+        const { parseJSON } = await import('./lib/fileProcessing/jsonParser');
+        const { parseXML } = await import('./lib/fileProcessing/xmlParser');
+        const { autoDetectMapping } = await import('./lib/fileProcessing/transformer');
+        
+        // Parse file based on format
+        let records: any[] = [];
+        
+        if (input.fileFormat === 'csv') {
+          records = await parseCSV(input.fileUrl);
+        } else if (['xlsx', 'xls'].includes(input.fileFormat)) {
+          records = await parseExcel(input.fileUrl);
+        } else if (input.fileFormat === 'json') {
+          records = await parseJSON(input.fileUrl);
+        } else if (input.fileFormat === 'xml') {
+          records = await parseXML(input.fileUrl);
+        } else {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: `Unsupported file format: ${input.fileFormat}` });
+        }
+        
+        if (records.length === 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'File contains no data' });
+        }
+        
+        // Get headers from first record
+        const headers = Object.keys(records[0]);
+        
+        // Auto-detect column mapping
+        const detectedMapping = autoDetectMapping(headers);
+        
+        // Get first 10 rows as sample
+        const sampleRows = records.slice(0, 10);
+        
+        return {
+          headers,
+          detectedMapping,
+          sampleRows,
+          totalRows: records.length,
+        };
+      }),
+    
     processFile: protectedProcedure
       .input(z.object({
         jobId: z.number(),

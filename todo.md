@@ -428,3 +428,65 @@
 ## 🐛 Bug Fixes
 
 - [x] Fix "process is not defined" error - server/_core/env.ts imported in client code
+
+
+## 🎯 Feature Development Sprint
+
+### Feature #1: Column Mapping UI
+- [x] Add parsePreview tRPC endpoint (returns headers + 10 sample rows)
+- [x] Create ColumnMappingDialog component
+- [x] Display auto-detected mappings with confidence indicators
+- [x] Add dropdown selectors for manual override
+- [x] Show sample data for each column
+- [x] Add confirm/cancel buttons
+- [x] Integrate with DataImport upload flow
+
+### Feature #2: Data Preview Modal
+- [ ] Create DataPreviewDialog component
+- [ ] Display first 10 rows in table format
+- [ ] Show detected data types for each column
+- [ ] Add validation warnings for suspicious data
+- [ ] Add back/confirm navigation buttons
+
+### Feature #3: Import Templates
+- [ ] Add importTemplates database table
+- [ ] Create saveTemplate tRPC endpoint
+- [ ] Create loadTemplate tRPC endpoint
+- [ ] Create listTemplates tRPC endpoint
+- [ ] Add template selector dropdown in DataImport
+- [ ] Add "Save as Template" button in ColumnMappingDialog
+- [ ] Add template management UI (rename, delete)
+
+### Feature #4: Real-Time Collaboration
+- [ ] Complete WebSocket test implementation (65+ tests)
+- [ ] Add real-time parcel update broadcasts
+- [ ] Add user presence indicators
+- [ ] Add live activity feed
+- [ ] Add collaborative cursor/selection indicators
+- [ ] Test with multiple concurrent users
+
+### Feature #5: Export & Reporting
+- [ ] Add PDF export for regression results
+- [ ] Add Excel export for AVM predictions
+- [ ] Add CSV export for assessment rolls
+- [ ] Create report templates with branding
+- [ ] Add export history tracking
+- [ ] Add scheduled report generation
+
+### Feature #6: Batch Valuation Processing
+- [ ] Create batchValuation tRPC endpoint
+- [ ] Add batch job queue system
+- [ ] Implement progress tracking with WebSocket
+- [ ] Create BatchValuationDialog component
+- [ ] Add parcel selection interface (filters, bulk select)
+- [ ] Display batch results summary
+- [ ] Add error handling for failed valuations
+
+### Feature #7: Dashboard Analytics
+- [ ] Create Dashboard page component
+- [ ] Add KPI cards (total parcels, avg value, assessment ratio, etc.)
+- [ ] Add recent activity timeline
+- [ ] Add valuation trend charts (Chart.js)
+- [ ] Add geographic heatmap
+- [ ] Add quick action buttons
+- [ ] Add customizable widget layout

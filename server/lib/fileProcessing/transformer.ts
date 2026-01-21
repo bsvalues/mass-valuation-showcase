@@ -1,4 +1,5 @@
 export interface ColumnMapping {
+  [key: string]: string | undefined;
   parcelId?: string;
   address?: string;
   sqft?: string;
