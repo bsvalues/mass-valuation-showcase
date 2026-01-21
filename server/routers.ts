@@ -608,6 +608,98 @@ export const appRouter = router({
       }),
   }),
   
+  batchValuation: router({
+    startBatch: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        modelId: z.number().optional(),
+        parcelIds: z.array(z.string()),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { batchJobs } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Create batch job
+        const result = await db.insert(batchJobs).values({
+          userId: ctx.user.id,
+          name: input.name,
+          modelId: input.modelId ?? null,
+          status: 'pending',
+          totalParcels: input.parcelIds.length,
+          processedParcels: 0,
+          successfulParcels: 0,
+          failedParcels: 0,
+          progress: 0,
+        });
+        
+        const batchJobId = result[0]?.insertId || 0;
+        
+        // TODO: Start async processing in background
+        // For now, return job ID immediately
+        
+        return { batchJobId, success: true };
+      }),
+    
+    getBatchStatus: protectedProcedure
+      .input(z.object({ batchJobId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { getBatchJobStatus } = await import('./lib/batchProcessor');
+        const job = await getBatchJobStatus(input.batchJobId);
+        
+        if (!job || job.userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
+        }
+        
+        return job;
+      }),
+    
+    getBatchResults: protectedProcedure
+      .input(z.object({ batchJobId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { getBatchJobStatus, getBatchJobResults } = await import('./lib/batchProcessor');
+        const job = await getBatchJobStatus(input.batchJobId);
+        
+        if (!job || job.userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
+        }
+        
+        const results = await getBatchJobResults(input.batchJobId);
+        return results;
+      }),
+    
+    listBatchJobs: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { batchJobs } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq, desc } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        const jobs = await db.select()
+          .from(batchJobs)
+          .where(eq(batchJobs.userId, ctx.user.id))
+          .orderBy(desc(batchJobs.createdAt));
+        
+        return jobs;
+      }),
+    
+    cancelBatch: protectedProcedure
+      .input(z.object({ batchJobId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { cancelBatchJob, getBatchJobStatus } = await import('./lib/batchProcessor');
+        const job = await getBatchJobStatus(input.batchJobId);
+        
+        if (!job || job.userId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Not authorized' });
+        }
+        
+        await cancelBatchJob(input.batchJobId);
+        return { success: true };
+      }),
+  }),
+  
   admin: router({
     listUsers: adminProcedure.query(async () => {
       return await db.getAllUsers();

@@ -25,6 +25,7 @@ import RegressionStudio from "./pages/RegressionStudio";
 import AVMStudio from "./pages/AVMStudio";
 import ModelManagement from "./pages/ModelManagement";
 import DataImport from "./pages/DataImport";
+import BatchValuation from "./pages/BatchValuation";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -45,6 +46,7 @@ function Router() {
       <Route path={"/neural-core"} component={NeuralCore} />
       <Route path={"/admin/users"} component={AdminUsers} />
       <Route path={"/data-import"} component={DataImport} />
+      <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -186,3 +186,44 @@ export const importTemplates = mysqlTable("importTemplates", {
 
 export type ImportTemplate = typeof importTemplates.$inferSelect;
 export type InsertImportTemplate = typeof importTemplates.$inferInsert;
+
+/**
+ * Batch jobs table - tracks batch AVM valuation operations
+ */
+export const batchJobs = mysqlTable("batchJobs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  modelId: int("modelId"), // Optional: specific model to use, null = use default
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed", "cancelled"]).default("pending").notNull(),
+  totalParcels: int("totalParcels").default(0),
+  processedParcels: int("processedParcels").default(0),
+  successfulParcels: int("successfulParcels").default(0),
+  failedParcels: int("failedParcels").default(0),
+  progress: int("progress").default(0), // Percentage 0-100
+  errorSummary: text("errorSummary"),
+  resultsUrl: text("resultsUrl"), // S3 URL to results CSV/Excel file
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+});
+
+export type BatchJob = typeof batchJobs.$inferSelect;
+export type InsertBatchJob = typeof batchJobs.$inferInsert;
+
+/**
+ * Batch results table - stores individual prediction results from batch jobs
+ */
+export const batchResults = mysqlTable("batchResults", {
+  id: int("id").autoincrement().primaryKey(),
+  batchJobId: int("batchJobId").notNull(),
+  parcelId: varchar("parcelId", { length: 50 }).notNull(),
+  predictedValue: int("predictedValue"),
+  modelType: varchar("modelType", { length: 50 }), // 'randomForest' or 'neuralNetwork'
+  features: text("features"), // JSON string of input features
+  error: text("error"), // Error message if prediction failed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BatchResult = typeof batchResults.$inferSelect;
+export type InsertBatchResult = typeof batchResults.$inferInsert;

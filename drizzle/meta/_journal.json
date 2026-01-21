@@ -50,6 +50,13 @@
       "when": 1769032007972,
       "tag": "0006_noisy_tomorrow_man",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1769035620372,
+      "tag": "0007_safe_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

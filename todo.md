@@ -526,3 +526,15 @@
 - [ ] Include charts and visualizations in PDF exports
 - [ ] Add custom branding (TerraForge logo, colors)
 - [ ] Write comprehensive test suite for export functionality
+
+## 🚀 Feature #6: Batch Valuation Processing
+
+- [x] Database schema: batchJobs table for tracking batch operations
+- [ ] Backend: Batch processing service with queue management
+- [ ] Backend: Progress tracking and status updates
+- [ ] tRPC API: startBatchValuation, getBatchStatus, getBatchResults, cancelBatch
+- [x] Frontend: Batch Valuation page with parcel selection
+- [ ] Frontend: Progress bar and real-time status updates
+- [ ] Frontend: Results table with export to CSV/Excel
+- [ ] Error handling for failed predictions
+- [ ] Comprehensive test suite for batch processing
