@@ -35,6 +35,9 @@ import {
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
+import { PresenceIndicator } from "./PresenceIndicator";
+import { useState as useReactState, useEffect } from "react";
+import { trpc } from "@/lib/trpc";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -45,6 +48,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { systemResonance, isRevalRunning, ingestData } = useGlobalSimulation();
   const { theme, toggleTheme } = useTheme();
+  const [connectedUsers, setConnectedUsers] = useReactState(1);
+  const [isWsConnected, setIsWsConnected] = useReactState(false);
+  
+  // Simulate WebSocket connection (replace with actual WebSocket hook when ready)
+  useEffect(() => {
+    setIsWsConnected(true);
+    // Simulate presence updates
+    const interval = setInterval(() => {
+      setConnectedUsers(Math.floor(Math.random() * 5) + 1);
+    }, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/" },
@@ -172,6 +187,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           <div className="flex items-center space-x-4">
+            <PresenceIndicator connectedUsers={connectedUsers} isConnected={isWsConnected} />
             <div className="hidden md:flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20">
               <Zap className="w-3 h-3 mr-1.5 fill-current" />
               System Operational
