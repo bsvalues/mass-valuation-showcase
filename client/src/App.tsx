@@ -48,6 +48,7 @@ function Router() {
       <Route path={"/admin/users"} component={AdminUsers} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
+      <Route path={"/analytics"} component={DashboardAnalytics} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

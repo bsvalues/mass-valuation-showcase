@@ -799,6 +799,33 @@ export const appRouter = router({
         
         return allActivities.slice(0, 10);
       }),
+    
+    getPropertyHeatmapData: protectedProcedure
+      .query(async () => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Fetch properties with coordinates and values for Benton County, WA
+        // Filter for properties with valid lat/lng and non-zero values
+        const properties = await db.select({
+          latitude: parcels.latitude,
+          longitude: parcels.longitude,
+          value: parcels.buildingValue,
+        })
+        .from(parcels)
+        .limit(1000); // Limit to 1000 points for performance
+        
+        // Filter out null/invalid coordinates and calculate total value
+        return properties
+          .filter(p => p.latitude && p.longitude && p.value)
+          .map(p => ({
+            latitude: parseFloat(p.latitude!),
+            longitude: parseFloat(p.longitude!),
+            value: (p.value || 0),
+          }));
+      }),
   }),
   
   admin: router({
