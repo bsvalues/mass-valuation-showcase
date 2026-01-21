@@ -490,3 +490,13 @@
 - [ ] Add geographic heatmap
 - [ ] Add quick action buttons
 - [ ] Add customizable widget layout
+
+
+## 🔧 Template Selector Enhancement
+
+- [x] Add template selector dropdown to DataImport page
+- [x] Load user's saved templates on page mount
+- [x] Display template name and description in dropdown
+- [x] Apply template mapping when user selects a template
+- [x] Show success toast when template loaded
+- [x] Handle empty state (no templates saved yet)

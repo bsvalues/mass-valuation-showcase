@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { ColumnMappingDialog } from '@/components/ColumnMappingDialog';
 import { DataPreviewDialog } from '@/components/DataPreviewDialog';
 import { SaveTemplateDialog } from '@/components/SaveTemplateDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function DataImport() {
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -34,6 +35,12 @@ export default function DataImport() {
   const parsePreviewMutation = trpc.dataImport.parsePreview.useMutation();
   const processFileMutation = trpc.dataImport.processFile.useMutation();
   const saveTemplateMutation = trpc.dataImport.saveTemplate.useMutation();
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const { data: templates } = trpc.dataImport.listTemplates.useQuery();
+  const { data: loadedTemplate } = trpc.dataImport.loadTemplate.useQuery(
+    { templateId: selectedTemplateId! },
+    { enabled: !!selectedTemplateId }
+  );
   const { data: jobs, refetch: refetchJobs } = trpc.dataImport.listJobs.useQuery({ page: 1, pageSize: 10 });
   const { data: currentJob } = trpc.dataImport.getJobStatus.useQuery(
     { jobId: currentJobId! },
@@ -201,6 +208,19 @@ export default function DataImport() {
     setMappingDialogOpen(true);
   };
   
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(Number(templateId));
+  };
+  
+  // Apply loaded template mapping
+  useEffect(() => {
+    if (loadedTemplate && previewData) {
+      setCurrentMapping(loadedTemplate.mapping);
+      toast.success(`Template "${loadedTemplate.name}" loaded successfully!`);
+      setSelectedTemplateId(null); // Reset selection
+    }
+  }, [loadedTemplate, previewData]);
+  
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -253,6 +273,45 @@ export default function DataImport() {
           Upload property assessment data from CSV, Excel, XML, PDF, or JSON files
         </p>
       </div>
+      
+      {/* Template Selector */}
+      {templates && templates.length > 0 && (
+        <Card className="border-[#00D9D9]/20 bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-[#00FFEE]">Load Saved Template</CardTitle>
+            <CardDescription>
+              Apply a previously saved column mapping template to your uploaded file
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Select Template</label>
+                <Select onValueChange={handleTemplateSelect} value={selectedTemplateId?.toString() || ""}>
+                  <SelectTrigger className="border-[#00D9D9]/30 focus:border-[#00FFEE]">
+                    <SelectValue placeholder="Choose a template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id.toString()}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{template.name}</span>
+                          {template.description && (
+                            <span className="text-xs text-muted-foreground">{template.description}</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {templates.length} template{templates.length !== 1 ? 's' : ''} available
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {/* Upload Zone */}
       <Card className="border-[#00D9D9]/20 bg-card/50 backdrop-blur-sm">
