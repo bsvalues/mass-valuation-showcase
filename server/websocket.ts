@@ -104,9 +104,11 @@ export function initializeWebSocket(httpServer: HTTPServer): SocketIOServer {
     socket.join(`user-${userId}`);
 
     // Broadcast user joined event to global room
+    const connectedCount = io.sockets.sockets.size;
     io.to('global').emit('user:joined', {
       userId,
       userEmail,
+      connectedCount,
       timestamp: new Date().toISOString(),
     });
 
@@ -143,9 +145,11 @@ export function initializeWebSocket(httpServer: HTTPServer): SocketIOServer {
       console.log(`[WebSocket] Client disconnected: ${userEmail} (${socket.id}), reason: ${reason}`);
 
       // Broadcast user left event to global room
+      const connectedCount = io.sockets.sockets.size;
       io.to('global').emit('user:left', {
         userId,
         userEmail,
+        connectedCount,
         reason,
         timestamp: new Date().toISOString(),
       });

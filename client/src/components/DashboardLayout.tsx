@@ -38,6 +38,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { PresenceIndicator } from "./PresenceIndicator";
 import { useState as useReactState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -49,17 +50,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { systemResonance, isRevalRunning, ingestData } = useGlobalSimulation();
   const { theme, toggleTheme } = useTheme();
   const [connectedUsers, setConnectedUsers] = useReactState(1);
-  const [isWsConnected, setIsWsConnected] = useReactState(false);
+  const { isConnected, subscribe } = useWebSocket({ autoConnect: true });
   
-  // Simulate WebSocket connection (replace with actual WebSocket hook when ready)
+  // Subscribe to real-time presence updates
   useEffect(() => {
-    setIsWsConnected(true);
-    // Simulate presence updates
-    const interval = setInterval(() => {
-      setConnectedUsers(Math.floor(Math.random() * 5) + 1);
-    }, 30000); // Update every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+    const unsubJoined = subscribe('user:joined', (payload) => {
+      if (payload.data.connectedCount) {
+        setConnectedUsers(payload.data.connectedCount);
+      }
+    });
+    
+    const unsubLeft = subscribe('user:left', (payload) => {
+      if (payload.data.connectedCount) {
+        setConnectedUsers(payload.data.connectedCount);
+      }
+    });
+    
+    return () => {
+      unsubJoined();
+      unsubLeft();
+    };
+  }, [subscribe]);
 
   const navItems = [
     { icon: Home, label: "Overview", href: "/" },
@@ -187,7 +198,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           <div className="flex items-center space-x-4">
-            <PresenceIndicator connectedUsers={connectedUsers} isConnected={isWsConnected} />
+            <PresenceIndicator connectedUsers={connectedUsers} isConnected={isConnected} />
             <div className="hidden md:flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium border border-primary/20">
               <Zap className="w-3 h-3 mr-1.5 fill-current" />
               System Operational

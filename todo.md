@@ -506,8 +506,8 @@
 
 - [x] Add real-time presence indicator component
 - [x] Show connected users count in header
-- [ ] Add "live" badge to data that updates in real-time
-- [ ] Implement user presence tracking (join/leave events)
-- [ ] Add visual feedback when data changes from other users
-- [ ] Test WebSocket connection and reconnection
+- [x] Add "live" badge to data that updates in real-time
+- [x] Implement user presence tracking (join/leave events)
+- [x] Add visual feedback when data changes from other users
+- [x] Test WebSocket connection and reconnection
 - [x] Add WebSocket status indicator (connected/disconnected)
