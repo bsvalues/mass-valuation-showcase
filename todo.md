@@ -511,3 +511,18 @@
 - [x] Add visual feedback when data changes from other users
 - [x] Test WebSocket connection and reconnection
 - [x] Add WebSocket status indicator (connected/disconnected)
+
+
+## 📊 Feature #5: Export & Reporting
+- [x] Install PDF generation library (jsPDF)
+- [x] Create PDF export service for regression results
+- [x] Add PDF export for AVM predictions
+- [x] Create Excel export service (xlsx library already installed)
+- [x] Add Excel export for assessment rolls
+- [x] Create export button components
+- [x] Add export to Calibration Studio page
+- [x] Add export to AVM Studio page
+- [x] Add export to Model Management page
+- [ ] Include charts and visualizations in PDF exports
+- [ ] Add custom branding (TerraForge logo, colors)
+- [ ] Write comprehensive test suite for export functionality

@@ -6,7 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { multipleRegression, generateDiagnosticPlots, calculateCorrelationMatrix, type RegressionResult } from "@/lib/regression";
-import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2 } from "lucide-react";
+import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText } from "lucide-react";
+import { exportRegressionToPDF } from "@/lib/pdfExport";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -200,13 +201,25 @@ export default function RegressionStudio() {
 
                   <Button
                     onClick={() => {
-                      alert('PDF export functionality - integrate with PDF library');
-                      // TODO: Implement PDF export using jsPDF or similar
+                      if (regressionResult) {
+                        exportRegressionToPDF({
+                          coefficients: regressionResult.coefficients,
+                          rSquared: regressionResult.rSquared,
+                          adjustedRSquared: regressionResult.adjustedRSquared,
+                          fStatistic: regressionResult.fStatistic,
+                          pValues: regressionResult.pValues,
+                          standardErrors: regressionResult.standardErrors,
+                          confidenceIntervals: regressionResult.confidenceIntervals,
+                          residualStandardError: Math.sqrt(regressionResult.residuals.reduce((sum, r) => sum + r * r, 0) / regressionResult.residuals.length),
+                          observations: regressionResult.residuals.length,
+                        });
+                        alert('PDF report generated successfully!');
+                      }
                     }}
                     variant="outline"
                     className="w-full"
                   >
-                    <Download className="w-4 h-4 mr-2" />
+                    <FileText className="w-4 h-4 mr-2" />
                     Export to PDF
                   </Button>
                 </div>

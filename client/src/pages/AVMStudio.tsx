@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Brain, TreeDeciduous, TrendingUp, Play, Download, Sparkles, History, BarChart } from 'lucide-react';
+import { Brain, TreeDeciduous, TrendingUp, Play, Download, Sparkles, History, BarChart, FileText } from 'lucide-react';
+import { exportAVMPredictionToPDF } from '../lib/pdfExport';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { trpc } from '../lib/trpc';
 import { preprocessData, trainTestSplit, type FeatureVector, type FeatureStats } from '../lib/ml/features';
@@ -620,6 +621,33 @@ export default function AVMStudio() {
                     </div>
                   </div>
                 )}
+                <div className="mt-4 pt-4 border-t border-cyan-400/30">
+                  <button
+                    onClick={() => {
+                      if (predictionResult !== null) {
+                        exportAVMPredictionToPDF({
+                          predictedValue: predictionResult,
+                          modelType: modelType === 'randomForest' ? 'Random Forest' : 'Neural Network',
+                          features: {
+                            squareFeet: parseFloat(predictionInput.squareFeet),
+                            yearBuilt: parseFloat(predictionInput.yearBuilt),
+                            landValue: parseFloat(predictionInput.landValue),
+                            buildingValue: parseFloat(predictionInput.buildingValue),
+                          },
+                          timestamp: new Date().toISOString(),
+                          confidenceInterval: predictionHistory[0]?.confidenceInterval
+                            ? [predictionHistory[0].confidenceInterval.lower, predictionHistory[0].confidenceInterval.upper]
+                            : undefined,
+                        });
+                        alert('PDF report generated successfully!');
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 rounded-lg text-cyan-400 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Export Prediction to PDF
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { trpc } from '../lib/trpc';
-import { Trash2, Download, Brain, TreeDeciduous, Calendar, TrendingUp, Edit, X, Tag, Search } from 'lucide-react';
+import { Trash2, Download, Brain, TreeDeciduous, Calendar, TrendingUp, Edit, X, Tag, Search, FileText } from 'lucide-react';
+import { exportAVMModelToPDF, exportModelComparisonToPDF } from '../lib/pdfExport';
 
 export default function ModelManagement() {
   const { data: savedModels, refetch } = trpc.avmModels.list.useQuery();
@@ -185,6 +186,25 @@ export default function ModelManagement() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <button
+                            onClick={() => {
+                              exportAVMModelToPDF({
+                                name: model.name,
+                                type: model.modelType,
+                                mae: parseFloat(model.mae ?? '0'),
+                                rmse: parseFloat(model.rmse ?? '0'),
+                                rSquared: parseFloat(model.r2 ?? '0'),
+                                mape: parseFloat(model.mape ?? '0'),
+                                trainingDataSize: model.trainingDataSize ?? 0,
+                                createdAt: model.createdAt.toISOString(),
+                              });
+                              alert('PDF report generated successfully!');
+                            }}
+                            className="p-2 text-green-400 hover:text-green-300 hover:bg-green-900/20 rounded transition-colors"
+                            title="Export to PDF"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => handleEditNotesTags(model)}
                             className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-900/20 rounded transition-colors"
                             title="Edit notes & tags"
@@ -281,6 +301,27 @@ export default function ModelManagement() {
                   }).name}{' '}
                   ({Math.max(...selectedModelData.map(m => m.r2 ? parseFloat(m.r2) : 0)).toFixed(3)})
                 </p>
+                <button
+                  onClick={() => {
+                    exportModelComparisonToPDF(
+                      selectedModelData.map(model => ({
+                        name: model.name,
+                        type: model.modelType,
+                        mae: parseFloat(model.mae ?? '0'),
+                        rmse: parseFloat(model.rmse ?? '0'),
+                        rSquared: parseFloat(model.r2 ?? '0'),
+                        mape: parseFloat(model.mape ?? '0'),
+                        trainingDataSize: model.trainingDataSize ?? 0,
+                        createdAt: model.createdAt.toISOString(),
+                      }))
+                    );
+                    alert('Comparison PDF generated successfully!');
+                  }}
+                  className="mt-3 w-full px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 rounded-lg text-cyan-400 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Export Comparison to PDF
+                </button>
               </div>
             )}
           </div>
