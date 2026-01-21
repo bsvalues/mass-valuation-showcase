@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, CheckCircle2, XCircle, Clock, Loader2, AlertCircle } from 'lucide-react';
-import { storagePut } from '../../../server/storage';
+// Removed direct server import - using tRPC API instead
 import { toast } from 'sonner';
 
 export default function DataImport() {
@@ -15,6 +15,7 @@ export default function DataImport() {
   const [isUploading, setIsUploading] = useState(false);
   
   const uploadFileMutation = trpc.dataImport.uploadFile.useMutation();
+  const uploadToS3Mutation = trpc.dataImport.uploadToS3.useMutation();
   const processFileMutation = trpc.dataImport.processFile.useMutation();
   const { data: jobs, refetch: refetchJobs } = trpc.dataImport.listJobs.useQuery({ page: 1, pageSize: 10 });
   const { data: currentJob } = trpc.dataImport.getJobStatus.useQuery(
@@ -37,9 +38,15 @@ export default function DataImport() {
         
         setUploadProgress(30);
         
-        // Step 2: Upload file to S3
+        // Step 2: Upload file to S3 via tRPC
         const fileBuffer = await file.arrayBuffer();
-        const { url: fileUrl } = await storagePut(fileKey, new Uint8Array(fileBuffer), file.type);
+        const uint8Array = new Uint8Array(fileBuffer);
+        const base64Data = btoa(Array.from(uint8Array).map(b => String.fromCharCode(b)).join(''));
+        const { url: fileUrl } = await uploadToS3Mutation.mutateAsync({
+          fileKey,
+          fileData: base64Data,
+          contentType: file.type,
+        });
         
         setUploadProgress(70);
         

@@ -423,3 +423,8 @@
 - [x] Test auto-detect column mapping (50+ variations)
 - [x] Verify TypeScript clean (zero errors)
 - [x] Verify all existing tests still pass
+
+
+## 🐛 Bug Fixes
+
+- [x] Fix "process is not defined" error - server/_core/env.ts imported in client code

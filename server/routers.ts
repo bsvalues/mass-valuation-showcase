@@ -325,6 +325,24 @@ export const appRouter = router({
         };
       }),
     
+    uploadToS3: protectedProcedure
+      .input(z.object({
+        fileKey: z.string(),
+        fileData: z.string(), // base64 encoded file
+        contentType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { storagePut } = await import('./storage');
+        
+        // Decode base64 to buffer
+        const buffer = Buffer.from(input.fileData, 'base64');
+        
+        // Upload to S3
+        const { url } = await storagePut(input.fileKey, buffer, input.contentType);
+        
+        return { url };
+      }),
+    
     processFile: protectedProcedure
       .input(z.object({
         jobId: z.number(),
