@@ -442,11 +442,11 @@
 - [x] Integrate with DataImport upload flow
 
 ### Feature #2: Data Preview Modal
-- [ ] Create DataPreviewDialog component
-- [ ] Display first 10 rows in table format
-- [ ] Show detected data types for each column
-- [ ] Add validation warnings for suspicious data
-- [ ] Add back/confirm navigation buttons
+- [x] Create DataPreviewDialog component
+- [x] Display first 10 rows in table format
+- [x] Show detected data types for each column
+- [x] Add validation warnings for suspicious data
+- [x] Add back/confirm navigation buttons
 
 ### Feature #3: Import Templates
 - [ ] Add importTemplates database table

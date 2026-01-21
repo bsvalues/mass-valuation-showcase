@@ -9,12 +9,15 @@ import { Upload, FileText, CheckCircle2, XCircle, Clock, Loader2, AlertCircle } 
 // Removed direct server import - using tRPC API instead
 import { toast } from 'sonner';
 import { ColumnMappingDialog } from '@/components/ColumnMappingDialog';
+import { DataPreviewDialog } from '@/components/DataPreviewDialog';
 
 export default function DataImport() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [currentJobId, setCurrentJobId] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [currentMapping, setCurrentMapping] = useState<Record<string, string>>({});
   const [previewData, setPreviewData] = useState<{
     headers: string[];
     detectedMapping: Record<string, string>;
@@ -121,10 +124,49 @@ export default function DataImport() {
     }
   };
   
+  const handleMappingPreview = (mapping: Record<string, string>) => {
+    setCurrentMapping(mapping);
+    setMappingDialogOpen(false);
+    setPreviewDialogOpen(true);
+  };
+  
   const handleMappingCancel = () => {
     setMappingDialogOpen(false);
     setPreviewData(null);
     toast.info('Import cancelled.');
+  };
+  
+  const handlePreviewBack = () => {
+    setPreviewDialogOpen(false);
+    setMappingDialogOpen(true);
+  };
+  
+  const handlePreviewConfirm = async () => {
+    if (!previewData) return;
+    
+    try {
+      setPreviewDialogOpen(false);
+      setIsUploading(true);
+      
+      // Process file with confirmed mapping
+      await processFileMutation.mutateAsync({
+        jobId: previewData.jobId,
+        fileUrl: previewData.fileUrl,
+        customMapping: currentMapping,
+      });
+      
+      setCurrentJobId(previewData.jobId);
+      toast.success('File processing started.');
+      refetchJobs();
+      
+    } catch (error) {
+      console.error('Processing failed:', error);
+      toast.error(`Failed to process file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUploading(false);
+      setPreviewData(null);
+      setCurrentMapping({});
+    }
   };
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -339,7 +381,22 @@ export default function DataImport() {
           sampleRows={previewData.sampleRows}
           totalRows={previewData.totalRows}
           onConfirm={handleMappingConfirm}
+          onPreview={handleMappingPreview}
           onCancel={handleMappingCancel}
+        />
+      )}
+      
+      {/* Data Preview Dialog */}
+      {previewData && (
+        <DataPreviewDialog
+          open={previewDialogOpen}
+          onOpenChange={setPreviewDialogOpen}
+          headers={previewData.headers}
+          sampleRows={previewData.sampleRows}
+          totalRows={previewData.totalRows}
+          mapping={currentMapping}
+          onBack={handlePreviewBack}
+          onConfirm={handlePreviewConfirm}
         />
       )}
     </div>

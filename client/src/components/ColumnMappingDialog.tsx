@@ -26,6 +26,7 @@ interface ColumnMappingDialogProps {
   sampleRows: Record<string, any>[];
   totalRows: number;
   onConfirm: (mapping: Record<string, string>) => void;
+  onPreview: (mapping: Record<string, string>) => void;
   onCancel: () => void;
 }
 
@@ -53,6 +54,7 @@ export function ColumnMappingDialog({
   sampleRows,
   totalRows,
   onConfirm,
+  onPreview,
   onCancel,
 }: ColumnMappingDialogProps) {
   const [mapping, setMapping] = useState<Record<string, string>>(detectedMapping);
@@ -207,17 +209,27 @@ export function ColumnMappingDialog({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex items-center justify-between">
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={!isValid}
-            className="bg-cyan-500 hover:bg-cyan-600 text-white"
-          >
-            Confirm Mapping & Process
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => onPreview(mapping)}
+              disabled={!isValid}
+              className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+            >
+              Preview Data
+            </Button>
+            <Button
+              onClick={handleConfirm}
+              disabled={!isValid}
+              className="bg-cyan-500 hover:bg-cyan-600 text-white"
+            >
+              Skip Preview & Import
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
