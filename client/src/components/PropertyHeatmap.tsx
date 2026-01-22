@@ -255,6 +255,7 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
         <PropertyDetailModal
           open={modalOpen}
           onOpenChange={setModalOpen}
+          propertyId={selectedPropertyId}
           property={{
             parcelNumber: propertyDetails.parcelId,
             siteAddress: propertyDetails.address,

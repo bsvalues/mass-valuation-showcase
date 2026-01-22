@@ -51,6 +51,22 @@ export type Parcel = typeof parcels.$inferSelect;
 export type InsertParcel = typeof parcels.$inferInsert;
 
 /**
+ * Property History table - stores historical assessment values for properties
+ */
+export const propertyHistory = mysqlTable("propertyHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  parcelId: int("parcelId").notNull(), // Foreign key to parcels.id
+  assessmentYear: int("assessmentYear").notNull(),
+  landValue: int("landValue"),
+  buildingValue: int("buildingValue"),
+  totalValue: int("totalValue"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PropertyHistory = typeof propertyHistory.$inferSelect;
+export type InsertPropertyHistory = typeof propertyHistory.$inferInsert;
+
+/**
  * Sales table - stores comparable sales data
  */
 export const sales = mysqlTable("sales", {

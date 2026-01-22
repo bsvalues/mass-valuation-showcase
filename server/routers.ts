@@ -133,6 +133,23 @@ export const appRouter = router({
         
         return { success: true, count: input.parcels.length };
       }),
+    getHistory: protectedProcedure
+      .input(z.object({ parcelId: z.number() }))
+      .query(async ({ input }) => {
+        const { propertyHistory } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq, desc } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        const history = await db
+          .select()
+          .from(propertyHistory)
+          .where(eq(propertyHistory.parcelId, input.parcelId))
+          .orderBy(desc(propertyHistory.assessmentYear));
+        
+        return history;
+      }),
   }),
   sales: router({
     list: protectedProcedure.query(async ({ ctx }) => {

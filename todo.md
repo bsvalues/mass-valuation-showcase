@@ -623,3 +623,14 @@
 - [x] Display modal with property information (address, values, sqft, year built)
 - [x] Test marker clicks and modal display in browser (cyan markers visible)
 - [x] Write tests for marker interaction (17 tests passing)
+
+
+### 📈 Property Assessment History Chart
+- [x] Add propertyHistory table to database schema
+- [x] Create migration for propertyHistory table (pnpm db:push)
+- [x] Add tRPC endpoint to fetch property assessment history (parcels.getHistory)
+- [x] Update PropertyDetailModal to include historical chart
+- [x] Create line chart with Recharts showing value changes over time (3 lines: Total, Building, Land)
+- [x] Add chart legend and tooltips (formatted currency)
+- [x] Test historical chart with sample data (seed-history.mjs, 180 records)
+- [x] Write tests for history endpoint and chart rendering (15 tests passing)

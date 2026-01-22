@@ -57,6 +57,13 @@
       "when": 1769035620372,
       "tag": "0007_safe_goblin_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1769042350145,
+      "tag": "0008_tranquil_vivisector",
+      "breakpoints": true
     }
   ]
 }
