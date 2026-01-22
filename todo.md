@@ -756,3 +756,60 @@
 - [x] Update map style to use OSM raster tiles
 - [x] Fix TypeScript errors (mapboxgl namespace, circle-radius syntax)
 - [x] Verify map tiles load correctly showing Benton County geography
+
+
+## 🎯 Complete GIS Features Implementation
+
+### Phase 1: Property Markers
+- [ ] Debug why property markers aren't visible on map
+- [ ] Ensure markers render at appropriate zoom levels
+- [ ] Make markers clickable with proper event handlers
+- [ ] Add hover effects on markers
+- [ ] Style markers with TerraForge cyan color
+
+### Phase 2: Heatmap Layer
+- [ ] Verify heatmap layer is added to map
+- [ ] Configure heatmap with cyan gradient (#00FFFF)
+- [ ] Set appropriate heatmap intensity and radius
+- [ ] Make heatmap visible at all zoom levels
+- [ ] Add toggle control for heatmap visibility
+
+### Phase 3: Neighborhood Statistics Integration
+- [ ] Connect property click events to neighborhood stats query
+- [ ] Display stats panel/modal when property is clicked
+- [ ] Show median home value, avg sqft, price/sqft, property count
+- [ ] Display property type distribution with bars
+- [ ] Show average age of homes with comparison
+
+### Phase 4: Circle Boundary Visualization
+- [ ] Draw 1-mile radius circle when property is selected
+- [ ] Style circle with cyan stroke matching theme
+- [ ] Clear circle when modal closes or new property selected
+- [ ] Ensure circle renders above base map but below markers
+
+### Phase 5: Dark Theme Styling
+- [ ] Apply dark color scheme to OSM tiles
+- [ ] Invert map colors for dark mode
+- [ ] Ensure text labels are readable
+- [ ] Match TerraForge cyan accent colors
+
+### Phase 6: Testing & Validation
+- [ ] Test property marker clicks
+- [ ] Verify heatmap displays correctly
+- [ ] Confirm neighborhood stats load and display
+- [ ] Check circle boundary draws accurately
+- [ ] Validate all features work together
+
+
+## 🗺️ Simplified Map Explorer - Property Markers Priority
+
+- [x] Simplify MapExplorer component to focus on basic marker rendering
+- [x] Remove complex heatmap and layer logic temporarily
+- [x] Use simple circle markers with cyan color (#00FFFF)
+- [x] Ensure markers are visible at all zoom levels
+- [x] Add property count and coordinates to marker popups
+- [x] Test markers appear on map load (22 markers visible)
+- [x] Add click handlers to markers
+- [x] Show property details in MapLibre popup on marker click
+- [x] Add neighborhood statistics panel (conditional rendering)
+- [ ] Debug click handler to trigger neighborhood stats panel
