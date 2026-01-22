@@ -6,6 +6,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, X } from "lucide-react";
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -13,11 +15,23 @@ export default function MapExplorer() {
   const markers = useRef<maplibregl.Marker[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
 
   const properties = allProperties || [];
+
+  // Filter properties based on search query
+  const filteredProperties = properties.filter((p: any) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const address = (p.address || "").toLowerCase();
+    const parcelNumber = (p.parcelNumber || "").toLowerCase();
+    
+    return address.includes(query) || parcelNumber.includes(query);
+  });
 
   // Initialize map
   useEffect(() => {
@@ -146,6 +160,10 @@ export default function MapExplorer() {
     { enabled: !!selectedProperty && !!selectedPropertyData?.latitude && !!selectedPropertyData?.longitude }
   );
 
+  // Get count of properties with valid coordinates
+  const validPropertiesCount = properties.filter((p: any) => p.latitude && p.longitude).length;
+  const filteredValidCount = filteredProperties.filter((p: any) => p.latitude && p.longitude).length;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -173,7 +191,7 @@ export default function MapExplorer() {
                 <CardDescription>
                   {isLoading
                     ? "Loading properties..."
-                    : `${properties.filter((p: any) => p.latitude && p.longitude).length || 0} properties loaded • Click markers to view details`}
+                    : `${validPropertiesCount} properties loaded • Click markers to view details`}
                 </CardDescription>
               </div>
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
@@ -186,40 +204,78 @@ export default function MapExplorer() {
               {/* Property List Sidebar */}
               {sidebarOpen && (
                 <div className="w-80 flex-shrink-0 border-r border-border pr-4">
-                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                    <h3 className="text-sm font-semibold text-foreground mb-3">Properties ({properties.filter((p: any) => p.latitude && p.longitude).length})</h3>
-                    {properties.filter((p: any) => p.latitude && p.longitude).map((property: any) => (
-                      <button
-                        key={property.id}
-                        onClick={() => {
-                          console.log("✅ Property selected from sidebar:", property.id);
-                          setSelectedProperty(property.id);
-                          // Pan map to property
-                          if (map.current && property.latitude && property.longitude) {
-                            map.current.flyTo({
-                              center: [parseFloat(property.longitude), parseFloat(property.latitude)],
-                              zoom: 14,
-                              duration: 1000
-                            });
-                          }
-                        }}
-                        className={`w-full text-left p-3 rounded-lg border transition-all hover:border-primary/50 ${
-                          selectedProperty === property.id
-                            ? "border-primary bg-primary/10"
-                            : "border-border bg-card"
-                        }`}
-                      >
-                        <div className="text-sm font-medium text-foreground truncate">
-                          {property.address || "Unknown Address"}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Parcel: {property.parcelNumber || "N/A"}
-                        </div>
-                        <div className="text-xs text-primary mt-1 font-mono">
-                          ${property.assessedValue?.toLocaleString() || "N/A"}
-                        </div>
-                      </button>
-                    ))}
+                  {/* Search Bar */}
+                  <div className="mb-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Search by address or parcel..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 pr-9 focus:border-primary transition-colors"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {searchQuery && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Found {filteredValidCount} {filteredValidCount === 1 ? 'property' : 'properties'} matching "{searchQuery}"
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Property List */}
+                  <div className="space-y-2 max-h-[520px] overflow-y-auto">
+                    <h3 className="text-sm font-semibold text-foreground mb-3">
+                      Properties ({filteredValidCount})
+                    </h3>
+                    {filteredValidCount === 0 && searchQuery ? (
+                      <div className="text-center py-8">
+                        <Search className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground">No properties found</p>
+                        <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
+                      </div>
+                    ) : (
+                      filteredProperties.filter((p: any) => p.latitude && p.longitude).map((property: any) => (
+                        <button
+                          key={property.id}
+                          onClick={() => {
+                            console.log("✅ Property selected from sidebar:", property.id);
+                            setSelectedProperty(property.id);
+                            // Pan map to property
+                            if (map.current && property.latitude && property.longitude) {
+                              map.current.flyTo({
+                                center: [parseFloat(property.longitude), parseFloat(property.latitude)],
+                                zoom: 14,
+                                duration: 1000
+                              });
+                            }
+                          }}
+                          className={`w-full text-left p-3 rounded-lg border transition-all hover:border-primary/50 ${
+                            selectedProperty === property.id
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-card"
+                          }`}
+                        >
+                          <div className="text-sm font-medium text-foreground truncate">
+                            {property.address || "Unknown Address"}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Parcel: {property.parcelNumber || "N/A"}
+                          </div>
+                          <div className="text-xs text-primary mt-1 font-mono">
+                            ${property.assessedValue?.toLocaleString() || "N/A"}
+                          </div>
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

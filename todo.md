@@ -59,6 +59,10 @@
 - [x] Marker highlight on property selection (size + glow effect)
 - [x] Map flyTo animation on property selection
 - [x] Toggle sidebar visibility button
+- [x] Property search bar with real-time filtering (address + parcel number)
+- [x] Search result count display
+- [x] Clear button (X icon) for search reset
+- [x] Empty state when no search results found
 - [x] Layer management (Valuation, Sales, Parcels, Zoning)
 - [x] Spatial analysis tools
 - [x] Swarm visualization for property clusters
@@ -846,3 +850,13 @@
 - [ ] Highlight selected marker with different color/size
 - [ ] Add toggle button to show/hide sidebar
 - [ ] Test end-to-end: click property → stats panel appears → marker highlights
+
+
+## 🔍 Map Explorer Search Feature (In Progress)
+
+- [ ] Add search input UI component to sidebar
+- [ ] Implement real-time filtering logic for address and parcel number
+- [ ] Add search result count display
+- [ ] Add clear button (X icon) when search is active
+- [ ] Test search functionality with various queries
+- [ ] Save checkpoint with search feature complete
