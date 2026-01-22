@@ -1217,3 +1217,57 @@
 - [x] Page loads cleanly with 32 properties
 - [x] No React error boundary triggered
 - [x] Save checkpoint with cleanup errors fixed
+
+
+## 🎨 Apple Maps-Inspired UI/UX Redesign (In Progress)
+
+### Design Architecture
+- [ ] Remove clunky sidebar layout
+- [ ] Implement full-screen immersive map (100vh)
+- [ ] Design floating glass panel system
+- [ ] Plan gesture-driven interaction patterns
+- [ ] Define spatial hierarchy (map primary, tools secondary)
+
+### Floating Search Bar
+- [ ] Create top floating search bar with glassmorphism
+- [ ] Add backdrop blur and subtle shadow
+- [ ] Implement auto-hide on scroll down
+- [ ] Add smooth slide-in animation
+
+### Swipeable Bottom Sheet
+- [ ] Create bottom sheet component for property details
+- [ ] Implement swipe gestures (up/down)
+- [ ] Add three states: collapsed, half, full
+- [ ] Smooth spring physics animations
+- [ ] Backdrop blur when expanded
+
+### Floating Action Buttons (FAB)
+- [ ] Create FAB cluster on right edge
+- [ ] Add GIS tools button
+- [ ] Add layers button
+- [ ] Add measurement tools button
+- [ ] Implement expand/collapse animation
+- [ ] Glassmorphism with glow effects
+
+### Glassmorphism & Premium Effects
+- [ ] Apply backdrop-blur to all floating panels
+- [ ] Add subtle shadows and glows
+- [ ] Implement SF Pro Display-style typography
+- [ ] Add smooth transitions (spring physics)
+- [ ] Remove all hard borders
+- [ ] Add contextual fade-in/fade-out
+
+### Animations & Interactions
+- [ ] Map flyTo with easing
+- [ ] Panel slide animations
+- [ ] FAB expand/collapse
+- [ ] Search bar auto-hide
+- [ ] Property card transitions
+- [ ] Tool activation feedback
+
+### Testing & Polish
+- [ ] Test on different screen sizes
+- [ ] Verify touch interactions
+- [ ] Check animation performance
+- [ ] Validate glassmorphism effects
+- [ ] Save checkpoint with redesigned UI
