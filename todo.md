@@ -1095,3 +1095,20 @@
 - [x] Filter out properties layer from legend
 - [x] Browser verification complete (legend appears when Zoning toggled on)
 - [x] Save checkpoint with map legend complete
+
+
+## 🐛 MapLibre Source/Layer Cleanup Errors
+
+- [x] Fix Error: Source "heatmap-data" already exists
+- [x] Fix Error: Source "heatmap-data" cannot be removed while layer "property-heatmap" is using it
+- [x] Remove layers before removing sources in cleanup (line 220-234)
+- [x] Add existence checks before adding layers (line 235-237)
+- [x] Fix heatmap useEffect cleanup order (remove layer before source)
+- [x] Clustering useEffect cleanup order already correct (line 117-124)
+- [x] Add closing brace for if statement (line 294)
+- [x] Test map loading without errors (browser verified)
+- [x] Verify hot reload doesn't cause duplicate sources (working)
+- [x] Zero TypeScript errors
+- [x] Page loads cleanly with 32 properties
+- [x] No React error boundary triggered
+- [x] Save checkpoint with cleanup errors fixed

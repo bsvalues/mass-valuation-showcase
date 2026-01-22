@@ -217,6 +217,12 @@ export default function MapExplorer() {
         }
       });
 
+      // Add heatmap layer (initially hidden)
+      // IMPORTANT: Remove layer before removing source
+      if (mapInstance.getLayer('property-heatmap')) {
+        mapInstance.removeLayer('property-heatmap');
+      }
+      
       // Add separate heatmap source (non-clustered)
       if (mapInstance.getSource('heatmap-data')) {
         mapInstance.removeSource('heatmap-data');
@@ -225,12 +231,10 @@ export default function MapExplorer() {
         type: 'geojson',
         data: geojson
       });
-
-      // Add heatmap layer (initially hidden)
-      if (mapInstance.getLayer('property-heatmap')) {
-        mapInstance.removeLayer('property-heatmap');
-      }
-      mapInstance.addLayer({
+      
+      // Only add layer if it doesn't already exist
+      if (!mapInstance.getLayer('property-heatmap')) {
+        mapInstance.addLayer({
         id: 'property-heatmap',
         type: 'heatmap',
         source: 'heatmap-data',
@@ -287,6 +291,7 @@ export default function MapExplorer() {
           'visibility': 'none' // Initially hidden
         }
       });
+      }
 
       // Click handler for clusters - zoom in
       mapInstance.on('click', 'clusters', (e) => {
