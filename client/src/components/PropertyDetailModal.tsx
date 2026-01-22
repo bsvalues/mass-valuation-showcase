@@ -53,6 +53,16 @@ export function PropertyDetailModal({
     { enabled: open && propertyId !== null && !!property?.latitude && !!property?.longitude }
   );
 
+  // Fetch neighborhood statistics
+  const { data: neighborhoodStats, isLoading: statsLoading } = trpc.parcels.getNeighborhoodStats.useQuery(
+    {
+      latitude: parseFloat(property?.latitude || '0'),
+      longitude: parseFloat(property?.longitude || '0'),
+      radius: 1.0,
+    },
+    { enabled: open && !!property?.latitude && !!property?.longitude }
+  );
+
   if (!property) return null;
 
   const formatCurrency = (value: string | null | number) => {
@@ -252,6 +262,94 @@ export function PropertyDetailModal({
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Neighborhood Statistics Section */}
+        <Separator className="bg-slate-700" />
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-[#00FFFF]" />
+            <h3 className="text-xl font-semibold text-[#00FFFF]">Neighborhood Statistics</h3>
+            <Badge variant="outline" className="bg-[#00FFFF]/10 text-[#00FFFF] border-[#00FFFF]/30">
+              Within 1 mi
+            </Badge>
+          </div>
+
+          {statsLoading ? (
+            <div className="text-slate-400 text-sm">Loading neighborhood statistics...</div>
+          ) : neighborhoodStats && neighborhoodStats.propertyCount > 0 ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <Home className="w-4 h-4 text-[#00FFFF]" />
+                  <span className="text-sm text-slate-400">Properties</span>
+                </div>
+                <p className="text-2xl font-bold text-white">{neighborhoodStats.propertyCount.toLocaleString()}</p>
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="w-4 h-4 text-[#00FFFF]" />
+                  <span className="text-sm text-slate-400">Median Value</span>
+                </div>
+                <p className="text-2xl font-bold text-white">{formatCurrency(neighborhoodStats.medianValue)}</p>
+                {property.totalValue && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    {parseFloat(property.totalValue) > neighborhoodStats.medianValue ? (
+                      <span className="text-green-400">↑ Above median</span>
+                    ) : parseFloat(property.totalValue) < neighborhoodStats.medianValue ? (
+                      <span className="text-amber-400">↓ Below median</span>
+                    ) : (
+                      <span className="text-slate-400">= At median</span>
+                    )}
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <Ruler className="w-4 h-4 text-[#00FFFF]" />
+                  <span className="text-sm text-slate-400">Avg. Sq Ft</span>
+                </div>
+                <p className="text-2xl font-bold text-white">{neighborhoodStats.avgSquareFootage.toLocaleString()}</p>
+                {property.squareFootage && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    {parseFloat(property.squareFootage) > neighborhoodStats.avgSquareFootage ? (
+                      <span className="text-green-400">↑ Above average</span>
+                    ) : parseFloat(property.squareFootage) < neighborhoodStats.avgSquareFootage ? (
+                      <span className="text-amber-400">↓ Below average</span>
+                    ) : (
+                      <span className="text-slate-400">= At average</span>
+                    )}
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="w-4 h-4 text-[#00FFFF]" />
+                  <span className="text-sm text-slate-400">Avg. $/Sq Ft</span>
+                </div>
+                <p className="text-2xl font-bold text-white">${neighborhoodStats.avgPricePerSqFt.toLocaleString()}</p>
+                {property.totalValue && property.squareFootage && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    {(() => {
+                      const propertyPricePerSqFt = parseFloat(property.totalValue) / parseFloat(property.squareFootage);
+                      return propertyPricePerSqFt > neighborhoodStats.avgPricePerSqFt ? (
+                        <span className="text-green-400">↑ Above average</span>
+                      ) : propertyPricePerSqFt < neighborhoodStats.avgPricePerSqFt ? (
+                        <span className="text-amber-400">↓ Below average</span>
+                      ) : (
+                        <span className="text-slate-400">= At average</span>
+                      );
+                    })()}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-slate-400 text-sm">No neighborhood data available</div>
+          )}
         </div>
 
         {/* Similar Properties Nearby Section */}

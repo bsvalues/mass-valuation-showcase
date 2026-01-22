@@ -221,6 +221,114 @@ export const appRouter = router({
           .sort((a, b) => a.distance - b.distance)
           .slice(0, input.limit);
       }),
+
+    getNeighborhoodStats: protectedProcedure
+      .input(z.object({
+        latitude: z.number(),
+        longitude: z.number(),
+        radius: z.number().default(1.0), // miles
+      }))
+      .query(async ({ input }) => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { isNotNull, sql } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+        // Calculate bounding box
+        const latRange = input.radius / 69;
+        const lonRange = input.radius / (69 * Math.cos(input.latitude * Math.PI / 180));
+        const minLat = input.latitude - latRange;
+        const maxLat = input.latitude + latRange;
+        const minLon = input.longitude - lonRange;
+        const maxLon = input.longitude + lonRange;
+
+        // Find properties within bounding box
+        const nearby = await db
+          .select({
+            totalValue: parcels.totalValue,
+            squareFeet: parcels.squareFeet,
+            latitude: parcels.latitude,
+            longitude: parcels.longitude,
+          })
+          .from(parcels)
+          .where(
+            sql`CAST(${parcels.latitude} AS DECIMAL(10,6)) >= ${minLat}
+            AND CAST(${parcels.latitude} AS DECIMAL(10,6)) <= ${maxLat}
+            AND CAST(${parcels.longitude} AS DECIMAL(10,6)) >= ${minLon}
+            AND CAST(${parcels.longitude} AS DECIMAL(10,6)) <= ${maxLon}
+            AND ${parcels.totalValue} IS NOT NULL
+            AND ${parcels.totalValue} > 0
+            AND ${parcels.squareFeet} IS NOT NULL
+            AND ${parcels.squareFeet} > 0`
+          );
+
+        // Filter by exact radius using Haversine
+        const validProperties = nearby.filter(p => {
+          const lat = parseFloat(p.latitude || '0');
+          const lon = parseFloat(p.longitude || '0');
+          const R = 3959; // Earth radius in miles
+          const dLat = (lat - input.latitude) * Math.PI / 180;
+          const dLon = (lon - input.longitude) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(input.latitude * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c;
+          return distance <= input.radius;
+        });
+
+        if (validProperties.length === 0) {
+          return {
+            propertyCount: 0,
+            medianValue: 0,
+            avgSquareFootage: 0,
+            avgPricePerSqFt: 0,
+          };
+        }
+
+        // Calculate statistics
+        const values = validProperties
+          .map(p => parseFloat(String(p.totalValue || '0')))
+          .filter(v => v > 0)
+          .sort((a, b) => a - b);
+
+        const squareFeet = validProperties
+          .map(p => parseFloat(String(p.squareFeet || '0')))
+          .filter(sf => sf > 0);
+
+        const pricesPerSqFt = validProperties
+          .map(p => {
+            const val = parseFloat(String(p.totalValue || '0'));
+            const sf = parseFloat(String(p.squareFeet || '0'));
+            return sf > 0 ? val / sf : 0;
+          })
+          .filter(price => price > 0);
+
+        // Calculate median value
+        const medianValue = values.length > 0
+          ? values.length % 2 === 0
+            ? (values[values.length / 2 - 1] + values[values.length / 2]) / 2
+            : values[Math.floor(values.length / 2)]
+          : 0;
+
+        // Calculate averages
+        const avgSquareFootage = squareFeet.length > 0
+          ? Math.round(squareFeet.reduce((sum, sf) => sum + sf, 0) / squareFeet.length)
+          : 0;
+
+        const avgPricePerSqFt = pricesPerSqFt.length > 0
+          ? Math.round(pricesPerSqFt.reduce((sum, price) => sum + price, 0) / pricesPerSqFt.length)
+          : 0;
+
+        return {
+          propertyCount: validProperties.length,
+          medianValue: Math.round(medianValue),
+          avgSquareFootage,
+          avgPricePerSqFt,
+        };
+      }),
   }),
   sales: router({
     list: protectedProcedure.query(async ({ ctx }) => {

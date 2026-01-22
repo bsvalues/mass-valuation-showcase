@@ -646,3 +646,18 @@
 - [x] Display table with address, value, sqft, year built, distance
 - [x] Test with Benton County property data (map visible, ready for click testing)
 - [x] Write tests for nearby properties endpoint (20 tests passing)
+
+
+## 📊 Neighborhood Statistics Panel
+
+- [x] Create tRPC endpoint to calculate neighborhood statistics (parcels.getNeighborhoodStats)
+- [x] Calculate median home value within 1 mile radius
+- [x] Calculate average square footage for neighborhood
+- [x] Calculate average price per square foot
+- [x] Count total properties in neighborhood
+- [x] Use Haversine formula for accurate distance calculation
+- [x] Filter out properties with null/zero values
+- [x] Add "Neighborhood Statistics" section to PropertyDetailModal
+- [x] Display 4 stat cards: Property Count, Median Value, Avg Sq Ft, Avg $/Sq Ft
+- [x] Show comparison indicators (above/below/at median/average)
+- [x] Write comprehensive tests for statistics calculations (40 tests passing)
