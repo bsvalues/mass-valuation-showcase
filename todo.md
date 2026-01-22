@@ -1271,3 +1271,51 @@
 - [ ] Check animation performance
 - [ ] Validate glassmorphism effects
 - [ ] Save checkpoint with redesigned UI
+
+
+## 🔧 Re-integrate Spatial Analytics into Apple Maps UI (In Progress)
+
+### Layer Management
+- [ ] Add LayerManager component with glassmorphism
+- [ ] Connect to Layers FAB button
+- [ ] Restore 6 GIS layers (zoning, schools, floods, transit, parks, utilities)
+- [ ] Opacity sliders working
+- [ ] Layer rendering on map
+
+### GIS Tools
+- [ ] Add GIS Tools panel with glassmorphism
+- [ ] Buffer zone tool
+- [ ] Proximity analysis
+- [ ] Drawing tools
+- [ ] Connect to GIS Tools FAB
+
+### Measurement Tools
+- [ ] Add MeasurementTools component
+- [ ] Distance measurement
+- [ ] Area measurement
+- [ ] Connect to Ruler FAB
+- [ ] Visual line/polygon drawing
+
+### Spatial Query
+- [ ] Add spatial query mode
+- [ ] Click-to-query functionality
+- [ ] Results panel with glassmorphism
+- [ ] Connect to Target FAB
+- [ ] CSV export button
+
+### Heatmap & Legend
+- [ ] Add heatmap toggle button
+- [ ] Heatmap layer rendering
+- [ ] Map legend component
+- [ ] Auto-show/hide legend
+
+### Neighborhood Statistics
+- [ ] Restore neighborhood stats in bottom sheet
+- [ ] 1-mile radius calculation
+- [ ] Property type distribution
+- [ ] CSV export functionality
+
+### Feature Popups
+- [ ] Click layer features to show popups
+- [ ] Formatted attribute display
+- [ ] Glassmorphism styling
