@@ -1,299 +1,502 @@
+import { useEffect, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { MapView } from "@/components/Map";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layers, Map as MapIcon, MousePointer2, Navigation, Search, Settings2, Zap, Network, X, Building2, Ruler, DollarSign } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
-import { toast } from "sonner";
-import { performKMeansClustering } from "@/lib/clustering";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Layers, MapPin, TrendingUp, Home as HomeIcon, Maximize2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+// Mapbox access token - using Mapbox's public demo token
+// For production, get your own token at https://account.mapbox.com/
+mapboxgl.accessToken = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
 
 export default function MapExplorer() {
-  const [activeLayer, setActiveLayer] = useState("valuation");
-  const [is3DMode, setIs3DMode] = useState(true);
-  const [isSwarmMode, setIsSwarmMode] = useState(false);
-  const [clusters, setClusters] = useState<any[]>([]);
-  const [selectedParcel, setSelectedParcel] = useState<any>(null);
-  const { realData, hasRealData } = useGlobalSimulation();
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
+  const [selectedPropertyData, setSelectedPropertyData] = useState<any>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const circleLayerRef = useRef<string | null>(null);
+  
+  // Fetch property data for heatmap
+  const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
+  
+  // Filter and transform properties for map display
+  const properties = allProperties?.filter(p => 
+    p.latitude && p.longitude && (p.buildingValue || p.totalValue)
+  ).map(p => ({
+    id: p.id,
+    parcelNumber: p.parcelId,
+    latitude: parseFloat(p.latitude!),
+    longitude: parseFloat(p.longitude!),
+    value: p.buildingValue || p.totalValue || 0,
+    address: p.address,
+    assessedValue: p.totalValue || 0,
+  }));
+  
+  // Fetch neighborhood stats when property is selected
+  const { data: neighborhoodStats } = trpc.parcels.getNeighborhoodStats.useQuery(
+    { 
+      latitude: selectedPropertyData?.latitude || 0,
+      longitude: selectedPropertyData?.longitude || 0,
+      radius: 1609.34 // 1 mile in meters
+    },
+    { enabled: !!selectedProperty && !!selectedPropertyData }
+  );
 
+  // Initialize Mapbox
   useEffect(() => {
-    if (hasRealData) {
-      toast.success("Map Data Hydrated", {
-        description: `Visualizing ${realData.length.toLocaleString()} parcels from uploaded tax roll.`
+    if (!mapContainer.current || map.current) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/dark-v11", // Dark theme matching TerraForge
+      center: [-119.2, 46.2], // Benton County, Washington
+      zoom: 9.5,
+      pitch: 0, // Start flat, can be adjusted
+      bearing: 0,
+    });
+
+    map.current.on("load", () => {
+      setMapLoaded(true);
+    });
+
+    // Add navigation controls
+    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+    
+    // Add fullscreen control
+    map.current.addControl(new mapboxgl.FullscreenControl(), "top-right");
+
+    return () => {
+      map.current?.remove();
+    };
+  }, []);
+
+  // Add property markers and heatmap when data loads
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !properties || isLoading) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Prepare GeoJSON data
+    const geojsonData: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: properties.map((property: any) => ({
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [property.longitude, property.latitude],
+        },
+        properties: {
+          id: property.id,
+          value: property.value,
+          parcelNumber: property.parcelNumber || "Unknown",
+        },
+      })),
+    };
+
+    // Add source
+    if (!map.current.getSource("properties")) {
+      map.current.addSource("properties", {
+        type: "geojson",
+        data: geojsonData,
       });
-      
-      // Auto-run clustering when data loads
-      const calculatedClusters = performKMeansClustering(realData, 5);
-      setClusters(calculatedClusters);
+    } else {
+      (map.current.getSource("properties") as mapboxgl.GeoJSONSource).setData(geojsonData);
     }
-  }, [hasRealData, realData.length]);
+
+    // Add heatmap layer
+    if (!map.current.getLayer("properties-heatmap")) {
+      map.current.addLayer({
+        id: "properties-heatmap",
+        type: "heatmap",
+        source: "properties",
+        paint: {
+          // Increase weight as property value increases
+          "heatmap-weight": [
+            "interpolate",
+            ["linear"],
+            ["get", "value"],
+            0, 0,
+            1000000, 1,
+          ],
+          // Increase intensity as zoom level increases
+          "heatmap-intensity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            0, 1,
+            15, 3,
+          ],
+          // Color ramp for heatmap - TerraForge cyan theme
+          "heatmap-color": [
+            "interpolate",
+            ["linear"],
+            ["heatmap-density"],
+            0, "rgba(0, 0, 0, 0)",
+            0.2, "rgb(0, 50, 100)",
+            0.4, "rgb(0, 100, 150)",
+            0.6, "rgb(0, 150, 200)",
+            0.8, "rgb(0, 200, 230)",
+            1, "rgb(0, 255, 255)", // Cyan
+          ],
+          // Adjust radius by zoom level
+          "heatmap-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            0, 2,
+            15, 20,
+          ],
+          // Transition from heatmap to circle layer by zoom level
+          "heatmap-opacity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            7, 1,
+            11, 0.3,
+          ],
+        },
+      });
+    }
+
+    // Add circle layer for individual properties (visible at higher zoom)
+    if (!map.current.getLayer("properties-point")) {
+      map.current.addLayer({
+        id: "properties-point",
+        type: "circle",
+        source: "properties",
+        minzoom: 10,
+        paint: {
+          // Size circles by property value
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["get", "value"],
+            0, 6,
+            500000, 10,
+            1000000, 14,
+          ],
+          // TerraForge cyan with glow effect
+          "circle-color": "#00FFFF",
+          "circle-opacity": 0.9,
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#FFFFFF",
+          "circle-stroke-opacity": 0.6,
+          // Add blur for glow effect
+          "circle-blur": 0.15,
+        },
+      });
+    }
+
+    // Add click handler for property markers
+    map.current.on("click", "properties-point", (e) => {
+      if (!e.features || e.features.length === 0) return;
+      
+      const feature = e.features[0];
+      const propertyId = feature.properties?.id;
+      
+      if (propertyId) {
+        setSelectedProperty(propertyId);
+        
+        // Find full property data
+        const propData = properties.find((p: any) => p.id === propertyId);
+        setSelectedPropertyData(propData);
+        
+        // Draw 1-mile radius circle
+        const coordinates = (feature.geometry as GeoJSON.Point).coordinates;
+        
+        // Remove existing circle if any
+        if (circleLayerRef.current) {
+          if (map.current!.getLayer(circleLayerRef.current)) {
+            map.current!.removeLayer(circleLayerRef.current);
+          }
+          if (map.current!.getSource(circleLayerRef.current)) {
+            map.current!.removeSource(circleLayerRef.current);
+          }
+        }
+        
+        // Add new circle
+        const circleId = `circle-${propertyId}`;
+        circleLayerRef.current = circleId;
+        
+        map.current!.addSource(circleId, {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: coordinates,
+            },
+            properties: {},
+          },
+        });
+        
+        map.current!.addLayer({
+          id: circleId,
+          type: "circle",
+          source: circleId,
+          paint: {
+            "circle-radius": {
+              stops: [
+                [0, 0],
+                [20, metersToPixelsAtMaxZoom(1609.34, coordinates[1])], // 1 mile = 1609.34 meters
+              ],
+              base: 2,
+            },
+            "circle-color": "#00FFFF",
+            "circle-opacity": 0.1,
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#00FFFF",
+            "circle-stroke-opacity": 0.8,
+          },
+        });
+      }
+    });
+
+    // Change cursor on hover
+    map.current.on("mouseenter", "properties-point", () => {
+      if (map.current) map.current.getCanvas().style.cursor = "pointer";
+    });
+
+    map.current.on("mouseleave", "properties-point", () => {
+      if (map.current) map.current.getCanvas().style.cursor = "";
+    });
+
+  }, [mapLoaded, properties, isLoading]);
+
+  // Helper function to convert meters to pixels at max zoom
+  const metersToPixelsAtMaxZoom = (meters: number, latitude: number) => {
+    return meters / 0.075 / Math.cos((latitude * Math.PI) / 180);
+  };
 
   return (
     <DashboardLayout>
-      <div className="h-[calc(100vh-8rem)] flex flex-col lg:flex-row gap-4">
-        {/* Sidebar Controls */}
-        <Card className="w-full lg:w-80 flex flex-col terra-card bg-[rgba(10,14,26,0.8)] border-r border-[rgba(0,255,255,0.1)]">
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <MapPin className="w-8 h-8 text-primary" />
+            Map Explorer
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Professional GIS visualization powered by Mapbox GL JS • Benton County, Washington
+          </p>
+        </div>
+
+        {/* Map Container */}
+        <Card className="border-sidebar-border bg-card/50 backdrop-blur-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-[#00FFFF]">
-              <MapIcon className="w-5 h-5" />
-              TerraGAMA GIS
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Geospatial Assisted Mass Appraisal
-            </CardDescription>
-          </CardHeader>
-          
-          <ScrollArea className="flex-1 px-6">
-            <div className="space-y-6">
-              {/* Layer Selection */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                  <Layers className="w-3 h-3" /> Active Layers
-                </h3>
-                <div className="space-y-2">
-                  {[
-                    { id: "valuation", label: "Valuation Heatmap", color: "bg-blue-500" },
-                    { id: "sales", label: "Recent Sales", color: "bg-green-500" },
-                    { id: "parcels", label: "Parcel Boundaries", color: "bg-slate-500" },
-                    { id: "zoning", label: "Zoning Districts", color: "bg-purple-500" },
-                  ].map((layer) => (
-                    <div 
-                      key={layer.id}
-                      className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-all duration-200 ${
-                        activeLayer === layer.id 
-                          ? "bg-[rgba(0,255,255,0.1)] border border-[rgba(0,255,255,0.2)]" 
-                          : "hover:bg-white/5 border border-transparent"
-                      }`}
-                      onClick={() => setActiveLayer(layer.id)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${layer.color}`} />
-                        <span className="text-sm">{layer.label}</span>
-                      </div>
-                      <Switch checked={activeLayer === layer.id} />
-                    </div>
-                  ))}
-                </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  Property Heatmap
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  {properties ? `${properties.length.toLocaleString()} properties loaded` : "Loading properties..."}
+                  {" • "}Zoom in to see individual markers
+                </CardDescription>
               </div>
-
-              <Separator className="bg-white/10" />
-
-              {/* Analysis Tools */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                  <Zap className="w-3 h-3" /> Spatial Analysis
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" size="sm" className="justify-start text-xs h-8 active-recoil">
-                    <MousePointer2 className="w-3 h-3 mr-2" /> Select
-                  </Button>
-                  <Button variant="outline" size="sm" className="justify-start text-xs h-8 active-recoil">
-                    <Navigation className="w-3 h-3 mr-2" /> Buffer
-                  </Button>
-                  <Button variant="outline" size="sm" className="justify-start text-xs h-8 active-recoil">
-                    <Search className="w-3 h-3 mr-2" /> Query
-                  </Button>
-                  <Button variant="outline" size="sm" className="justify-start text-xs h-8 active-recoil">
-                    <Settings2 className="w-3 h-3 mr-2" /> Filter
-                  </Button>
-                </div>
-              </div>
-
-              {/* 3D Controls */}
-              <div className="p-3 rounded-lg bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border border-cyan-500/20">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-cyan-400">3D Terrain Mode</span>
-                  <Switch checked={is3DMode} onCheckedChange={setIs3DMode} />
-                </div>
-                <p className="text-[10px] text-slate-400">
-                  Enable WebGL terrain extrusion based on property value density.
-                </p>
-              </div>
-
-              {/* Swarm Controls */}
-              <div className={`p-3 rounded-lg border transition-all duration-500 ${isSwarmMode ? 'bg-[#00ffee]/10 border-[#00ffee]/50 shadow-[0_0_15px_rgba(0,255,238,0.2)]' : 'bg-white/5 border-white/10'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`text-sm font-medium flex items-center gap-2 ${isSwarmMode ? 'text-[#00ffee]' : 'text-slate-300'}`}>
-                    <Zap className={`w-4 h-4 ${isSwarmMode ? 'animate-pulse' : ''}`} />
-                    Swarm Visualization
-                  </span>
-                  <Switch checked={isSwarmMode} onCheckedChange={setIsSwarmMode} />
-                </div>
-                <p className="text-[10px] text-slate-400">
-                  Visualize the "Million Agent Consciousness" and synaptic connections between comparable properties.
-                </p>
-                {isSwarmMode && (
-                  <div className="mt-2 space-y-1">
-                    <div className="text-[10px] font-mono text-[#00ffee] animate-pulse">
-                      &gt; SYNAPSES ACTIVE: {hasRealData ? (realData.length * 3.5).toLocaleString(undefined, {maximumFractionDigits: 0}) : "42,891"}
-                    </div>
-                    {clusters.length > 0 && (
-                      <div className="text-[10px] font-mono text-purple-400">
-                        &gt; CLUSTERS IDENTIFIED: {clusters.length}
-                      </div>
-                    )}
-                  </div>
-                )}
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                  <Layers className="w-3 h-3 mr-1" />
+                  Heatmap Active
+                </Badge>
               </div>
             </div>
-          </ScrollArea>
-        </Card>
-
-        {/* Main Map View */}
-        <Card className="flex-1 terra-card overflow-hidden relative border-0">
-          <div className="absolute inset-0 bg-slate-900">
-            <MapView 
-              className="w-full h-full"
-              onMapReady={(map) => {
-                console.log("TerraGAMA Map Ready", map);
-                // Future: Add TerraGAMA layers here
-              }}
+          </CardHeader>
+          <CardContent>
+            <div
+              ref={mapContainer}
+              className="w-full h-[650px] rounded-lg overflow-hidden border border-sidebar-border"
+              style={{ background: "#0a0e1a" }}
             />
             
-            {/* Map Overlay Controls */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2">
-              <Button size="icon" variant="secondary" className="rounded-full shadow-lg bg-black/50 backdrop-blur-md border border-white/10 hover:bg-black/70">
-                <Navigation className="w-4 h-4" />
-              </Button>
-              <Button size="icon" variant="secondary" className="rounded-full shadow-lg bg-black/50 backdrop-blur-md border border-white/10 hover:bg-black/70">
-                <Layers className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Legend Overlay */}
-            <div className="absolute bottom-4 right-4 p-4 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 shadow-xl max-w-[200px]">
-              <h4 className="text-xs font-bold mb-2 text-white">Valuation Density</h4>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[10px] text-slate-300">
-                  <span>High</span>
-                  <div className="w-20 h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 rounded-full" />
-                  <span>Low</span>
-                </div>
-                {hasRealData && (
-                  <div className="mt-2 pt-2 border-t border-white/10">
-                    <div className="flex justify-between text-[10px] text-slate-400">
-                      <span>Parcels Loaded:</span>
-                      <span className="text-[#00ffee]">{realData.length.toLocaleString()}</span>
-                    </div>
-                  </div>
-                )}
+            {/* Map Instructions */}
+            <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground bg-sidebar/30 p-3 rounded-lg">
+              <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
+              <div>
+                <strong className="text-foreground">How to use:</strong> Zoom in to reveal individual property markers (cyan circles). 
+                Click any marker to view detailed neighborhood statistics within a 1-mile radius.
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Swarm Overlay */}
-            {isSwarmMode && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <div className="relative w-full h-full overflow-hidden opacity-30">
-                  <div className="absolute top-1/2 left-1/2 w-[800px] h-[800px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite]" />
-                  <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite_1s]" />
-                  <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] -translate-x-1/2 -translate-y-1/2 border border-[#00ffee] rounded-full animate-[ping_4s_linear_infinite_2s]" />
-                  
-                  {/* Render Clusters */}
-                  {clusters.map((cluster, i) => (
-                    <div 
-                      key={i}
-                      className="absolute w-4 h-4 bg-purple-500 rounded-full animate-pulse shadow-[0_0_20px_#a855f7] cursor-pointer hover:scale-150 transition-transform"
-                      style={{
-                        top: `${50 + (cluster.centroid.lat - 25.7617) * 200}%`,
-                        left: `${50 + (cluster.centroid.lng - (-80.1918)) * 200}%`
-                      }}
-                      onClick={() => {
-                        // Find a representative parcel from this cluster to show details
-                        if (cluster.points.length > 0) {
-                          const parcelId = cluster.points[0].id;
-                          const parcelData = realData.find((d: any) => d.pin === parcelId || d.id === parcelId) || {
-                            pin: parcelId,
-                            address: "1234 Market St",
-                            owner: "TerraFusion Corp",
-                            total_value: cluster.centroid.value,
-                            land_value: cluster.centroid.value * 0.3,
-                            imp_value: cluster.centroid.value * 0.7,
-                            total_sqft: 2500
-                          };
-                          setSelectedParcel(parcelData);
-                        }
-                      }}
-                    />
-                  ))}
+        {/* Neighborhood Stats Panel */}
+        {selectedProperty && selectedPropertyData && neighborhoodStats && (
+          <Card className="border-primary/30 bg-card/50 backdrop-blur-sm shadow-lg shadow-primary/5">
+            <CardHeader className="pb-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                    Neighborhood Statistics
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    Analysis of properties within 1-mile radius
+                  </CardDescription>
                 </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setSelectedProperty(null);
+                    setSelectedPropertyData(null);
+                    // Remove circle
+                    if (circleLayerRef.current && map.current) {
+                      if (map.current.getLayer(circleLayerRef.current)) {
+                        map.current.removeLayer(circleLayerRef.current);
+                      }
+                      if (map.current.getSource(circleLayerRef.current)) {
+                        map.current.removeSource(circleLayerRef.current);
+                      }
+                      circleLayerRef.current = null;
+                    }
+                  }}
+                >
+                  Close
+                </Button>
               </div>
-            )}
-
-            {/* Parcel Detail Modal */}
-            <Dialog open={!!selectedParcel} onOpenChange={(open) => !open && setSelectedParcel(null)}>
-              <DialogContent className="bg-[#0b1020]/95 border border-[#00ffee]/30 backdrop-blur-xl sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-[#00ffee] flex items-center gap-2">
-                    <Building2 className="w-5 h-5" />
-                    Property Detail Card
-                  </DialogTitle>
-                </DialogHeader>
-                
-                {selectedParcel && (
-                  <div className="space-y-6">
-                    <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                      <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Parcel ID</div>
-                      <div className="text-xl font-mono font-bold text-white">{selectedParcel.pin || selectedParcel.id || "N/A"}</div>
-                      <div className="text-sm text-slate-300 mt-1">{selectedParcel.address || "Address Unknown"}</div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Selected Property Info */}
+              <div className="p-4 rounded-lg bg-sidebar/30 border border-sidebar-border">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <HomeIcon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-muted-foreground">Selected Property</div>
+                    <div className="text-lg font-semibold text-foreground truncate">
+                      {selectedPropertyData.address || "Address Unknown"}
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                          <DollarSign className="w-3 h-3" /> Total Value
-                        </div>
-                        <div className="text-lg font-bold text-[#00ffee]">
-                          ${parseFloat(selectedParcel.total_value || 0).toLocaleString()}
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                          <Ruler className="w-3 h-3" /> Building Size
-                        </div>
-                        <div className="text-lg font-bold text-white">
-                          {parseFloat(selectedParcel.total_sqft || 0).toLocaleString()} sqft
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs text-slate-400">
-                        <span>Land Value</span>
-                        <span>Improvement Value</span>
-                      </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden flex">
-                        <div 
-                          className="h-full bg-blue-500" 
-                          style={{ width: `${(parseFloat(selectedParcel.land_value || 0) / parseFloat(selectedParcel.total_value || 1)) * 100}%` }} 
-                        />
-                        <div 
-                          className="h-full bg-purple-500" 
-                          style={{ width: `${(parseFloat(selectedParcel.imp_value || 0) / parseFloat(selectedParcel.total_value || 1)) * 100}%` }} 
-                        />
-                      </div>
-                      <div className="flex justify-between text-xs font-mono text-white">
-                        <span>${parseFloat(selectedParcel.land_value || 0).toLocaleString()}</span>
-                        <span>${parseFloat(selectedParcel.imp_value || 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-white/10 flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedParcel(null)}>Close</Button>
-                      <Button size="sm" className="bg-[#00ffee] text-[#0b1020] hover:bg-[#00ffee]/90 font-bold">
-                        View Full Record
-                      </Button>
+                    <div className="text-sm text-primary font-medium mt-1">
+                      ${selectedPropertyData.assessedValue?.toLocaleString() || "N/A"}
                     </div>
                   </div>
-                )}
-              </DialogContent>
-            </Dialog>
-          </div>
+                </div>
+              </div>
+
+              {/* Key Metrics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Median Home Value</div>
+                  <div className="text-2xl font-bold text-primary mt-1">
+                    ${neighborhoodStats.medianValue.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {selectedPropertyData.assessedValue > neighborhoodStats.medianValue ? "↑ Above" : 
+                     selectedPropertyData.assessedValue < neighborhoodStats.medianValue ? "↓ Below" : "= At"} median
+                  </div>
+                </div>
+                <div className="p-4 rounded-lg bg-sidebar/30 border border-sidebar-border">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Avg Square Footage</div>
+                  <div className="text-2xl font-bold text-foreground mt-1">
+                    {neighborhoodStats.avgSquareFootage.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">sq ft</div>
+                </div>
+                <div className="p-4 rounded-lg bg-sidebar/30 border border-sidebar-border">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Avg Price/Sq Ft</div>
+                  <div className="text-2xl font-bold text-foreground mt-1">
+                    ${neighborhoodStats.avgPricePerSqFt.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">per sq ft</div>
+                </div>
+                <div className="p-4 rounded-lg bg-sidebar/30 border border-sidebar-border">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Properties</div>
+                  <div className="text-2xl font-bold text-foreground mt-1">
+                    {neighborhoodStats.propertyCount}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">in radius</div>
+                </div>
+              </div>
+
+              {/* Property Type Distribution */}
+              {neighborhoodStats.propertyTypeDistribution && neighborhoodStats.propertyTypeDistribution.length > 0 && (
+                <div>
+                  <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-primary" />
+                    Property Type Distribution
+                  </h3>
+                  <div className="space-y-3">
+                    {neighborhoodStats.propertyTypeDistribution.map((item) => (
+                      <div key={item.type} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{item.type}</span>
+                          <span className="text-foreground font-medium">
+                            {item.count} ({item.percentage.toFixed(1)}%)
+                          </span>
+                        </div>
+                        <div className="h-2 bg-sidebar/30 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-500"
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Average Age */}
+              {neighborhoodStats.avgAge !== null && (
+                <div>
+                  <h3 className="text-base font-semibold mb-3">Average Age of Homes</h3>
+                  <div className="p-4 rounded-lg bg-sidebar/30 border border-sidebar-border">
+                    <div className="text-3xl font-bold text-primary">
+                      {neighborhoodStats.avgAge.toFixed(1)} years
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Average construction year: {(new Date().getFullYear() - neighborhoodStats.avgAge).toFixed(0)}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Legend */}
+        <Card className="border-sidebar-border bg-card/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Layers className="w-4 h-4 text-primary" />
+              Map Legend
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-[#00FFFF] border-2 border-white/60"></div>
+                <div>
+                  <div className="text-sm font-medium">Individual Properties</div>
+                  <div className="text-xs text-muted-foreground">Visible at zoom level 10+</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-5 bg-gradient-to-r from-[#003264] via-[#0096c8] to-[#00FFFF] rounded"></div>
+                <div>
+                  <div className="text-sm font-medium">Density Heatmap</div>
+                  <div className="text-xs text-muted-foreground">Low to high property density</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full border-2 border-[#00FFFF] bg-[#00FFFF]/10"></div>
+                <div>
+                  <div className="text-sm font-medium">1-Mile Radius</div>
+                  <div className="text-xs text-muted-foreground">Neighborhood analysis boundary</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </DashboardLayout>

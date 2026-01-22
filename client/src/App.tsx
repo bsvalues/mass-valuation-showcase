@@ -26,7 +26,7 @@ import AVMStudio from "./pages/AVMStudio";
 import ModelManagement from "./pages/ModelManagement";
 import DataImport from "./pages/DataImport";
 import BatchValuation from "./pages/BatchValuation";
-import DashboardAnalytics from "@/pages/DashboardAnalytics";
+
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -48,7 +48,7 @@ function Router() {
       <Route path={"/admin/users"} component={AdminUsers} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
-      <Route path={"/analytics"} component={DashboardAnalytics} />
+
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

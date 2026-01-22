@@ -697,3 +697,44 @@
 - [x] Use BarChart3 icon from lucide-react
 - [x] Place after "Market Analysis" in the navigation list
 - [x] Link to /analytics route
+
+
+## 🗺️ Mapbox GIS Rebuild - Professional Modern Mapping
+
+### Phase 1: Navigation Cleanup
+- [x] Remove duplicate "Analytics" menu item from DashboardLayout
+- [x] Keep only "Map Explorer" for GIS functionality
+- [x] Delete DashboardAnalytics.tsx page
+- [x] Remove Analytics route from App.tsx
+
+### Phase 2: Mapbox Setup
+- [x] Install mapbox-gl and @types/mapbox-gl packages
+- [x] Configure Mapbox access token (using Mapbox demo token)
+- [x] Set up custom dark theme matching TerraForge aesthetic (dark-v11)
+- [x] Configure initial map view centered on Benton County
+
+### Phase 3: Property Visualization
+- [x] Replace Google Maps with Mapbox GL JS
+- [x] Create custom property markers with TerraForge cyan glow
+- [x] Implement heatmap layer using Mapbox native heatmap
+- [x] Make markers clickable to show property details
+- [ ] Add property clustering for better performance (deferred)
+
+### Phase 4: Neighborhood Statistics Integration
+- [x] Connect neighborhood stats endpoint to map markers
+- [x] Show stats in modern card below map on marker click
+- [x] Draw 1-mile radius circle using Mapbox circle layer
+- [x] Add property type distribution visualization
+
+### Phase 5: Modern UI & Controls
+- [ ] Add custom map controls matching TerraForge theme
+- [ ] Implement layer toggles (heatmap, markers, boundaries)
+- [ ] Add search/filter controls with modern styling
+- [ ] Ensure responsive design for all screen sizes
+
+### Phase 6: Testing & Polish
+- [ ] Test marker interactions and popups
+- [ ] Verify neighborhood statistics accuracy
+- [ ] Test performance with full dataset
+- [ ] Write tests for map functionality
+- [ ] Save checkpoint
