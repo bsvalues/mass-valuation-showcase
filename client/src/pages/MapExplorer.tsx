@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import mapboxgl from "mapbox-gl";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,17 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Layers, MapPin, TrendingUp, Home as HomeIcon, Maximize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-// Mapbox access token - using a more reliable public token
-// For production, get your own token at https://account.mapbox.com/
-mapboxgl.accessToken = "pk.eyJ1IjoiZXhhbXBsZXMiLCJhIjoiY2p0MG01MXRqMW45cjQzb2R6b2ptc3J4MSJ9.zA2W0IkI0c6KaAhJfk9bWg";
+// MapLibre GL JS - free and open source, no API key required
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const map = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
   const [selectedPropertyData, setSelectedPropertyData] = useState<any>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
   const circleLayerRef = useRef<string | null>(null);
   
   // Fetch property data for heatmap
@@ -52,12 +51,36 @@ export default function MapExplorer() {
     if (!mapContainer.current || map.current) return;
 
     try {
-      map.current = new mapboxgl.Map({
+      map.current = new maplibregl.Map({
         container: mapContainer.current,
-        style: "mapbox://styles/mapbox/dark-v11", // Dark theme matching TerraForge
+        style: {
+          version: 8,
+          sources: {
+            'osm-tiles': {
+              type: 'raster',
+              tiles: [
+                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              ],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors'
+            }
+          },
+          layers: [
+            {
+              id: 'osm-tiles-layer',
+              type: 'raster',
+              source: 'osm-tiles',
+              minzoom: 0,
+              maxzoom: 19
+            }
+          ],
+          glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf'
+        },
         center: [-119.2, 46.2], // Benton County, Washington
         zoom: 9.5,
-        pitch: 0, // Start flat, can be adjusted
+        pitch: 0,
         bearing: 0,
       });
 
@@ -72,10 +95,10 @@ export default function MapExplorer() {
       });
 
       // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      map.current.addControl(new maplibregl.NavigationControl(), "top-right");
       
       // Add fullscreen control
-      map.current.addControl(new mapboxgl.FullscreenControl(), "top-right");
+      map.current.addControl(new maplibregl.FullscreenControl(), "top-right");
     } catch (error) {
       console.error("Failed to initialize map:", error);
     }
@@ -117,7 +140,7 @@ export default function MapExplorer() {
         data: geojsonData,
       });
     } else {
-      (map.current.getSource("properties") as mapboxgl.GeoJSONSource).setData(geojsonData);
+      (map.current.getSource("properties") as maplibregl.GeoJSONSource).setData(geojsonData);
     }
 
     // Add heatmap layer
@@ -252,13 +275,13 @@ export default function MapExplorer() {
           type: "circle",
           source: circleId,
           paint: {
-            "circle-radius": {
-              stops: [
-                [0, 0],
-                [20, metersToPixelsAtMaxZoom(1609.34, coordinates[1])], // 1 mile = 1609.34 meters
-              ],
-              base: 2,
-            },
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              0, 0,
+              20, metersToPixelsAtMaxZoom(1609.34, coordinates[1]) // 1 mile = 1609.34 meters
+            ],
             "circle-color": "#00FFFF",
             "circle-opacity": 0.1,
             "circle-stroke-width": 2,

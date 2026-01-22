@@ -746,3 +746,13 @@
 - [x] Add error event handlers for map tile loading failures
 - [x] Add try-catch wrapper for map initialization
 - [x] Test map loading without errors (Zero TypeScript errors, hot reload working)
+
+
+## 🗺️ Fix Map Tiles Not Loading
+
+- [x] Test current Mapbox token validity (invalid/expired)
+- [x] Switch to MapLibre GL JS (free, open source, designed for OSM)
+- [x] Install maplibre-gl and replace all mapboxgl references
+- [x] Update map style to use OSM raster tiles
+- [x] Fix TypeScript errors (mapboxgl namespace, circle-radius syntax)
+- [x] Verify map tiles load correctly showing Benton County geography
