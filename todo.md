@@ -676,3 +676,16 @@
 - [x] Write tests for property type distribution calculations (5 tests)
 - [x] Write tests for average age calculations (6 tests)
 - [x] All 51 tests passing (40 original + 11 new)
+
+
+## 🗺️ Neighborhood Boundary Visualization
+
+- [x] Add circle overlay to map in PropertyHeatmap when property is selected
+- [x] Use Google Maps Circle API to draw radius boundary
+- [x] Set circle radius to match statistics calculation (1 mile = 1609.34 meters)
+- [x] Style circle with cyan stroke color matching TerraForge theme (#00FFFF)
+- [x] Make circle semi-transparent to show underlying map features (15% fill opacity)
+- [x] Center circle on selected property coordinates
+- [x] Clear circle when modal closes
+- [x] Write tests for circle creation and cleanup (27 tests passing)
+- [x] Remove old circle when new property is selected

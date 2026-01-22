@@ -39,6 +39,7 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [heatmap, setHeatmap] = useState<google.maps.visualization.HeatmapLayer | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [circle, setCircle] = useState<google.maps.Circle | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
@@ -173,6 +174,24 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
           marker.addListener("click", () => {
             setSelectedPropertyId(property.id!);
             setModalOpen(true);
+            
+            // Draw circle around selected property
+            if (circle) {
+              circle.setMap(null);
+            }
+            
+            const newCircle = new google.maps.Circle({
+              strokeColor: "#00FFFF",
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
+              fillColor: "#00FFFF",
+              fillOpacity: 0.15,
+              map: map,
+              center: { lat: property.latitude, lng: property.longitude },
+              radius: 1609.34, // 1 mile in meters
+            });
+            
+            setCircle(newCircle);
           });
 
           newMarkers.push(marker);
@@ -254,7 +273,14 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
       {propertyDetails && (
         <PropertyDetailModal
           open={modalOpen}
-          onOpenChange={setModalOpen}
+          onOpenChange={(open) => {
+            setModalOpen(open);
+            if (!open && circle) {
+              // Clear circle when modal closes
+              circle.setMap(null);
+              setCircle(null);
+            }
+          }}
           propertyId={selectedPropertyId}
           property={{
             parcelNumber: propertyDetails.parcelId,
