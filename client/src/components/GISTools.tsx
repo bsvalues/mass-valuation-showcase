@@ -13,6 +13,8 @@ export interface GISToolsProps {
   onDrawPolygon: () => void;
   onClearTools: () => void;
   selectedProperty: { latitude: number; longitude: number } | null;
+  spatialQueryMode: boolean;
+  onToggleSpatialQuery: () => void;
 }
 
 export function GISTools({
@@ -21,6 +23,8 @@ export function GISTools({
   onDrawPolygon,
   onClearTools,
   selectedProperty,
+  spatialQueryMode,
+  onToggleSpatialQuery,
 }: GISToolsProps) {
   const [bufferRadius, setBufferRadius] = useState("0.5");
   const [measurementMode, setMeasurementMode] = useState<"distance" | "area" | null>(null);
@@ -141,6 +145,30 @@ export function GISTools({
               Clear All
             </Button>
           </div>
+        </div>
+
+        <Separator className="bg-sidebar-border" />
+
+        {/* Spatial Query Tool */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <Target className="h-4 w-4 text-sidebar-primary" />
+            Spatial Query
+          </Label>
+          <Button
+            size="sm"
+            variant={spatialQueryMode ? "default" : "outline"}
+            onClick={onToggleSpatialQuery}
+            className="w-full text-xs"
+          >
+            <Target className="h-3 w-3 mr-1" />
+            {spatialQueryMode ? "Query Mode Active" : "Activate Query Mode"}
+          </Button>
+          {spatialQueryMode && (
+            <p className="text-xs text-sidebar-primary">
+              Click anywhere on map to query all intersecting layers
+            </p>
+          )}
         </div>
 
         <Separator className="bg-sidebar-border" />

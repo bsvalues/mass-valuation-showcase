@@ -1051,3 +1051,26 @@
 - [x] Test layer toggle and rendering (zoning layer verified)
 - [x] Browser verification complete (GIS Tools panel working)
 - [x] Save checkpoint with feature popups complete
+
+
+## 🎯 Spatial Query Tool Implementation
+
+- [x] Add spatial query mode toggle button in GIS Tools
+- [x] Add state management for query mode and results
+- [x] Implement map click handler for spatial queries
+- [x] Query all visible layers at clicked point
+- [x] Use MapLibre queryRenderedFeatures() API
+- [x] Create summary panel UI component
+- [x] Display all intersecting layers in organized format
+- [x] Show layer-specific attributes for each intersection
+- [x] Add close button (X) to dismiss query results
+- [x] Style summary panel to match TerraForge theme
+- [x] Helper text when mode active: "Click anywhere on map to query all intersecting layers"
+- [x] Button changes to "Query Mode Active" when enabled
+- [x] Color-coded layer indicators in results
+- [x] Feature count badges for each layer
+- [x] Empty state when no layers intersect
+- [x] Formatted attribute display with getLayerColorForDisplay() helper
+- [x] Layer-specific attribute formatting with formatFeatureAttributes() helper
+- [x] Browser verification complete (button changes to "Query Mode Active")
+- [x] Save checkpoint with spatial query tool complete

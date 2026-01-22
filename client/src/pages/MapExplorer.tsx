@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, Flame, ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { Search, X, Flame, ChevronLeft, ChevronRight, Settings, Target } from "lucide-react";
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -21,6 +21,8 @@ export default function MapExplorer() {
   const [heatmapVisible, setHeatmapVisible] = useState(false);
   const [layers, setLayers] = useState<Layer[]>(defaultLayers);
   const [bufferZoneVisible, setBufferZoneVisible] = useState(false);
+  const [spatialQueryMode, setSpatialQueryMode] = useState(false);
+  const [queryResults, setQueryResults] = useState<any>(null);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -351,6 +353,38 @@ export default function MapExplorer() {
       mapInstance.on('mouseleave', 'clusters', clusterMouseLeave);
       mapInstance.on('mouseenter', 'unclustered-point', pointMouseEnter);
       mapInstance.on('mouseleave', 'unclustered-point', pointMouseLeave);
+
+      // Add spatial query click handler
+      mapInstance.on('click', (e) => {
+        if (!spatialQueryMode) return;
+
+        // Query all visible layers at clicked point
+        const point = e.point;
+        const layerIds = layers
+          .filter(l => l.visible && l.id !== 'properties')
+          .map(l => l.id);
+
+        const features = mapInstance.queryRenderedFeatures(point, {
+          layers: layerIds
+        });
+
+        // Organize results by layer
+        const results: any = {
+          point: { lat: e.lngLat.lat, lng: e.lngLat.lng },
+          layers: {}
+        };
+
+        features.forEach(feature => {
+          const layerId = feature.layer.id;
+          if (!results.layers[layerId]) {
+            results.layers[layerId] = [];
+          }
+          results.layers[layerId].push(feature.properties);
+        });
+
+        setQueryResults(results);
+        console.log('✅ Spatial query results:', results);
+      });
     };
 
     if (mapInstance.isStyleLoaded()) {
@@ -809,6 +843,88 @@ export default function MapExplorer() {
     // TODO: Clear other tools
   };
 
+  // Helper function to get layer color for display
+  const getLayerColorForDisplay = (layerId: string): string => {
+    const colors: Record<string, string> = {
+      'zoning': '#FFD700',
+      'schools': '#4169E1',
+      'floods': '#1E90FF',
+      'transit': '#FF6347',
+      'parks': '#32CD32',
+      'utilities': '#FF8C00',
+    };
+    return colors[layerId] || '#808080';
+  };
+
+  // Helper function to format feature attributes for display
+  const formatFeatureAttributes = (layerId: string, properties: any): React.ReactElement => {
+    const renderAttribute = (label: string, value: any) => (
+      <div key={label} className="flex justify-between">
+        <span className="text-muted-foreground">{label}:</span>
+        <span className="font-medium">{value || 'N/A'}</span>
+      </div>
+    );
+
+    switch (layerId) {
+      case 'zoning':
+        return (
+          <div className="space-y-1">
+            {renderAttribute('Zone', properties.zone)}
+            {renderAttribute('Type', properties.zoneType)}
+            {renderAttribute('Description', properties.description)}
+          </div>
+        );
+      case 'schools':
+        return (
+          <div className="space-y-1">
+            {renderAttribute('District', properties.name)}
+            {renderAttribute('Type', properties.type)}
+            {renderAttribute('Grades', properties.grades)}
+          </div>
+        );
+      case 'floods':
+        return (
+          <div className="space-y-1">
+            {renderAttribute('Zone', properties.zone)}
+            {renderAttribute('Risk Level', properties.riskLevel)}
+            {renderAttribute('Description', properties.description)}
+          </div>
+        );
+      case 'transit':
+        return (
+          <div className="space-y-1">
+            {renderAttribute('Route', properties.routeNumber)}
+            {renderAttribute('Name', properties.name)}
+            {renderAttribute('Type', properties.type)}
+          </div>
+        );
+      case 'parks':
+        return (
+          <div className="space-y-1">
+            {renderAttribute('Name', properties.name)}
+            {renderAttribute('Type', properties.type)}
+            {renderAttribute('Acres', properties.acres)}
+          </div>
+        );
+      case 'utilities':
+        return (
+          <div className="space-y-1">
+            {renderAttribute('Type', properties.type)}
+            {renderAttribute('Operator', properties.operator)}
+            {renderAttribute('Status', properties.status)}
+          </div>
+        );
+      default:
+        return (
+          <div className="space-y-1">
+            {Object.entries(properties).map(([key, value]) =>
+              renderAttribute(key, value as any)
+            )}
+          </div>
+        );
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -944,6 +1060,8 @@ export default function MapExplorer() {
                         latitude: parseFloat(selectedPropertyData.latitude || "0"),
                         longitude: parseFloat(selectedPropertyData.longitude || "0")
                       } : null}
+                      spatialQueryMode={spatialQueryMode}
+                      onToggleSpatialQuery={() => setSpatialQueryMode(!spatialQueryMode)}
                     />
                     <LayerManager
                       layers={layers}
@@ -1029,6 +1147,68 @@ export default function MapExplorer() {
                     {neighborhoodStats.avgAge} years old
                   </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Spatial Query Results Panel */}
+        {queryResults && (
+          <Card className="neighborhood-stats-panel bg-card border-border shadow-lg">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    Spatial Query Results
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    Intersecting layers at ({queryResults.point.lat.toFixed(6)}, {queryResults.point.lng.toFixed(6)})
+                  </CardDescription>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setQueryResults(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Object.keys(queryResults.layers).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No layers intersect at this location</p>
+                  <p className="text-sm mt-1">Try enabling more layers or clicking a different area</p>
+                </div>
+              ) : (
+                Object.entries(queryResults.layers).map(([layerId, features]: [string, any]) => {
+                  const layer = layers.find(l => l.id === layerId);
+                  if (!layer) return null;
+
+                  return (
+                    <div key={layerId} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded"
+                          style={{ backgroundColor: getLayerColorForDisplay(layerId) }}
+                        />
+                        <h3 className="text-sm font-semibold">{layer.name}</h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {features.length} feature{features.length > 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+                      <div className="ml-6 space-y-2">
+                        {features.map((feature: any, idx: number) => (
+                          <div key={idx} className="p-3 bg-muted/50 rounded-lg text-sm">
+                            {formatFeatureAttributes(layerId, feature)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </CardContent>
           </Card>
