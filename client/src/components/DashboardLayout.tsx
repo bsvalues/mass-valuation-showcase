@@ -78,6 +78,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Calculator, label: "Cost Matrix", href: "/cost-matrix" },
     { icon: Factory, label: "Mass Valuation Studio", href: "/mass-valuation" },
     { icon: BarChart3, label: "Market Analysis", href: "/analysis" },
+    { icon: BarChart3, label: "Analytics", href: "/analytics" },
     { icon: MapIcon, label: "Map Explorer", href: "/map-explorer" },
     { icon: Box, label: "Models & Algorithms", href: "/models" },
     { icon: TrendingUp, label: "Regression Studio", href: "/regression" },

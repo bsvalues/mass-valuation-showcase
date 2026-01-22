@@ -689,3 +689,11 @@
 - [x] Clear circle when modal closes
 - [x] Write tests for circle creation and cleanup (27 tests passing)
 - [x] Remove old circle when new property is selected
+
+
+## 🔗 Analytics Navigation Menu Item
+
+- [x] Add Analytics menu item to DashboardLayout sidebar navigation
+- [x] Use BarChart3 icon from lucide-react
+- [x] Place after "Market Analysis" in the navigation list
+- [x] Link to /analytics route
