@@ -63,6 +63,11 @@
 - [x] Search result count display
 - [x] Clear button (X icon) for search reset
 - [x] Empty state when no search results found
+- [x] MapLibre clustering for better performance (GPU-accelerated WebGL)
+- [x] Cluster circles with dynamic sizing (20px/30px/40px)
+- [x] Cluster count labels (white text)
+- [x] Click clusters to zoom in with easing animation
+- [x] Unclustered points at high zoom levels (zoom > 14)
 - [x] Layer management (Valuation, Sales, Parcels, Zoning)
 - [x] Spatial analysis tools
 - [x] Swarm visualization for property clusters
@@ -860,3 +865,19 @@
 - [ ] Add clear button (X icon) when search is active
 - [ ] Test search functionality with various queries
 - [ ] Save checkpoint with search feature complete
+
+
+## 🗺️ Map Clustering Implementation
+
+- [x] Replace custom DOM markers with GeoJSON source
+- [x] Configure MapLibre clustering (cluster: true, clusterRadius: 50, clusterMaxZoom: 14)
+- [x] Add cluster circle layer with dynamic sizing (20px/30px/40px based on count)
+- [x] Add cluster count labels (white text, 14px)
+- [x] Add unclustered point layer for individual properties (8px radius)
+- [x] Implement click handler for clusters (zoom in with easing animation)
+- [x] Implement click handler for individual points (select property)
+- [x] Cursor hover effects (pointer on clusters and points)
+- [x] Property highlight on selection (14px radius, 3px stroke)
+- [x] Test clustering at zoom levels 8-16 (verified working)
+- [x] Verify performance improvement with GPU-accelerated WebGL rendering
+- [x] Integration with existing features (search, selection, stats panel)

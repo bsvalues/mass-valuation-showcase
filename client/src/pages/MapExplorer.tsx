@@ -12,7 +12,6 @@ import { Search, X } from "lucide-react";
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
-  const markers = useRef<maplibregl.Marker[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,81 +69,214 @@ export default function MapExplorer() {
     };
   }, []);
 
-  // Add property markers
+  // Add property markers with clustering
   useEffect(() => {
     if (!map.current || !properties.length) return;
 
-    // Clear existing markers
-    markers.current.forEach(marker => marker.remove());
-    markers.current = [];
+    const mapInstance = map.current;
 
-    // Filter properties with valid coordinates
-    const validProperties = properties.filter(
-      (p: any) => p.latitude && p.longitude
-    );
+    // Wait for map to load before adding sources/layers
+    const addClustering = () => {
+      // Remove existing source and layers if they exist
+      if (mapInstance.getSource('properties')) {
+        if (mapInstance.getLayer('clusters')) mapInstance.removeLayer('clusters');
+        if (mapInstance.getLayer('cluster-count')) mapInstance.removeLayer('cluster-count');
+        if (mapInstance.getLayer('unclustered-point')) mapInstance.removeLayer('unclustered-point');
+        mapInstance.removeSource('properties');
+      }
 
-    // Add markers for each property
-    validProperties.forEach(property => {
-      const el = document.createElement("div");
-      el.className = "property-marker";
-      el.dataset.propertyId = property.id.toString();
-      el.style.width = "12px";
-      el.style.height = "12px";
-      el.style.borderRadius = "50%";
-      el.style.backgroundColor = "#00FFFF";
-      el.style.border = "2px solid #FFFFFF";
-      el.style.cursor = "pointer";
-      el.style.boxShadow = "0 0 10px rgba(0, 255, 255, 0.5)";
-      el.style.transition = "all 0.3s ease";
+      // Filter properties with valid coordinates
+      const validProperties = properties.filter(
+        (p: any) => p.latitude && p.longitude
+      );
 
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([parseFloat(property.longitude!), parseFloat(property.latitude!)])
-        .addTo(map.current!);
+      // Create GeoJSON FeatureCollection
+      const geojson: GeoJSON.FeatureCollection = {
+        type: 'FeatureCollection',
+        features: validProperties.map((property: any) => ({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(property.longitude), parseFloat(property.latitude)]
+          },
+          properties: {
+            id: property.id,
+            address: property.address || 'Unknown Address',
+            parcelNumber: property.parcelNumber || 'N/A',
+            assessedValue: property.assessedValue || 0
+          }
+        }))
+      };
 
-      // Use marker element's onclick for immediate event binding
-      const markerEl = marker.getElement();
-      markerEl.onclick = (e) => {
-        e.stopPropagation();
-        console.log("✅ Marker clicked! Property:", property.id, property.address);
-        setSelectedProperty(property.id);
+      // Add clustered GeoJSON source
+      mapInstance.addSource('properties', {
+        type: 'geojson',
+        data: geojson,
+        cluster: true,
+        clusterMaxZoom: 14, // Max zoom to cluster points on
+        clusterRadius: 50 // Radius of each cluster when clustering points
+      });
+
+      // Add cluster circle layer
+      mapInstance.addLayer({
+        id: 'clusters',
+        type: 'circle',
+        source: 'properties',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': [
+            'step',
+            ['get', 'point_count'],
+            '#00FFFF',  // Cyan for small clusters (< 10)
+            10,
+            '#00D9D9',  // Darker cyan for medium clusters (10-30)
+            30,
+            '#00B8B8'   // Even darker for large clusters (30+)
+          ],
+          'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            20,  // 20px for small clusters
+            10,
+            30,  // 30px for medium clusters
+            30,
+            40   // 40px for large clusters
+          ],
+          'circle-opacity': 0.8,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#FFFFFF'
+        }
+      });
+
+      // Add cluster count labels
+      mapInstance.addLayer({
+        id: 'cluster-count',
+        type: 'symbol',
+        source: 'properties',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': '{point_count_abbreviated}',
+          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+          'text-size': 14
+        },
+        paint: {
+          'text-color': '#FFFFFF'
+        }
+      });
+
+      // Add unclustered point layer (individual properties)
+      mapInstance.addLayer({
+        id: 'unclustered-point',
+        type: 'circle',
+        source: 'properties',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': '#00FFFF',
+          'circle-radius': 8,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-opacity': 0.9
+        }
+      });
+
+      // Click handler for clusters - zoom in
+      mapInstance.on('click', 'clusters', (e) => {
+        const features = mapInstance.queryRenderedFeatures(e.point, {
+          layers: ['clusters']
+        });
+
+        if (!features.length) return;
+
+        const clusterId = features[0].properties?.cluster_id;
+        const source = mapInstance.getSource('properties') as maplibregl.GeoJSONSource;
+        const coordinates = (features[0].geometry as GeoJSON.Point).coordinates;
+
+        // Zoom into the cluster
+        source.getClusterExpansionZoom(clusterId).then((zoom: number) => {
+          mapInstance.easeTo({
+            center: [coordinates[0], coordinates[1]],
+            zoom: zoom || 14
+          });
+        }).catch(() => {
+          // Fallback zoom if expansion zoom fails
+          mapInstance.easeTo({
+            center: [coordinates[0], coordinates[1]],
+            zoom: 14
+          });
+        });
+      });
+
+      // Click handler for individual points - select property
+      mapInstance.on('click', 'unclustered-point', (e) => {
+        const features = mapInstance.queryRenderedFeatures(e.point, {
+          layers: ['unclustered-point']
+        });
+
+        if (!features.length) return;
+
+        const propertyId = features[0].properties?.id;
+        console.log("✅ Unclustered point clicked! Property ID:", propertyId);
+        setSelectedProperty(propertyId);
+
         // Scroll to stats panel
         setTimeout(() => {
           const statsPanel = document.querySelector(".neighborhood-stats-panel");
-          console.log("📊 Stats panel:", statsPanel);
           if (statsPanel) {
             statsPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
           }
         }, 200);
+      });
+
+      // Change cursor on hover
+      const clusterMouseEnter = () => {
+        mapInstance.getCanvas().style.cursor = 'pointer';
+      };
+      const clusterMouseLeave = () => {
+        mapInstance.getCanvas().style.cursor = '';
+      };
+      const pointMouseEnter = () => {
+        mapInstance.getCanvas().style.cursor = 'pointer';
+      };
+      const pointMouseLeave = () => {
+        mapInstance.getCanvas().style.cursor = '';
       };
 
-      markers.current.push(marker);
-    });
-  }, [allProperties]);
+      mapInstance.on('mouseenter', 'clusters', clusterMouseEnter as any);
+      mapInstance.on('mouseleave', 'clusters', clusterMouseLeave as any);
+      mapInstance.on('mouseenter', 'unclustered-point', pointMouseEnter as any);
+      mapInstance.on('mouseleave', 'unclustered-point', pointMouseLeave as any);
+    };
 
-  // Highlight selected marker
+    if (mapInstance.loaded()) {
+      addClustering();
+    } else {
+      mapInstance.on('load', addClustering);
+    }
+
+    // Cleanup - event handlers are automatically removed when layers are removed
+  }, [properties]);
+
+  // Highlight selected property by updating layer paint
   useEffect(() => {
-    // Reset all markers to default style
-    const allMarkerElements = document.querySelectorAll(".property-marker");
-    allMarkerElements.forEach((el: any) => {
-      el.style.width = "12px";
-      el.style.height = "12px";
-      el.style.backgroundColor = "#00FFFF";
-      el.style.border = "2px solid #FFFFFF";
-      el.style.boxShadow = "0 0 10px rgba(0, 255, 255, 0.5)";
-      el.style.zIndex = "0";
-    });
+    if (!map.current || !selectedProperty) return;
 
-    // Highlight selected marker
-    if (selectedProperty) {
-      const selectedMarkerEl = document.querySelector(`[data-property-id="${selectedProperty}"]`);
-      if (selectedMarkerEl) {
-        (selectedMarkerEl as HTMLElement).style.width = "20px";
-        (selectedMarkerEl as HTMLElement).style.height = "20px";
-        (selectedMarkerEl as HTMLElement).style.backgroundColor = "#00FFFF";
-        (selectedMarkerEl as HTMLElement).style.border = "3px solid #FFFFFF";
-        (selectedMarkerEl as HTMLElement).style.boxShadow = "0 0 20px rgba(0, 255, 255, 1), 0 0 40px rgba(0, 255, 255, 0.5)";
-        (selectedMarkerEl as HTMLElement).style.zIndex = "1000";
-      }
+    const mapInstance = map.current;
+
+    // Update unclustered-point layer to highlight selected property
+    if (mapInstance.getLayer('unclustered-point')) {
+      mapInstance.setPaintProperty('unclustered-point', 'circle-radius', [
+        'case',
+        ['==', ['get', 'id'], selectedProperty],
+        14,  // Larger radius for selected
+        8    // Normal radius
+      ]);
+
+      mapInstance.setPaintProperty('unclustered-point', 'circle-stroke-width', [
+        'case',
+        ['==', ['get', 'id'], selectedProperty],
+        3,   // Thicker stroke for selected
+        2    // Normal stroke
+      ]);
     }
   }, [selectedProperty]);
 
@@ -191,7 +323,7 @@ export default function MapExplorer() {
                 <CardDescription>
                   {isLoading
                     ? "Loading properties..."
-                    : `${validPropertiesCount} properties loaded • Click markers to view details`}
+                    : `${validPropertiesCount} properties loaded • Clustering enabled for better performance`}
                 </CardDescription>
               </div>
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
@@ -289,7 +421,7 @@ export default function MapExplorer() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              ✨ Select a property from the list to view details and neighborhood statistics
+              ✨ Click clusters to zoom in • Click individual markers to view property details
             </p>
           </CardContent>
         </Card>
