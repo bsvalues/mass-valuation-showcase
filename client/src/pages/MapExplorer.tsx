@@ -938,7 +938,7 @@ export default function MapExplorer() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <Card className="border-primary/20">
+        <Card className="terra-card border-primary/20">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -975,7 +975,7 @@ export default function MapExplorer() {
             <div className="flex gap-4">
               {/* Property List Sidebar - Glassmorphism Applied */}
               {sidebarOpen && (
-                <div className="w-72 flex-shrink-0 space-y-4 terra-card rounded-2xl p-4 transition-all duration-300 ease-in-out">
+                <div className="w-72 flex-shrink-0 space-y-4 bg-background/50 rounded-xl p-4 border border-primary/10 transition-all duration-300 ease-in-out">
                   {/* Search Bar */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1071,7 +1071,7 @@ export default function MapExplorer() {
 
                 {/* GIS Tools Panel */}
                 {gisToolsOpen && (
-                  <div className="w-72 flex-shrink-0 space-y-4 terra-card rounded-2xl p-4 transition-all duration-300 ease-in-out">
+                  <div className="w-72 flex-shrink-0 space-y-4 bg-background/50 rounded-xl p-4 border border-primary/10 transition-all duration-300 ease-in-out">
                     <GISTools
                       onBufferZone={handleBufferZone}
                       onMeasureDistance={handleMeasureDistance}

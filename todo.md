@@ -1382,3 +1382,7 @@
 - [ ] Round corners on all panels (rounded-2xl)
 - [ ] Test visual polish in browser
 - [ ] Save checkpoint with visual polish complete
+
+## 🐛 Current Bugs
+
+- [x] Fix glassmorphism not rendering on Map Explorer sidebar (terra-card class not applying visual effects)
