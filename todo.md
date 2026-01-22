@@ -1074,3 +1074,24 @@
 - [x] Layer-specific attribute formatting with formatFeatureAttributes() helper
 - [x] Browser verification complete (button changes to "Query Mode Active")
 - [x] Save checkpoint with spatial query tool complete
+
+
+## 🗺️ Dynamic Map Legend Implementation
+
+- [x] Create MapLegend component file
+- [x] Add layer list with color swatches (4x4px rounded)
+- [x] Add layer names and descriptions
+- [x] Implement toggle switches for visibility control
+- [x] Add collapsible/expandable functionality (ChevronUp/Down)
+- [x] Position legend in bottom-right corner (absolute bottom-4 right-4)
+- [x] Auto-hide when no layers are visible (returns null)
+- [x] Show layer count badge (Badge component)
+- [x] Style to match TerraForge theme (bg-sidebar/95 backdrop-blur)
+- [x] Integrate into MapExplorer (inside map container with relative positioning)
+- [x] Test layer visibility toggling from legend (browser verified)
+- [x] Layers icon in header
+- [x] Hover effects on layer items (bg-sidebar-accent)
+- [x] Color coding system (6 layer colors)
+- [x] Filter out properties layer from legend
+- [x] Browser verification complete (legend appears when Zoning toggled on)
+- [x] Save checkpoint with map legend complete

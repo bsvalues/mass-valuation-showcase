@@ -1,6 +1,7 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { GISTools } from "@/components/GISTools";
 import { LayerManager, defaultLayers, type Layer } from "@/components/LayerManager";
+import { MapLegend } from "@/components/MapLegend";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
@@ -1041,10 +1042,15 @@ export default function MapExplorer() {
 
               {/* Map Container */}
               <div className="flex-1 flex gap-4">
-                <div className="flex-1">
+                <div className="flex-1 relative">
                   <div
                     ref={mapContainer}
                     className="w-full h-[600px] rounded-lg overflow-hidden border border-border"
+                  />
+                  {/* Map Legend */}
+                  <MapLegend
+                    layers={layers}
+                    onLayerToggle={handleLayerToggle}
                   />
                 </div>
 
