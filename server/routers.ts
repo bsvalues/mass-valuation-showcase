@@ -250,6 +250,8 @@ export const appRouter = router({
             squareFeet: parcels.squareFeet,
             latitude: parcels.latitude,
             longitude: parcels.longitude,
+            propertyType: parcels.propertyType,
+            yearBuilt: parcels.yearBuilt,
           })
           .from(parcels)
           .where(
@@ -285,6 +287,8 @@ export const appRouter = router({
             medianValue: 0,
             avgSquareFootage: 0,
             avgPricePerSqFt: 0,
+            propertyTypeDistribution: [],
+            avgAge: 0,
           };
         }
 
@@ -322,11 +326,38 @@ export const appRouter = router({
           ? Math.round(pricesPerSqFt.reduce((sum, price) => sum + price, 0) / pricesPerSqFt.length)
           : 0;
 
+        // Calculate property type distribution
+        const propertyTypeCounts: Record<string, number> = {};
+        validProperties.forEach(p => {
+          const type = p.propertyType || 'Unknown';
+          propertyTypeCounts[type] = (propertyTypeCounts[type] || 0) + 1;
+        });
+
+        const propertyTypeDistribution = Object.entries(propertyTypeCounts)
+          .map(([type, count]) => ({
+            type,
+            count,
+            percentage: Math.round((count / validProperties.length) * 100),
+          }))
+          .sort((a, b) => b.count - a.count); // Sort by count descending
+
+        // Calculate average age of homes
+        const currentYear = new Date().getFullYear();
+        const yearsBuilt = validProperties
+          .map(p => p.yearBuilt)
+          .filter((year): year is number => year !== null && year > 0 && year <= currentYear);
+
+        const avgAge = yearsBuilt.length > 0
+          ? Math.round(currentYear - (yearsBuilt.reduce((sum, year) => sum + year, 0) / yearsBuilt.length))
+          : 0;
+
         return {
           propertyCount: validProperties.length,
           medianValue: Math.round(medianValue),
           avgSquareFootage,
           avgPricePerSqFt,
+          propertyTypeDistribution,
+          avgAge,
         };
       }),
   }),

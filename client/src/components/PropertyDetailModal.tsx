@@ -278,6 +278,7 @@ export function PropertyDetailModal({
           {statsLoading ? (
             <div className="text-slate-400 text-sm">Loading neighborhood statistics...</div>
           ) : neighborhoodStats && neighborhoodStats.propertyCount > 0 ? (
+            <>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
                 <div className="flex items-center gap-2 mb-2">
@@ -347,6 +348,60 @@ export function PropertyDetailModal({
                 )}
               </div>
             </div>
+
+            {/* Property Type Distribution */}
+            {neighborhoodStats.propertyTypeDistribution && neighborhoodStats.propertyTypeDistribution.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-[#00FFFF] mb-3">Property Type Distribution</h4>
+                <div className="space-y-2">
+                  {neighborhoodStats.propertyTypeDistribution.map((item, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm text-slate-300">{item.type}</span>
+                          <span className="text-xs text-slate-400">{item.count} ({item.percentage}%)</span>
+                        </div>
+                        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#00FFFF] to-[#00D9D9] transition-all duration-300"
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Average Age of Homes */}
+            {neighborhoodStats.avgAge > 0 && (
+              <div className="mt-6">
+                <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-4 h-4 text-[#00FFFF]" />
+                    <span className="text-sm text-slate-400">Average Age of Homes</span>
+                  </div>
+                  <p className="text-2xl font-bold text-white">{neighborhoodStats.avgAge} years</p>
+                  {property.yearBuilt && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      {(() => {
+                        const currentYear = new Date().getFullYear();
+                        const propertyAge = currentYear - parseInt(property.yearBuilt);
+                        return propertyAge > neighborhoodStats.avgAge ? (
+                          <span className="text-amber-400">↓ Older than average</span>
+                        ) : propertyAge < neighborhoodStats.avgAge ? (
+                          <span className="text-green-400">↑ Newer than average</span>
+                        ) : (
+                          <span className="text-slate-400">= At average age</span>
+                        );
+                      })()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+            </>
           ) : (
             <div className="text-slate-400 text-sm">No neighborhood data available</div>
           )}

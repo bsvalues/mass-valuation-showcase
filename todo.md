@@ -661,3 +661,18 @@
 - [x] Display 4 stat cards: Property Count, Median Value, Avg Sq Ft, Avg $/Sq Ft
 - [x] Show comparison indicators (above/below/at median/average)
 - [x] Write comprehensive tests for statistics calculations (40 tests passing)
+
+
+## 🏘️ Enhanced Neighborhood Statistics - Property Types & Age
+
+- [x] Update getNeighborhoodStats endpoint to include property type distribution
+- [x] Calculate count and percentage for each property type in neighborhood
+- [x] Calculate average age of homes in neighborhood
+- [x] Add propertyTypeDistribution array to response (type, count, percentage)
+- [x] Add avgAge field to response
+- [x] Update frontend PropertyDetailModal to display property type breakdown
+- [x] Add visual chart/bars for property type distribution
+- [x] Display average age of homes with comparison indicator
+- [x] Write tests for property type distribution calculations (5 tests)
+- [x] Write tests for average age calculations (6 tests)
+- [x] All 51 tests passing (40 original + 11 new)

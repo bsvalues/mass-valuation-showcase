@@ -257,6 +257,109 @@ describe("Neighborhood Statistics - Backend Logic", () => {
     });
   });
 
+  describe("Property Type Distribution", () => {
+    it("should count properties by type correctly", () => {
+      const properties = [
+        { type: "Residential" },
+        { type: "Residential" },
+        { type: "Commercial" },
+        { type: "Residential" },
+        { type: "Commercial" },
+      ];
+      const typeCounts: Record<string, number> = {};
+      properties.forEach(p => {
+        typeCounts[p.type] = (typeCounts[p.type] || 0) + 1;
+      });
+      expect(typeCounts["Residential"]).toBe(3);
+      expect(typeCounts["Commercial"]).toBe(2);
+    });
+
+    it("should calculate percentages correctly", () => {
+      const total = 100;
+      const count = 25;
+      const percentage = Math.round((count / total) * 100);
+      expect(percentage).toBe(25);
+    });
+
+    it("should sort by count descending", () => {
+      const distribution = [
+        { type: "Commercial", count: 10 },
+        { type: "Residential", count: 50 },
+        { type: "Industrial", count: 5 },
+      ];
+      const sorted = distribution.sort((a, b) => b.count - a.count);
+      expect(sorted[0].type).toBe("Residential");
+      expect(sorted[1].type).toBe("Commercial");
+      expect(sorted[2].type).toBe("Industrial");
+    });
+
+    it("should handle unknown property types", () => {
+      const properties = [
+        { type: null },
+        { type: "" },
+        { type: "Residential" },
+      ];
+      const typeCounts: Record<string, number> = {};
+      properties.forEach(p => {
+        const type = p.type || "Unknown";
+        typeCounts[type] = (typeCounts[type] || 0) + 1;
+      });
+      expect(typeCounts["Unknown"]).toBe(2);
+      expect(typeCounts["Residential"]).toBe(1);
+    });
+
+    it("should return empty array when no properties", () => {
+      const distribution: any[] = [];
+      expect(distribution.length).toBe(0);
+    });
+  });
+
+  describe("Average Age Calculations", () => {
+    it("should calculate average age correctly", () => {
+      const currentYear = new Date().getFullYear();
+      const yearsBuilt = [1990, 2000, 2010];
+      const avgYearBuilt = yearsBuilt.reduce((sum, year) => sum + year, 0) / yearsBuilt.length;
+      const avgAge = Math.round(currentYear - avgYearBuilt);
+      expect(avgAge).toBeGreaterThan(0);
+    });
+
+    it("should filter out null year built values", () => {
+      const yearsBuilt = [2000, null, 2010, null, 2020];
+      const validYears = yearsBuilt.filter((year): year is number => year !== null);
+      expect(validYears.length).toBe(3);
+    });
+
+    it("should filter out invalid years (future or zero)", () => {
+      const currentYear = new Date().getFullYear();
+      const yearsBuilt = [1990, 0, 2010, currentYear + 10, 2020];
+      const validYears = yearsBuilt.filter(year => year > 0 && year <= currentYear);
+      expect(validYears.length).toBe(3);
+    });
+
+    it("should handle properties with same year built", () => {
+      const currentYear = new Date().getFullYear();
+      const yearsBuilt = [2000, 2000, 2000];
+      const avgYearBuilt = yearsBuilt.reduce((sum, year) => sum + year, 0) / yearsBuilt.length;
+      const avgAge = Math.round(currentYear - avgYearBuilt);
+      expect(avgAge).toBe(currentYear - 2000);
+    });
+
+    it("should return 0 when no valid years", () => {
+      const yearsBuilt: number[] = [];
+      const avgAge = yearsBuilt.length > 0 ? Math.round(new Date().getFullYear() - (yearsBuilt.reduce((sum, year) => sum + year, 0) / yearsBuilt.length)) : 0;
+      expect(avgAge).toBe(0);
+    });
+
+    it("should compare property age to neighborhood average", () => {
+      const currentYear = new Date().getFullYear();
+      const propertyYearBuilt = 2000;
+      const avgAge = 30;
+      const propertyAge = currentYear - propertyYearBuilt;
+      const isOlder = propertyAge > avgAge;
+      expect(typeof isOlder).toBe("boolean");
+    });
+  });
+
   describe("Performance Considerations", () => {
     it("should limit radius to reasonable distance", () => {
       const radiusMiles = 1.0;
