@@ -954,7 +954,7 @@ export default function MapExplorer() {
                   variant={heatmapVisible ? "default" : "outline"}
                   size="sm"
                   onClick={() => setHeatmapVisible(!heatmapVisible)}
-                  className="gap-2 bg-black/40 backdrop-blur-xl border-white/10 rounded-full shadow-lg hover:scale-105 transition-all duration-200"
+                  className="gap-2"
                 >
                   <Flame className="h-4 w-4" />
                   {heatmapVisible ? "Hide" : "Show"} Heatmap
@@ -963,7 +963,7 @@ export default function MapExplorer() {
                   variant={gisToolsOpen ? "default" : "outline"}
                   size="sm"
                   onClick={() => setGisToolsOpen(!gisToolsOpen)}
-                  className="gap-2 bg-black/40 backdrop-blur-xl border-white/10 rounded-full shadow-lg hover:scale-105 transition-all duration-200"
+                  className="gap-2"
                 >
                   <Settings className="h-4 w-4" />
                   GIS Tools
@@ -975,7 +975,7 @@ export default function MapExplorer() {
             <div className="flex gap-4">
               {/* Property List Sidebar */}
               {sidebarOpen && (
-                <div className="w-70 flex-shrink-0 space-y-4 bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl transition-all duration-300 ease-in-out">
+                <div className="w-80 flex-shrink-0 space-y-4">
                   {/* Search Bar */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1015,7 +1015,7 @@ export default function MapExplorer() {
                         <button
                           key={property.id}
                           onClick={() => setSelectedProperty(property.id)}
-                          className={`w-full text-left p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] ${
+                          className={`w-full text-left p-3 rounded-lg border transition-all ${
                             selectedProperty === property.id
                               ? "border-primary bg-primary/10"
                               : "border-border hover:border-primary/50 hover:bg-muted/50"
@@ -1071,7 +1071,7 @@ export default function MapExplorer() {
 
                 {/* GIS Tools Panel */}
                 {gisToolsOpen && (
-                  <div className="w-70 flex-shrink-0 space-y-4 bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl transition-all duration-300 ease-in-out">
+                  <div className="w-80 flex-shrink-0 space-y-4">
                     <GISTools
                       onBufferZone={handleBufferZone}
                       onMeasureDistance={handleMeasureDistance}

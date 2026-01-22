@@ -1319,3 +1319,66 @@
 - [ ] Click layer features to show popups
 - [ ] Formatted attribute display
 - [ ] Glassmorphism styling
+
+
+## 📱 Swipeable Bottom Sheet Implementation (In Progress)
+
+### Layout Transformation
+- [ ] Remove left sidebar completely
+- [ ] Expand map to full screen (100vw x 100vh)
+- [ ] Create bottom sheet container
+- [ ] Add drag handle UI element
+- [ ] Position bottom sheet at bottom of viewport
+
+### Three-State System
+- [ ] Collapsed state (80px height) - shows drag handle only
+- [ ] Half state (50vh height) - shows property list
+- [ ] Full state (90vh height) - shows full details + stats
+- [ ] State transition animations (500ms ease-out)
+
+### Swipe Gesture Handling
+- [ ] Detect touch/mouse drag on handle
+- [ ] Calculate drag distance and velocity
+- [ ] Snap to nearest state on release
+- [ ] Prevent over-scrolling beyond states
+- [ ] Add spring physics for natural feel
+
+### Content Migration
+- [ ] Move property search to bottom sheet header
+- [ ] Move property list (22 properties) to bottom sheet
+- [ ] Move neighborhood stats to full state view
+- [ ] Keep GIS tools in separate floating panel
+- [ ] Maintain all existing functionality
+
+### Styling & Polish
+- [ ] Glassmorphism (bg-black/60 backdrop-blur-2xl)
+- [ ] Rounded top corners (rounded-t-3xl)
+- [ ] Border glow (border-t border-white/10)
+- [ ] Shadow effect (shadow-2xl)
+- [ ] Smooth height transitions
+- [ ] Drag handle visual feedback
+
+### Testing
+- [ ] Test swipe up/down gestures
+- [ ] Test click-to-expand on handle
+- [ ] Test property selection updates sheet
+- [ ] Verify all GIS tools still accessible
+- [ ] Browser verification
+- [ ] Save checkpoint
+
+
+## 🎨 Apple Maps Visual Polish (In Progress)
+
+- [ ] Apply glassmorphism to sidebar (bg-black/60 backdrop-blur-2xl)
+- [ ] Apply glassmorphism to GIS tools panel
+- [ ] Apply glassmorphism to search bar
+- [ ] Reduce sidebar width from 320px to 280px
+- [ ] Enlarge map container height
+- [ ] Add smooth slide-in animation to sidebar
+- [ ] Add fade-in animation to panels
+- [ ] Add hover scale effects to property cards
+- [ ] Improve button styling with backdrop blur
+- [ ] Add floating shadow effects
+- [ ] Round corners on all panels (rounded-2xl)
+- [ ] Test visual polish in browser
+- [ ] Save checkpoint with visual polish complete
