@@ -612,3 +612,14 @@
 
 - [x] Fix getValueTrends SQL query error (used db.execute with raw SQL)
 - [x] Test analytics page loads without errors (working!)
+
+
+## 🖱️ Clickable Heatmap Markers with Property Details
+
+- [x] Create PropertyDetailModal component
+- [x] Add parcels.getById tRPC endpoint
+- [x] Add clickable cyan markers overlay on heatmap
+- [x] Fetch full property details on marker click
+- [x] Display modal with property information (address, values, sqft, year built)
+- [x] Test marker clicks and modal display in browser (cyan markers visible)
+- [x] Write tests for marker interaction (17 tests passing)

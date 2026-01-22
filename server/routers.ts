@@ -34,6 +34,22 @@ export const appRouter = router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return await db.getParcels(ctx.user.id);
     }),
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        const result = await db.select().from(parcels).where(eq(parcels.id, input.id)).limit(1);
+        if (result.length === 0) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Property not found' });
+        }
+        
+        return result[0];
+      }),
     create: protectedProcedure
       .input(z.object({
         parcelId: z.string(),
@@ -827,6 +843,8 @@ export const appRouter = router({
         
         // Build query with filters
         let query = db.select({
+          id: parcels.id,
+          parcelNumber: parcels.parcelId,
           latitude: parcels.latitude,
           longitude: parcels.longitude,
           value: parcels.buildingValue,
@@ -869,10 +887,12 @@ export const appRouter = router({
         
         const properties = await query.limit(1000); // Limit to 1000 points for performance
         
-        // Map to heatmap format
+        // Map to heatmap format with id and parcelNumber for clickable markers
         return properties
           .filter(p => p.latitude && p.longitude && p.value)
           .map(p => ({
+            id: p.id,
+            parcelNumber: p.parcelNumber,
             latitude: parseFloat(p.latitude!),
             longitude: parseFloat(p.longitude!),
             value: (p.value || 0),

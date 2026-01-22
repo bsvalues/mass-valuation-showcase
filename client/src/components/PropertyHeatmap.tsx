@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { PropertyDetailModal } from "./PropertyDetailModal";
+import { trpc } from "@/lib/trpc";
 
 declare global {
   interface Window {
@@ -23,6 +25,8 @@ const BENTON_COUNTY_CENTER = {
 
 interface PropertyHeatmapProps {
   properties: Array<{
+    id?: number;
+    parcelNumber?: string;
     latitude: number;
     longitude: number;
     value: number;
@@ -34,8 +38,17 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [heatmap, setHeatmap] = useState<google.maps.visualization.HeatmapLayer | null>(null);
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // Fetch property details when a property is selected
+  const { data: propertyDetails } = trpc.parcels.getById.useQuery(
+    { id: selectedPropertyId! },
+    { enabled: selectedPropertyId !== null }
+  );
 
   // Load Google Maps script
   useEffect(() => {
@@ -98,7 +111,7 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
     }
   }, [scriptLoaded, map]);
 
-  // Update heatmap when properties change
+  // Update heatmap and markers when properties change
   useEffect(() => {
     if (!map || !window.google?.maps?.visualization) return;
 
@@ -106,6 +119,10 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
     if (heatmap) {
       heatmap.setMap(null);
     }
+
+    // Remove old markers
+    markers.forEach(marker => marker.setMap(null));
+    setMarkers([]);
 
     if (properties.length === 0) return;
 
@@ -135,6 +152,34 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
       newHeatmap.setMap(map);
       setHeatmap(newHeatmap);
 
+      // Add clickable markers (show every 10th property to avoid clutter)
+      const newMarkers: google.maps.Marker[] = [];
+      properties.forEach((property, index) => {
+        if (index % 10 === 0 && property.id) {
+          const marker = new google.maps.Marker({
+            position: { lat: property.latitude, lng: property.longitude },
+            map: map,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 6,
+              fillColor: "#00FFFF",
+              fillOpacity: 0.8,
+              strokeColor: "#FFFFFF",
+              strokeWeight: 2,
+            },
+            title: property.parcelNumber || "Property",
+          });
+
+          marker.addListener("click", () => {
+            setSelectedPropertyId(property.id!);
+            setModalOpen(true);
+          });
+
+          newMarkers.push(marker);
+        }
+      });
+      setMarkers(newMarkers);
+
       // Fit bounds to show all properties
       if (heatmapData.length > 0) {
         const bounds = new google.maps.LatLngBounds();
@@ -155,7 +200,7 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
       console.error("Error creating heatmap:", err);
       setError("Failed to create heatmap");
     }
-  }, [map, properties, heatmap]);
+  }, [map, properties]);
 
   if (error) {
     return (
@@ -169,40 +214,61 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
   }
 
   return (
-    <Card className="terra-card bg-[rgba(10,14,26,0.6)]">
-      <CardHeader>
-        <CardTitle className="text-[#00FFFF]">Property Value Heatmap</CardTitle>
-        <CardDescription className="text-slate-400">
-          Color-coded density visualization for Benton County, Washington
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="relative">
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 rounded-lg">
-              <Loader2 className="w-8 h-8 animate-spin text-[#00FFFF]" />
-            </div>
-          )}
-          <div
-            ref={mapRef}
-            className="w-full h-[500px] rounded-lg border border-[#00FFFF]/20"
-          />
-          <div className="mt-4 flex items-center justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-[#00FFFF]"></div>
-              <span className="text-slate-300">Low Value</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-              <span className="text-slate-300">Medium Value</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500"></div>
-              <span className="text-slate-300">High Value</span>
+    <>
+      <Card className="terra-card bg-[rgba(10,14,26,0.6)]">
+        <CardHeader>
+          <CardTitle className="text-[#00FFFF]">Property Value Heatmap</CardTitle>
+          <CardDescription className="text-slate-400">
+            Color-coded density visualization for Benton County, Washington. Click cyan markers for property details.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 rounded-lg">
+                <Loader2 className="w-8 h-8 animate-spin text-[#00FFFF]" />
+              </div>
+            )}
+            <div
+              ref={mapRef}
+              className="w-full h-[500px] rounded-lg border border-[#00FFFF]/20"
+            />
+            <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-[#00FFFF]"></div>
+                <span className="text-slate-300">Low Value</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+                <span className="text-slate-300">Medium Value</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full bg-red-500"></div>
+                <span className="text-slate-300">High Value</span>
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {propertyDetails && (
+        <PropertyDetailModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          property={{
+            parcelNumber: propertyDetails.parcelId,
+            siteAddress: propertyDetails.address,
+            propertyType: propertyDetails.propertyType,
+            buildingValue: propertyDetails.buildingValue?.toString() || null,
+            landValue: propertyDetails.landValue?.toString() || null,
+            totalValue: propertyDetails.totalValue?.toString() || null,
+            squareFootage: propertyDetails.squareFeet?.toString() || null,
+            yearBuilt: propertyDetails.yearBuilt?.toString() || null,
+            latitude: propertyDetails.latitude,
+            longitude: propertyDetails.longitude,
+          }}
+        />
+      )}
+    </>
   );
 }
