@@ -49,10 +49,18 @@
 - [x] User CRUD operations for county administrators
 
 ### GIS & Mapping
-- [x] TerraGAMA GIS integration with Google Maps
+- [x] Replaced Google Maps with MapLibre GL JS + OpenStreetMap (free, no API keys)
+- [x] Map Explorer page with 22 property markers (cyan theme)
+- [x] Neighborhood statistics backend endpoint (1-mile radius Haversine calculation)
+- [x] Property type distribution and average age calculations
+- [x] Neighborhood statistics panel UI with 4 stat cards
+- [x] Property list sidebar with clickable cards (22 properties)
+- [x] Sidebar selection triggers neighborhood statistics panel
+- [x] Marker highlight on property selection (size + glow effect)
+- [x] Map flyTo animation on property selection
+- [x] Toggle sidebar visibility button
 - [x] Layer management (Valuation, Sales, Parcels, Zoning)
 - [x] Spatial analysis tools
-- [x] 3D terrain mode toggle
 - [x] Swarm visualization for property clusters
 
 ### Testing & Quality
@@ -813,3 +821,28 @@
 - [x] Show property details in MapLibre popup on marker click
 - [x] Add neighborhood statistics panel (conditional rendering)
 - [ ] Debug click handler to trigger neighborhood stats panel
+
+
+## 🐛 Debug Neighborhood Statistics Click Handler
+
+- [ ] Investigate why marker click doesn't trigger setSelectedProperty
+- [ ] Check if popup is preventing click event from reaching marker element
+- [ ] Test if console.log in click handler fires
+- [ ] Try alternative approach: use MapLibre marker.on('click') instead of DOM addEventListener
+- [ ] Verify selectedProperty state is updating correctly
+- [ ] Ensure neighborhood stats query is enabled when property is selected
+- [ ] Test end-to-end: click marker → stats panel appears
+
+
+## 📋 Property List Sidebar - Alternative Selection Method
+
+- [ ] Add collapsible property list sidebar to Map Explorer
+- [ ] Display all 22 properties in scrollable list
+- [ ] Show property address, parcel number, and assessed value in each card
+- [ ] Add click handler to property cards to set selectedProperty
+- [ ] Highlight selected property card with cyan border
+- [ ] Connect sidebar selection to neighborhood statistics panel
+- [ ] Pan map to center on selected property marker
+- [ ] Highlight selected marker with different color/size
+- [ ] Add toggle button to show/hide sidebar
+- [ ] Test end-to-end: click property → stats panel appears → marker highlights

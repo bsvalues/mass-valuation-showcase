@@ -5,12 +5,14 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markers = useRef<maplibregl.Marker[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -71,6 +73,7 @@ export default function MapExplorer() {
     validProperties.forEach(property => {
       const el = document.createElement("div");
       el.className = "property-marker";
+      el.dataset.propertyId = property.id.toString();
       el.style.width = "12px";
       el.style.height = "12px";
       el.style.borderRadius = "50%";
@@ -78,34 +81,58 @@ export default function MapExplorer() {
       el.style.border = "2px solid #FFFFFF";
       el.style.cursor = "pointer";
       el.style.boxShadow = "0 0 10px rgba(0, 255, 255, 0.5)";
+      el.style.transition = "all 0.3s ease";
 
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([parseFloat(property.longitude!), parseFloat(property.latitude!)])
-        .setPopup(
-          new maplibregl.Popup({ offset: 15 }).setHTML(
-            `<div style="padding: 8px;">
-              <strong>${property.address || "Unknown Address"}</strong><br/>
-              <small>Parcel: ${property.parcelId}</small><br/>
-              <small>Value: $${property.totalValue?.toLocaleString() || "N/A"}</small>
-            </div>`
-          )
-        )
         .addTo(map.current!);
 
-      // Add click handler
-      el.addEventListener("click", (e) => {
+      // Use marker element's onclick for immediate event binding
+      const markerEl = marker.getElement();
+      markerEl.onclick = (e) => {
         e.stopPropagation();
-        console.log("Marker clicked, property ID:", property.id);
+        console.log("✅ Marker clicked! Property:", property.id, property.address);
         setSelectedProperty(property.id);
-        // Scroll to stats panel after a short delay
+        // Scroll to stats panel
         setTimeout(() => {
-          document.querySelector(".neighborhood-stats-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
-      });
+          const statsPanel = document.querySelector(".neighborhood-stats-panel");
+          console.log("📊 Stats panel:", statsPanel);
+          if (statsPanel) {
+            statsPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        }, 200);
+      };
 
       markers.current.push(marker);
     });
   }, [allProperties]);
+
+  // Highlight selected marker
+  useEffect(() => {
+    // Reset all markers to default style
+    const allMarkerElements = document.querySelectorAll(".property-marker");
+    allMarkerElements.forEach((el: any) => {
+      el.style.width = "12px";
+      el.style.height = "12px";
+      el.style.backgroundColor = "#00FFFF";
+      el.style.border = "2px solid #FFFFFF";
+      el.style.boxShadow = "0 0 10px rgba(0, 255, 255, 0.5)";
+      el.style.zIndex = "0";
+    });
+
+    // Highlight selected marker
+    if (selectedProperty) {
+      const selectedMarkerEl = document.querySelector(`[data-property-id="${selectedProperty}"]`);
+      if (selectedMarkerEl) {
+        (selectedMarkerEl as HTMLElement).style.width = "20px";
+        (selectedMarkerEl as HTMLElement).style.height = "20px";
+        (selectedMarkerEl as HTMLElement).style.backgroundColor = "#00FFFF";
+        (selectedMarkerEl as HTMLElement).style.border = "3px solid #FFFFFF";
+        (selectedMarkerEl as HTMLElement).style.boxShadow = "0 0 20px rgba(0, 255, 255, 1), 0 0 40px rgba(0, 255, 255, 0.5)";
+        (selectedMarkerEl as HTMLElement).style.zIndex = "1000";
+      }
+    }
+  }, [selectedProperty]);
 
   // Get selected property details
   const selectedPropertyData = properties.find((p: any) => p.id === selectedProperty);
@@ -123,13 +150,18 @@ export default function MapExplorer() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-            <span className="text-primary">◉</span> Map Explorer
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Professional GIS visualization powered by MapLibre GL JS • Benton County, Washington
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+              <span className="text-primary">◉</span> Map Explorer
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Professional GIS visualization powered by MapLibre GL JS • Benton County, Washington
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            {sidebarOpen ? "Hide" : "Show"} Properties
+          </Button>
         </div>
 
         {/* Map Container */}
@@ -150,12 +182,58 @@ export default function MapExplorer() {
             </div>
           </CardHeader>
           <CardContent>
-            <div
-              ref={mapContainer}
-              className="w-full h-[600px] rounded-lg overflow-hidden border border-border"
-            />
+            <div className="flex gap-4">
+              {/* Property List Sidebar */}
+              {sidebarOpen && (
+                <div className="w-80 flex-shrink-0 border-r border-border pr-4">
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                    <h3 className="text-sm font-semibold text-foreground mb-3">Properties ({properties.filter((p: any) => p.latitude && p.longitude).length})</h3>
+                    {properties.filter((p: any) => p.latitude && p.longitude).map((property: any) => (
+                      <button
+                        key={property.id}
+                        onClick={() => {
+                          console.log("✅ Property selected from sidebar:", property.id);
+                          setSelectedProperty(property.id);
+                          // Pan map to property
+                          if (map.current && property.latitude && property.longitude) {
+                            map.current.flyTo({
+                              center: [parseFloat(property.longitude), parseFloat(property.latitude)],
+                              zoom: 14,
+                              duration: 1000
+                            });
+                          }
+                        }}
+                        className={`w-full text-left p-3 rounded-lg border transition-all hover:border-primary/50 ${
+                          selectedProperty === property.id
+                            ? "border-primary bg-primary/10"
+                            : "border-border bg-card"
+                        }`}
+                      >
+                        <div className="text-sm font-medium text-foreground truncate">
+                          {property.address || "Unknown Address"}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Parcel: {property.parcelNumber || "N/A"}
+                        </div>
+                        <div className="text-xs text-primary mt-1 font-mono">
+                          ${property.assessedValue?.toLocaleString() || "N/A"}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Map */}
+              <div className="flex-1">
+                <div
+                  ref={mapContainer}
+                  className="w-full h-[600px] rounded-lg overflow-hidden border border-border"
+                />
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground mt-2">
-              💡 How to use: Click any cyan marker to view property details and neighborhood statistics
+              ✨ Select a property from the list to view details and neighborhood statistics
             </p>
           </CardContent>
         </Card>
