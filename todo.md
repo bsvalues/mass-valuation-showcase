@@ -1032,3 +1032,22 @@
 - [x] Test GIS Tools panel opening
 - [x] Verify layer manager UI (7 layers displayed)
 - [x] Save checkpoint with live layer data complete
+
+
+## 🗺️ Map Feature Popups Implementation
+
+- [x] Import MapLibre Popup class
+- [x] Add click event handlers for all layer types
+- [x] Create popup HTML formatter for each layer type (formatPopupContent function)
+- [x] Display zoning attributes (zone type, description) with gold color
+- [x] Display school district attributes (district name, type, grades) with royal blue
+- [x] Display flood zone attributes (zone type, risk level) with dodger blue
+- [x] Display transit route attributes (route number, name, type) with tomato red
+- [x] Display park attributes (park name, type, acres) with lime green
+- [x] Display utility attributes (utility type, operator, status) with dark orange
+- [x] Style popups to match TerraForge theme (Inter font, dark background)
+- [x] Add emoji icons for visual identification
+- [x] Add cursor hover effects (pointer on hover)
+- [x] Test layer toggle and rendering (zoning layer verified)
+- [x] Browser verification complete (GIS Tools panel working)
+- [x] Save checkpoint with feature popups complete

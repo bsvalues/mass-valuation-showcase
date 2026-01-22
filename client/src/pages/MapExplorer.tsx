@@ -560,6 +560,30 @@ export default function MapExplorer() {
                 }
               });
             }
+
+            // Add click handler for popups
+            mapInstance.on('click', layerId, (e) => {
+              if (!e.features || e.features.length === 0) return;
+              
+              const feature = e.features[0];
+              const properties = feature.properties || {};
+              
+              // Format popup content based on layer type
+              const popupContent = formatPopupContent(layer.id, properties);
+              
+              new maplibregl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(popupContent)
+                .addTo(mapInstance);
+            });
+
+            // Change cursor on hover
+            mapInstance.on('mouseenter', layerId, () => {
+              mapInstance.getCanvas().style.cursor = 'pointer';
+            });
+            mapInstance.on('mouseleave', layerId, () => {
+              mapInstance.getCanvas().style.cursor = '';
+            });
           });
         } else {
           // Remove layer if not visible
@@ -636,6 +660,111 @@ export default function MapExplorer() {
         'utilities': '#FF4500',   // Orange red outline
       };
       return colors[layerId] || '#000000';
+    }
+
+    function formatPopupContent(layerId: string, properties: any): string {
+      const baseStyle = `
+        <div style="
+          font-family: 'Inter', sans-serif;
+          color: #0A0E1A;
+          padding: 8px;
+          min-width: 200px;
+        ">
+      `;
+      
+      let content = '';
+      
+      switch (layerId) {
+        case 'zoning':
+          content = `
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #FFD700;">
+              🏘️ Zoning District
+            </h3>
+            <div style="font-size: 14px; line-height: 1.6;">
+              <strong>Zone:</strong> ${properties.zone || 'N/A'}<br/>
+              <strong>Type:</strong> ${properties.zoneType || 'N/A'}<br/>
+              <strong>Description:</strong> ${properties.description || 'N/A'}
+            </div>
+          `;
+          break;
+        
+        case 'schools':
+          content = `
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #4169E1;">
+              🏫 School District
+            </h3>
+            <div style="font-size: 14px; line-height: 1.6;">
+              <strong>District:</strong> ${properties.name || 'N/A'}<br/>
+              <strong>Type:</strong> ${properties.type || 'N/A'}<br/>
+              <strong>Grades:</strong> ${properties.grades || 'N/A'}
+            </div>
+          `;
+          break;
+        
+        case 'floods':
+          content = `
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1E90FF;">
+              🌊 Flood Zone
+            </h3>
+            <div style="font-size: 14px; line-height: 1.6;">
+              <strong>Zone:</strong> ${properties.zone || 'N/A'}<br/>
+              <strong>Risk Level:</strong> ${properties.riskLevel || 'N/A'}<br/>
+              <strong>Description:</strong> ${properties.description || 'N/A'}
+            </div>
+          `;
+          break;
+        
+        case 'transit':
+          content = `
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #FF6347;">
+              🚌 Transit Route
+            </h3>
+            <div style="font-size: 14px; line-height: 1.6;">
+              <strong>Route:</strong> ${properties.routeNumber || 'N/A'}<br/>
+              <strong>Name:</strong> ${properties.name || 'N/A'}<br/>
+              <strong>Type:</strong> ${properties.type || 'N/A'}
+            </div>
+          `;
+          break;
+        
+        case 'parks':
+          content = `
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #32CD32;">
+              🏞️ Park & Recreation
+            </h3>
+            <div style="font-size: 14px; line-height: 1.6;">
+              <strong>Name:</strong> ${properties.name || 'N/A'}<br/>
+              <strong>Type:</strong> ${properties.type || 'N/A'}<br/>
+              <strong>Acres:</strong> ${properties.acres || 'N/A'}
+            </div>
+          `;
+          break;
+        
+        case 'utilities':
+          content = `
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #FF8C00;">
+              ⚡ Utility Line
+            </h3>
+            <div style="font-size: 14px; line-height: 1.6;">
+              <strong>Type:</strong> ${properties.type || 'N/A'}<br/>
+              <strong>Operator:</strong> ${properties.operator || 'N/A'}<br/>
+              <strong>Status:</strong> ${properties.status || 'N/A'}
+            </div>
+          `;
+          break;
+        
+        default:
+          content = `
+            <div style="font-size: 14px;">
+              <strong>Feature Properties:</strong><br/>
+              ${Object.entries(properties).map(([key, value]) => 
+                `<strong>${key}:</strong> ${value}`
+              ).join('<br/>')}
+            </div>
+          `;
+      }
+      
+      return baseStyle + content + '</div>';
     }
   }, [layers]);
 
