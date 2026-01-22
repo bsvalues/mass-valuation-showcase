@@ -1,0 +1,45 @@
+{
+  "query": "SELECT parcelId, address, latitude, longitude, buildingValue \nFROM parcels \nWHERE latitude IS NOT NULL AND longitude IS NOT NULL \nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT parcelId, address, latitude, longitude, buildingValue \nFROM parcels \nWHERE latitude IS NOT NULL AND longitude IS NOT NULL \nLIMIT 5;",
+  "rows": [
+    {
+      "parcelId": "TEST-001",
+      "address": "123 Test St",
+      "latitude": "40.7128",
+      "longitude": "-74.0060",
+      "buildingValue": "NULL"
+    },
+    {
+      "parcelId": "TEST-1768350012140",
+      "address": "123 Test St",
+      "latitude": "40.7128",
+      "longitude": "-74.0060",
+      "buildingValue": "NULL"
+    },
+    {
+      "parcelId": "TEST-1768350088788",
+      "address": "123 Test St",
+      "latitude": "40.7128",
+      "longitude": "-74.0060",
+      "buildingValue": "NULL"
+    },
+    {
+      "parcelId": "TEST-1768351158485",
+      "address": "123 Test St",
+      "latitude": "40.7128",
+      "longitude": "-74.0060",
+      "buildingValue": "NULL"
+    },
+    {
+      "parcelId": "TEST-1768351163800",
+      "address": "123 Test St",
+      "latitude": "40.7128",
+      "longitude": "-74.0060",
+      "buildingValue": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "parcelId\taddress\tlatitude\tlongitude\tbuildingValue\nTEST-001\t123 Test St\t40.7128\t-74.0060\tNULL\nTEST-1768350012140\t123 Test St\t40.7128\t-74.0060\tNULL\nTEST-1768350088788\t123 Test St\t40.7128\t-74.0060\tNULL\nTEST-1768351158485\t123 Test St\t40.7128\t-74.0060\tNULL\nTEST-1768351163800\t123 Test St\t40.7128\t-74.0060\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}
