@@ -68,6 +68,10 @@
 - [x] Cluster count labels (white text)
 - [x] Click clusters to zoom in with easing animation
 - [x] Unclustered points at high zoom levels (zoom > 14)
+- [x] Heatmap density layer with toggle button (Flame icon)
+- [x] Value-based heatmap weighting (assessed value)
+- [x] Color gradient: blue (low) → yellow → red (high)
+- [x] Zoom-dependent heatmap radius and intensity
 - [x] Layer management (Valuation, Sales, Parcels, Zoning)
 - [x] Spatial analysis tools
 - [x] Swarm visualization for property clusters
@@ -881,3 +885,20 @@
 - [x] Test clustering at zoom levels 8-16 (verified working)
 - [x] Verify performance improvement with GPU-accelerated WebGL rendering
 - [x] Integration with existing features (search, selection, stats panel)
+
+
+## 🔥 Heatmap Density Layer Implementation
+
+- [x] Add separate GeoJSON source for heatmap data (non-clustered)
+- [x] Configure heatmap layer with value-based intensity
+- [x] Set up color gradient (blue → yellow → red)
+- [x] Add toggle button UI in map header with Flame icon
+- [x] Implement state management for heatmap visibility
+- [x] Show/hide heatmap layer on toggle
+- [x] Zoom-dependent radius (2px at zoom 0, 30px at zoom 15)
+- [x] Zoom-dependent intensity (0.5 at zoom 0, 1.5 at zoom 15)
+- [x] Zoom-dependent opacity (0.8 at zoom 7, 0.3 at zoom 15)
+- [x] Value-based weighting ($0-$1M+ scale)
+- [x] Test heatmap at different zoom levels (works best at zoom 12-14)
+- [x] Verify button toggle functionality (Show/Hide states)
+- [x] Integration with existing features (clustering, selection, search)

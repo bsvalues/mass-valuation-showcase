@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
+import { Search, X, Flame } from "lucide-react";
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -15,6 +15,7 @@ export default function MapExplorer() {
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [heatmapVisible, setHeatmapVisible] = useState(false);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -179,6 +180,77 @@ export default function MapExplorer() {
         }
       });
 
+      // Add separate heatmap source (non-clustered)
+      if (mapInstance.getSource('heatmap-data')) {
+        mapInstance.removeSource('heatmap-data');
+      }
+      mapInstance.addSource('heatmap-data', {
+        type: 'geojson',
+        data: geojson
+      });
+
+      // Add heatmap layer (initially hidden)
+      if (mapInstance.getLayer('property-heatmap')) {
+        mapInstance.removeLayer('property-heatmap');
+      }
+      mapInstance.addLayer({
+        id: 'property-heatmap',
+        type: 'heatmap',
+        source: 'heatmap-data',
+        maxzoom: 15,
+        paint: {
+          // Increase weight based on assessed value
+          'heatmap-weight': [
+            'interpolate',
+            ['linear'],
+            ['get', 'assessedValue'],
+            0, 0,
+            100000, 0.2,
+            500000, 0.5,
+            1000000, 1
+          ],
+          // Increase intensity as zoom level increases
+          'heatmap-intensity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 0.5,
+            15, 1.5
+          ],
+          // Color gradient: blue (low) → yellow → red (high)
+          'heatmap-color': [
+            'interpolate',
+            ['linear'],
+            ['heatmap-density'],
+            0, 'rgba(33, 102, 172, 0)',
+            0.2, 'rgb(103, 169, 207)',
+            0.4, 'rgb(209, 229, 240)',
+            0.6, 'rgb(253, 219, 199)',
+            0.8, 'rgb(239, 138, 98)',
+            1, 'rgb(178, 24, 43)'
+          ],
+          // Adjust radius based on zoom level
+          'heatmap-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 2,
+            15, 30
+          ],
+          // Transition from heatmap to circle layer at higher zoom
+          'heatmap-opacity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            7, 0.8,
+            15, 0.3
+          ]
+        },
+        layout: {
+          'visibility': 'none' // Initially hidden
+        }
+      });
+
       // Click handler for clusters - zoom in
       mapInstance.on('click', 'clusters', (e) => {
         const features = mapInstance.queryRenderedFeatures(e.point, {
@@ -256,6 +328,21 @@ export default function MapExplorer() {
     // Cleanup - event handlers are automatically removed when layers are removed
   }, [properties]);
 
+  // Toggle heatmap visibility
+  useEffect(() => {
+    if (!map.current) return;
+
+    const mapInstance = map.current;
+
+    if (mapInstance.getLayer('property-heatmap')) {
+      mapInstance.setLayoutProperty(
+        'property-heatmap',
+        'visibility',
+        heatmapVisible ? 'visible' : 'none'
+      );
+    }
+  }, [heatmapVisible]);
+
   // Highlight selected property by updating layer paint
   useEffect(() => {
     if (!map.current || !selectedProperty) return;
@@ -309,9 +396,19 @@ export default function MapExplorer() {
               Professional GIS visualization powered by MapLibre GL JS • Benton County, Washington
             </p>
           </div>
-          <Button variant="outline" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            {sidebarOpen ? "Hide" : "Show"} Properties
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant={heatmapVisible ? "default" : "outline"}
+              onClick={() => setHeatmapVisible(!heatmapVisible)}
+              className="gap-2"
+            >
+              <Flame className="h-4 w-4" />
+              {heatmapVisible ? "Hide" : "Show"} Heatmap
+            </Button>
+            <Button variant="outline" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              {sidebarOpen ? "Hide" : "Show"} Properties
+            </Button>
+          </div>
         </div>
 
         {/* Map Container */}
