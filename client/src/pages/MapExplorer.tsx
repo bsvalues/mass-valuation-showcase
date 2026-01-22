@@ -1,4 +1,6 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { GISTools } from "@/components/GISTools";
+import { LayerManager, defaultLayers, type Layer } from "@/components/LayerManager";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
@@ -7,15 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, Flame } from "lucide-react";
+import { Search, X, Flame, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [gisToolsOpen, setGisToolsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [heatmapVisible, setHeatmapVisible] = useState(false);
+  const [layers, setLayers] = useState<Layer[]>(defaultLayers);
+  const [bufferZoneVisible, setBufferZoneVisible] = useState(false);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -32,6 +37,34 @@ export default function MapExplorer() {
     
     return address.includes(query) || parcelNumber.includes(query);
   });
+
+  // Get selected property details
+  const selectedPropertyData = properties.find((p: any) => p.id === selectedProperty);
+
+  // Fetch neighborhood stats for selected property
+  const { data: neighborhoodStats } = trpc.parcels.getNeighborhoodStats.useQuery(
+    {
+      latitude: parseFloat(selectedPropertyData?.latitude || "0"),
+      longitude: parseFloat(selectedPropertyData?.longitude || "0"),
+      radius: 1.0,
+    },
+    {
+      enabled: !!selectedPropertyData?.latitude && !!selectedPropertyData?.longitude,
+    }
+  );
+
+  // GIS buffer zone query
+  const bufferZoneQuery = trpc.gis.generateBufferZone.useQuery(
+    {
+      latitude: parseFloat(selectedPropertyData?.latitude || "0"),
+      longitude: parseFloat(selectedPropertyData?.longitude || "0"),
+      radiusMiles: 1.0,
+      points: 32,
+    },
+    {
+      enabled: !!selectedPropertyData?.latitude && !!selectedPropertyData?.longitude && bufferZoneVisible,
+    }
+  );
 
   // Initialize map
   useEffect(() => {
@@ -83,6 +116,7 @@ export default function MapExplorer() {
         if (mapInstance.getLayer('clusters')) mapInstance.removeLayer('clusters');
         if (mapInstance.getLayer('cluster-count')) mapInstance.removeLayer('cluster-count');
         if (mapInstance.getLayer('unclustered-point')) mapInstance.removeLayer('unclustered-point');
+        if (mapInstance.getLayer('selected-property')) mapInstance.removeLayer('selected-property');
         mapInstance.removeSource('properties');
       }
 
@@ -313,27 +347,73 @@ export default function MapExplorer() {
         mapInstance.getCanvas().style.cursor = '';
       };
 
-      mapInstance.on('mouseenter', 'clusters', clusterMouseEnter as any);
-      mapInstance.on('mouseleave', 'clusters', clusterMouseLeave as any);
-      mapInstance.on('mouseenter', 'unclustered-point', pointMouseEnter as any);
-      mapInstance.on('mouseleave', 'unclustered-point', pointMouseLeave as any);
+      mapInstance.on('mouseenter', 'clusters', clusterMouseEnter);
+      mapInstance.on('mouseleave', 'clusters', clusterMouseLeave);
+      mapInstance.on('mouseenter', 'unclustered-point', pointMouseEnter);
+      mapInstance.on('mouseleave', 'unclustered-point', pointMouseLeave);
     };
 
-    if (mapInstance.loaded()) {
+    if (mapInstance.isStyleLoaded()) {
       addClustering();
     } else {
       mapInstance.on('load', addClustering);
     }
-
-    // Cleanup - event handlers are automatically removed when layers are removed
   }, [properties]);
+
+  // Handle property selection - fly to location and highlight
+  useEffect(() => {
+    if (!map.current || !selectedProperty || !selectedPropertyData) return;
+
+    const mapInstance = map.current;
+    const lat = parseFloat(selectedPropertyData.latitude || "0");
+    const lon = parseFloat(selectedPropertyData.longitude || "0");
+
+    // Fly to selected property
+    mapInstance.flyTo({
+      center: [lon, lat],
+      zoom: 15,
+      essential: true,
+    });
+
+    // Add or update selected property highlight layer
+    if (mapInstance.getLayer('selected-property')) {
+      mapInstance.removeLayer('selected-property');
+    }
+    if (mapInstance.getSource('selected-property-source')) {
+      mapInstance.removeSource('selected-property-source');
+    }
+
+    mapInstance.addSource('selected-property-source', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [lon, lat]
+        },
+        properties: {}
+      }
+    });
+
+    mapInstance.addLayer({
+      id: 'selected-property',
+      type: 'circle',
+      source: 'selected-property-source',
+      paint: {
+        'circle-radius': 14,
+        'circle-color': '#00FFFF',
+        'circle-stroke-width': 3,
+        'circle-stroke-color': '#FFFFFF',
+        'circle-opacity': 1
+      }
+    });
+  }, [selectedProperty, selectedPropertyData]);
 
   // Toggle heatmap visibility
   useEffect(() => {
     if (!map.current) return;
-
     const mapInstance = map.current;
-
+    
     if (mapInstance.getLayer('property-heatmap')) {
       mapInstance.setLayoutProperty(
         'property-heatmap',
@@ -343,157 +423,189 @@ export default function MapExplorer() {
     }
   }, [heatmapVisible]);
 
-  // Highlight selected property by updating layer paint
+  // Add buffer zone visualization
   useEffect(() => {
-    if (!map.current || !selectedProperty) return;
+    if (!map.current || !bufferZoneQuery.data || !bufferZoneVisible) {
+      // Remove buffer zone if it exists
+      if (map.current) {
+        if (map.current.getLayer('buffer-zone')) {
+          map.current.removeLayer('buffer-zone');
+        }
+        if (map.current.getSource('buffer-zone-source')) {
+          map.current.removeSource('buffer-zone-source');
+        }
+      }
+      return;
+    }
 
     const mapInstance = map.current;
 
-    // Update unclustered-point layer to highlight selected property
-    if (mapInstance.getLayer('unclustered-point')) {
-      mapInstance.setPaintProperty('unclustered-point', 'circle-radius', [
-        'case',
-        ['==', ['get', 'id'], selectedProperty],
-        14,  // Larger radius for selected
-        8    // Normal radius
-      ]);
-
-      mapInstance.setPaintProperty('unclustered-point', 'circle-stroke-width', [
-        'case',
-        ['==', ['get', 'id'], selectedProperty],
-        3,   // Thicker stroke for selected
-        2    // Normal stroke
-      ]);
+    // Remove existing buffer zone
+    if (mapInstance.getLayer('buffer-zone')) {
+      mapInstance.removeLayer('buffer-zone');
     }
-  }, [selectedProperty]);
+    if (mapInstance.getSource('buffer-zone-source')) {
+      mapInstance.removeSource('buffer-zone-source');
+    }
 
-  // Get selected property details
-  const selectedPropertyData = properties.find((p: any) => p.id === selectedProperty);
+    // Add buffer zone source and layer
+    mapInstance.addSource('buffer-zone-source', {
+      type: 'geojson',
+      data: bufferZoneQuery.data as GeoJSON.Feature
+    });
 
-  // Fetch neighborhood stats when property is selected
-  const { data: neighborhoodStats } = trpc.parcels.getNeighborhoodStats.useQuery(
-    {
-      latitude: parseFloat(selectedPropertyData?.latitude || "0"),
-      longitude: parseFloat(selectedPropertyData?.longitude || "0"),
-    },
-    { enabled: !!selectedProperty && !!selectedPropertyData?.latitude && !!selectedPropertyData?.longitude }
-  );
+    mapInstance.addLayer({
+      id: 'buffer-zone',
+      type: 'fill',
+      source: 'buffer-zone-source',
+      paint: {
+        'fill-color': '#00FFFF',
+        'fill-opacity': 0.15,
+        'fill-outline-color': '#00FFFF'
+      }
+    });
 
-  // Get count of properties with valid coordinates
-  const validPropertiesCount = properties.filter((p: any) => p.latitude && p.longitude).length;
-  const filteredValidCount = filteredProperties.filter((p: any) => p.latitude && p.longitude).length;
+    // Add buffer zone outline
+    mapInstance.addLayer({
+      id: 'buffer-zone-outline',
+      type: 'line',
+      source: 'buffer-zone-source',
+      paint: {
+        'line-color': '#00FFFF',
+        'line-width': 2,
+        'line-dasharray': [2, 2]
+      }
+    });
+  }, [bufferZoneQuery.data, bufferZoneVisible]);
+
+  // Handle layer visibility changes
+  const handleLayerToggle = (layerId: string, visible: boolean) => {
+    setLayers(layers.map(layer => 
+      layer.id === layerId ? { ...layer, visible } : layer
+    ));
+    
+    // TODO: Implement actual map layer visibility control
+    // For now, just update state
+  };
+
+  // Handle layer opacity changes
+  const handleLayerOpacityChange = (layerId: string, opacity: number) => {
+    setLayers(layers.map(layer => 
+      layer.id === layerId ? { ...layer, opacity } : layer
+    ));
+    
+    // TODO: Implement actual map layer opacity control
+  };
+
+  // GIS tool handlers
+  const handleBufferZone = (radiusMiles: number) => {
+    console.log("Creating buffer zone with radius:", radiusMiles);
+    setBufferZoneVisible(true);
+  };
+
+  const handleMeasureDistance = () => {
+    console.log("Activating distance measurement tool");
+    // TODO: Implement distance measurement
+  };
+
+  const handleDrawPolygon = () => {
+    console.log("Activating polygon drawing tool");
+    // TODO: Implement polygon drawing
+  };
+
+  const handleClearTools = () => {
+    console.log("Clearing all GIS tools");
+    setBufferZoneVisible(false);
+    // TODO: Clear other tools
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-              <span className="text-primary">◉</span> Map Explorer
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Professional GIS visualization powered by MapLibre GL JS • Benton County, Washington
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={heatmapVisible ? "default" : "outline"}
-              onClick={() => setHeatmapVisible(!heatmapVisible)}
-              className="gap-2"
-            >
-              <Flame className="h-4 w-4" />
-              {heatmapVisible ? "Hide" : "Show"} Heatmap
-            </Button>
-            <Button variant="outline" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              {sidebarOpen ? "Hide" : "Show"} Properties
-            </Button>
-          </div>
-        </div>
-
-        {/* Map Container */}
-        <Card>
+        <Card className="border-primary/20">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Property Map</CardTitle>
+                <CardTitle className="text-2xl text-primary flex items-center gap-2">
+                  🗺️ TerraGAMA GIS Explorer
+                </CardTitle>
                 <CardDescription>
-                  {isLoading
-                    ? "Loading properties..."
-                    : `${validPropertiesCount} properties loaded • Clustering enabled for better performance`}
+                  Advanced spatial analysis and property mapping • {properties.length} properties loaded
                 </CardDescription>
               </div>
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                MapLibre Active
-              </Badge>
+              <div className="flex gap-2">
+                <Button
+                  variant={heatmapVisible ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setHeatmapVisible(!heatmapVisible)}
+                  className="gap-2"
+                >
+                  <Flame className="h-4 w-4" />
+                  {heatmapVisible ? "Hide" : "Show"} Heatmap
+                </Button>
+                <Button
+                  variant={gisToolsOpen ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setGisToolsOpen(!gisToolsOpen)}
+                  className="gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  GIS Tools
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4">
               {/* Property List Sidebar */}
               {sidebarOpen && (
-                <div className="w-80 flex-shrink-0 border-r border-border pr-4">
+                <div className="w-80 flex-shrink-0 space-y-4">
                   {/* Search Bar */}
-                  <div className="mb-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="Search by address or parcel..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 pr-9 focus:border-primary transition-colors"
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search address or parcel..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 pr-10"
+                    />
                     {searchQuery && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Found {filteredValidCount} {filteredValidCount === 1 ? 'property' : 'properties'} matching "{searchQuery}"
-                      </p>
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     )}
                   </div>
 
+                  {/* Property Count */}
+                  <div className="text-sm text-muted-foreground">
+                    {filteredProperties.length === properties.length
+                      ? `${properties.length} properties`
+                      : `${filteredProperties.length} of ${properties.length} properties`}
+                  </div>
+
                   {/* Property List */}
-                  <div className="space-y-2 max-h-[520px] overflow-y-auto">
-                    <h3 className="text-sm font-semibold text-foreground mb-3">
-                      Properties ({filteredValidCount})
-                    </h3>
-                    {filteredValidCount === 0 && searchQuery ? (
-                      <div className="text-center py-8">
-                        <Search className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                        <p className="text-sm text-muted-foreground">No properties found</p>
-                        <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
+                  <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                    {isLoading ? (
+                      <div className="text-sm text-muted-foreground">Loading properties...</div>
+                    ) : filteredProperties.length === 0 ? (
+                      <div className="text-sm text-muted-foreground">
+                        {searchQuery ? "No properties match your search" : "No properties found"}
                       </div>
                     ) : (
-                      filteredProperties.filter((p: any) => p.latitude && p.longitude).map((property: any) => (
+                      filteredProperties.map((property: any) => (
                         <button
                           key={property.id}
-                          onClick={() => {
-                            console.log("✅ Property selected from sidebar:", property.id);
-                            setSelectedProperty(property.id);
-                            // Pan map to property
-                            if (map.current && property.latitude && property.longitude) {
-                              map.current.flyTo({
-                                center: [parseFloat(property.longitude), parseFloat(property.latitude)],
-                                zoom: 14,
-                                duration: 1000
-                              });
-                            }
-                          }}
-                          className={`w-full text-left p-3 rounded-lg border transition-all hover:border-primary/50 ${
+                          onClick={() => setSelectedProperty(property.id)}
+                          className={`w-full text-left p-3 rounded-lg border transition-all ${
                             selectedProperty === property.id
                               ? "border-primary bg-primary/10"
-                              : "border-border bg-card"
+                              : "border-border hover:border-primary/50 hover:bg-muted/50"
                           }`}
                         >
-                          <div className="text-sm font-medium text-foreground truncate">
+                          <div className="font-medium text-sm">
                             {property.address || "Unknown Address"}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
@@ -509,16 +621,52 @@ export default function MapExplorer() {
                 </div>
               )}
 
-              {/* Map */}
-              <div className="flex-1">
-                <div
-                  ref={mapContainer}
-                  className="w-full h-[600px] rounded-lg overflow-hidden border border-border"
-                />
+              {/* Toggle Sidebar Button */}
+              <div className="flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="h-full"
+                >
+                  {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </Button>
+              </div>
+
+              {/* Map Container */}
+              <div className="flex-1 flex gap-4">
+                <div className="flex-1">
+                  <div
+                    ref={mapContainer}
+                    className="w-full h-[600px] rounded-lg overflow-hidden border border-border"
+                  />
+                </div>
+
+                {/* GIS Tools Panel */}
+                {gisToolsOpen && (
+                  <div className="w-80 flex-shrink-0 space-y-4">
+                    <GISTools
+                      onBufferZone={handleBufferZone}
+                      onMeasureDistance={handleMeasureDistance}
+                      onDrawPolygon={handleDrawPolygon}
+                      onClearTools={handleClearTools}
+                      selectedProperty={selectedPropertyData ? {
+                        latitude: parseFloat(selectedPropertyData.latitude || "0"),
+                        longitude: parseFloat(selectedPropertyData.longitude || "0")
+                      } : null}
+                    />
+                    <LayerManager
+                      layers={layers}
+                      onLayerToggle={handleLayerToggle}
+                      onLayerOpacityChange={handleLayerOpacityChange}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               ✨ Click clusters to zoom in • Click individual markers to view property details
+              {bufferZoneVisible && " • Buffer zone active (1-mile radius)"}
             </p>
           </CardContent>
         </Card>
