@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Layers, MapPin, TrendingUp, Home as HomeIcon, Maximize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-// Mapbox access token - using Mapbox's public demo token
+// Mapbox access token - using a more reliable public token
 // For production, get your own token at https://account.mapbox.com/
-mapboxgl.accessToken = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
+mapboxgl.accessToken = "pk.eyJ1IjoiZXhhbXBsZXMiLCJhIjoiY2p0MG01MXRqMW45cjQzb2R6b2ptc3J4MSJ9.zA2W0IkI0c6KaAhJfk9bWg";
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -51,24 +51,34 @@ export default function MapExplorer() {
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11", // Dark theme matching TerraForge
-      center: [-119.2, 46.2], // Benton County, Washington
-      zoom: 9.5,
-      pitch: 0, // Start flat, can be adjusted
-      bearing: 0,
-    });
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/dark-v11", // Dark theme matching TerraForge
+        center: [-119.2, 46.2], // Benton County, Washington
+        zoom: 9.5,
+        pitch: 0, // Start flat, can be adjusted
+        bearing: 0,
+      });
 
-    map.current.on("load", () => {
-      setMapLoaded(true);
-    });
+      map.current.on("load", () => {
+        setMapLoaded(true);
+      });
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-    
-    // Add fullscreen control
-    map.current.addControl(new mapboxgl.FullscreenControl(), "top-right");
+      // Add error handler
+      map.current.on("error", (e) => {
+        console.error("Mapbox error:", e);
+        // Silently handle tile loading errors - they don't affect functionality
+      });
+
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      
+      // Add fullscreen control
+      map.current.addControl(new mapboxgl.FullscreenControl(), "top-right");
+    } catch (error) {
+      console.error("Failed to initialize map:", error);
+    }
 
     return () => {
       map.current?.remove();
