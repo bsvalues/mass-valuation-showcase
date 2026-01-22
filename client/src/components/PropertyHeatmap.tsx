@@ -252,6 +252,23 @@ export function PropertyHeatmap({ properties, isLoading }: PropertyHeatmapProps)
       });
 
       setHeatmap(newHeatmap);
+      
+      // Auto-fit map bounds to show all properties
+      if (heatmapData.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        heatmapData.forEach(point => {
+          bounds.extend(point.location);
+        });
+        map.fitBounds(bounds);
+        
+        // Set a reasonable zoom level (not too close)
+        const listener = google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+          const currentZoom = map.getZoom();
+          if (currentZoom && currentZoom > 12) {
+            map.setZoom(12);
+          }
+        });
+      }
     } catch (err) {
       console.error("Error creating heatmap:", err);
       setError("Failed to create heatmap visualization.");
