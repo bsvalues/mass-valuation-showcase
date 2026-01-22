@@ -735,18 +735,29 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
         
-        // Get monthly trends for last 12 months
-        const trends = await db.select({
-          month: sql<string>`DATE_FORMAT(${parcels.createdAt}, '%Y-%m')`,
-          totalValue: sql<number>`SUM(${parcels.buildingValue} + ${parcels.landValue})`,
-          count: sql<number>`COUNT(*)`,
-        })
-        .from(parcels)
-        .where(sql`${parcels.createdAt} >= DATE_SUB(NOW(), INTERVAL 12 MONTH)`)
-        .groupBy(sql`DATE_FORMAT(${parcels.createdAt}, '%Y-%m')`)
-        .orderBy(sql`DATE_FORMAT(${parcels.createdAt}, '%Y-%m')`);
-        
-        return trends;
+        try {
+          // Get monthly trends for last 12 months
+          const trends = await db.execute(sql`
+            SELECT 
+              DATE_FORMAT(createdAt, '%Y-%m') as month,
+              COALESCE(SUM(buildingValue + landValue), 0) as totalValue,
+              COUNT(*) as count
+            FROM parcels
+            WHERE createdAt >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+            GROUP BY DATE_FORMAT(createdAt, '%Y-%m')
+            ORDER BY DATE_FORMAT(createdAt, '%Y-%m')
+          `);
+          
+          return (trends as any[]).map((row: any) => ({
+            month: row.month || '',
+            totalValue: Number(row.totalValue) || 0,
+            count: Number(row.count) || 0,
+          }));
+        } catch (error) {
+          console.error('getValueTrends error:', error);
+          // Return empty array if query fails
+          return [];
+        }
       }),
     
     getRecentActivity: protectedProcedure
