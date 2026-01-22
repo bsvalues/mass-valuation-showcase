@@ -2,6 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { GISTools } from "@/components/GISTools";
 import { LayerManager, defaultLayers, type Layer } from "@/components/LayerManager";
 import { MapLegend } from "@/components/MapLegend";
+import { MeasurementTools } from "@/components/MeasurementTools";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
@@ -10,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, Flame, ChevronLeft, ChevronRight, Settings, Target } from "lucide-react";
+import { Search, X, Flame, ChevronLeft, ChevronRight, Settings, Target, Download } from "lucide-react";
+import { exportSpatialQueryToCSV } from "@/lib/csvExport";
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -24,6 +26,7 @@ export default function MapExplorer() {
   const [bufferZoneVisible, setBufferZoneVisible] = useState(false);
   const [spatialQueryMode, setSpatialQueryMode] = useState(false);
   const [queryResults, setQueryResults] = useState<any>(null);
+  const [measurementMode, setMeasurementMode] = useState<"distance" | "area" | null>(null);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -834,8 +837,7 @@ export default function MapExplorer() {
   };
 
   const handleMeasureDistance = () => {
-    console.log("Activating distance measurement tool");
-    // TODO: Implement distance measurement
+    setMeasurementMode(prev => prev === "distance" ? null : "distance");
   };
 
   const handleDrawPolygon = () => {
@@ -846,7 +848,9 @@ export default function MapExplorer() {
   const handleClearTools = () => {
     console.log("Clearing all GIS tools");
     setBufferZoneVisible(false);
-    // TODO: Clear other tools
+    setMeasurementMode(null);
+    setSpatialQueryMode(false);
+    setQueryResults(null);
   };
 
   // Helper function to get layer color for display
@@ -1057,6 +1061,12 @@ export default function MapExplorer() {
                     layers={layers}
                     onLayerToggle={handleLayerToggle}
                   />
+                  {/* Measurement Tools */}
+                  <MeasurementTools
+                    map={map.current}
+                    mode={measurementMode}
+                    onModeChange={setMeasurementMode}
+                  />
                 </div>
 
                 {/* GIS Tools Panel */}
@@ -1177,13 +1187,52 @@ export default function MapExplorer() {
                     Intersecting layers at ({queryResults.point.lat.toFixed(6)}, {queryResults.point.lng.toFixed(6)})
                   </CardDescription>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setQueryResults(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (selectedPropertyData && neighborhoodStats) {
+                        exportSpatialQueryToCSV(
+                          {
+                            id: selectedPropertyData.id,
+                            address: selectedPropertyData.address || "N/A",
+                            parcelNumber: selectedPropertyData.parcelId || "N/A",
+                            assessedValue: selectedPropertyData.totalValue || 0,
+                            squareFootage: selectedPropertyData.squareFeet || 0,
+                            yearBuilt: selectedPropertyData.yearBuilt || 0,
+                            propertyType: selectedPropertyData.propertyType || "Unknown",
+                            latitude: selectedPropertyData.latitude || "0",
+                            longitude: selectedPropertyData.longitude || "0"
+                          },
+                          {
+                            medianValue: neighborhoodStats.medianValue,
+                            medianSquareFootage: neighborhoodStats.avgSquareFootage,
+                            medianPricePerSqFt: neighborhoodStats.avgPricePerSqFt,
+                            propertyTypes: neighborhoodStats.propertyTypeDistribution.reduce((acc: Record<string, number>, item: any) => {
+                              acc[item.type] = item.count;
+                              return acc;
+                            }, {}),
+                            averageAge: neighborhoodStats.avgAge,
+                            propertyCount: neighborhoodStats.propertyCount
+                          },
+                          queryResults.layers
+                        );
+                      }
+                    }}
+                    disabled={!selectedPropertyData || !neighborhoodStats}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Export CSV
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setQueryResults(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

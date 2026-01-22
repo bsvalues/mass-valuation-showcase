@@ -1112,3 +1112,108 @@
 - [x] Page loads cleanly with 32 properties
 - [x] No React error boundary triggered
 - [x] Save checkpoint with cleanup errors fixed
+
+
+## 📏 Measurement Tools Implementation (In Progress)
+
+- [ ] Install MapLibre Draw plugin for interactive drawing
+- [ ] Add distance measurement tool with line drawing
+- [ ] Add area measurement tool with polygon drawing
+- [ ] Calculate distances using Haversine formula
+- [ ] Calculate areas using GeoJSON area calculation
+- [ ] Display measurements in real-time (feet, meters, miles, acres)
+- [ ] Add unit conversion toggle (imperial/metric)
+- [ ] Show measurement results in overlay panel
+- [ ] Add clear measurement button
+- [ ] Style measurement lines and polygons
+- [ ] Test measurement accuracy
+- [ ] Save checkpoint with measurement tools complete
+
+## 📊 CSV Export Functionality (In Progress)
+
+- [ ] Add CSV export button to spatial query results panel
+- [ ] Format query results data for CSV export
+- [ ] Include property details in CSV (address, parcel, value, sqft)
+- [ ] Include neighborhood statistics in CSV
+- [ ] Include intersecting layer data in CSV
+- [ ] Generate CSV file with proper headers
+- [ ] Trigger browser download with filename
+- [ ] Add timestamp to exported filename
+- [ ] Test CSV export with multiple properties
+- [ ] Verify CSV opens correctly in Excel/Sheets
+- [ ] Save checkpoint with CSV export complete
+
+## 🎛️ Enhanced Layer Management (In Progress)
+
+- [ ] Add real-time opacity sliders to Layer Manager
+- [ ] Update layer opacity without closing panel
+- [ ] Add layer reordering (drag and drop or up/down buttons)
+- [ ] Add "Show All" / "Hide All" buttons
+- [ ] Add layer groups (Base Layers, Overlays, Analysis)
+- [ ] Add layer visibility persistence (localStorage)
+- [ ] Add layer loading indicators
+- [ ] Improve layer toggle animation/feedback
+- [ ] Add layer metadata tooltips
+- [ ] Test layer management performance with all layers
+- [ ] Save checkpoint with enhanced layer management complete
+
+
+## 📏 Measurement Tools Implementation (Complete)
+
+- [x] Create MeasurementTools component
+- [x] Add distance measurement mode
+- [x] Add area measurement mode
+- [x] Implement click-to-measure functionality
+- [x] Calculate Haversine distance between points
+- [x] Calculate polygon area using shoelace formula
+- [x] Display measurements in real-time
+- [x] Support unit conversion (feet/meters/miles/acres)
+- [x] Add visual line/polygon drawing on map (GeoJSON layers)
+- [x] Add clear measurement button
+- [x] Integrate into MapExplorer (after MapLegend)
+- [x] Connected to GIS Tools distance button
+- [x] Zero TypeScript errors
+
+## 📊 CSV Export Implementation (Complete)
+
+- [x] Create CSV export utility functions (csvExport.ts)
+- [x] Export spatial query results to CSV
+- [x] Include property information in export (8 fields)
+- [x] Include neighborhood statistics in export (5 metrics)
+- [x] Include property type distribution
+- [x] Include intersecting layer details with attributes
+- [x] Add CSV download button to query results panel (Download icon)
+- [x] Format CSV with proper headers and sections
+- [x] Escape special characters in CSV (double quotes)
+- [x] Add timestamp to filename (ISO format)
+- [x] Implement exportPropertiesToCSV() function
+- [x] Implement exportNeighborhoodComparisonToCSV() function
+- [x] Zero TypeScript errors
+
+## 🎨 Enhanced Layer Management (Complete)
+
+- [x] Opacity sliders already implemented in LayerManager
+- [x] Real-time opacity updates (0-100%, 5% steps)
+- [x] Layer color indicators (6 colors)
+- [x] Layer icons for visual identification (Building, Map, School, Trees, Bus, Droplet, Zap)
+- [x] Layer toggle switches with Switch component
+- [x] Opacity sliders show only when layer visible
+- [x] Real-time percentage display
+- [x] Color-coded icons
+- [x] Already feature-complete
+
+## 🐛 MapLibre Source/Layer Cleanup Errors (Fixed)
+
+- [x] Fix Error: Source "heatmap-data" already exists
+- [x] Fix Error: Source "heatmap-data" cannot be removed while layer "property-heatmap" is using it
+- [x] Remove layers before removing sources in cleanup (line 220-234)
+- [x] Add existence checks before adding layers (line 235-237)
+- [x] Fix heatmap useEffect cleanup order (remove layer before source)
+- [x] Clustering useEffect cleanup order already correct (line 117-124)
+- [x] Add closing brace for if statement (line 294)
+- [x] Test map loading without errors (browser verified)
+- [x] Verify hot reload doesn't cause duplicate sources (working)
+- [x] Zero TypeScript errors
+- [x] Page loads cleanly with 32 properties
+- [x] No React error boundary triggered
+- [x] Save checkpoint with cleanup errors fixed
