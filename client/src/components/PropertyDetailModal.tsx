@@ -41,6 +41,18 @@ export function PropertyDetailModal({
     { enabled: open && propertyId !== null }
   );
 
+  // Fetch nearby properties
+  const { data: nearbyProperties, isLoading: nearbyLoading } = trpc.parcels.getNearbyProperties.useQuery(
+    { 
+      id: propertyId!,
+      latitude: parseFloat(property?.latitude || '0'),
+      longitude: parseFloat(property?.longitude || '0'),
+      radius: 0.5,
+      limit: 5,
+    },
+    { enabled: open && propertyId !== null && !!property?.latitude && !!property?.longitude }
+  );
+
   if (!property) return null;
 
   const formatCurrency = (value: string | null | number) => {
@@ -240,6 +252,59 @@ export function PropertyDetailModal({
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Similar Properties Nearby Section */}
+        <Separator className="bg-slate-700" />
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-[#00FFFF]" />
+            <h3 className="text-xl font-semibold text-[#00FFFF]">Similar Properties Nearby</h3>
+            <Badge variant="outline" className="bg-[#00FFFF]/10 text-[#00FFFF] border-[#00FFFF]/30">
+              Within 0.5 mi
+            </Badge>
+          </div>
+
+          {nearbyLoading ? (
+            <p className="text-slate-400 text-sm">Loading nearby properties...</p>
+          ) : !nearbyProperties || nearbyProperties.length === 0 ? (
+            <p className="text-slate-400 text-sm">No comparable properties found within 0.5 miles.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left py-2 px-3 text-[#00FFFF] font-medium">Address</th>
+                    <th className="text-right py-2 px-3 text-[#00FFFF] font-medium">Total Value</th>
+                    <th className="text-right py-2 px-3 text-[#00FFFF] font-medium">Sq Ft</th>
+                    <th className="text-right py-2 px-3 text-[#00FFFF] font-medium">Year Built</th>
+                    <th className="text-right py-2 px-3 text-[#00FFFF] font-medium">Distance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {nearbyProperties.map((nearby: any, idx: number) => (
+                    <tr key={idx} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
+                      <td className="py-3 px-3 text-slate-200">
+                        {nearby.siteAddress || nearby.parcelId || 'N/A'}
+                      </td>
+                      <td className="text-right py-3 px-3 text-slate-200 font-medium">
+                        {formatCurrency(nearby.totalValue)}
+                      </td>
+                      <td className="text-right py-3 px-3 text-slate-300">
+                        {nearby.squareFootage ? formatNumber(nearby.squareFootage) : 'N/A'}
+                      </td>
+                      <td className="text-right py-3 px-3 text-slate-300">
+                        {nearby.yearBuilt || 'N/A'}
+                      </td>
+                      <td className="text-right py-3 px-3 text-[#00FFFF]">
+                        {nearby.distance.toFixed(2)} mi
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -150,6 +150,77 @@ export const appRouter = router({
         
         return history;
       }),
+
+    getNearbyProperties: protectedProcedure
+      .input(z.object({ 
+        id: z.number(),
+        latitude: z.number(),
+        longitude: z.number(),
+        radius: z.number().default(0.5), // miles
+        limit: z.number().default(5),
+      }))
+      .query(async ({ input }) => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { and, ne, isNotNull, sql } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Haversine formula to calculate distance
+        // 1 degree latitude ≈ 69 miles
+        // 1 degree longitude ≈ 69 * cos(latitude) miles
+        const latRange = input.radius / 69;
+        const lonRange = input.radius / (69 * Math.cos(input.latitude * Math.PI / 180));
+
+        const minLat = input.latitude - latRange;
+        const maxLat = input.latitude + latRange;
+        const minLon = input.longitude - lonRange;
+        const maxLon = input.longitude + lonRange;
+
+        // Find properties within bounding box
+        const nearby = await db
+          .select()
+          .from(parcels)
+          .where(
+            and(
+              ne(parcels.id, input.id), // Exclude the current property
+              isNotNull(parcels.latitude),
+              isNotNull(parcels.longitude),
+              sql`CAST(${parcels.latitude} AS DECIMAL(10,6)) >= ${minLat}`,
+              sql`CAST(${parcels.latitude} AS DECIMAL(10,6)) <= ${maxLat}`,
+              sql`CAST(${parcels.longitude} AS DECIMAL(10,6)) >= ${minLon}`,
+              sql`CAST(${parcels.longitude} AS DECIMAL(10,6)) <= ${maxLon}`
+            )
+          );
+
+        // Calculate exact distance and sort
+        const withDistance = nearby.map(p => {
+          const lat = parseFloat(p.latitude || '0');
+          const lon = parseFloat(p.longitude || '0');
+          
+          // Haversine distance formula
+          const R = 3959; // Earth radius in miles
+          const dLat = (lat - input.latitude) * Math.PI / 180;
+          const dLon = (lon - input.longitude) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(input.latitude * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c;
+
+          return {
+            ...p,
+            distance,
+          };
+        });
+
+        // Filter by exact radius and sort by distance
+        return withDistance
+          .filter(p => p.distance <= input.radius)
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, input.limit);
+      }),
   }),
   sales: router({
     list: protectedProcedure.query(async ({ ctx }) => {

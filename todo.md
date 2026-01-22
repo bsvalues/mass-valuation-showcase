@@ -634,3 +634,15 @@
 - [x] Add chart legend and tooltips (formatted currency)
 - [x] Test historical chart with sample data (seed-history.mjs, 180 records)
 - [x] Write tests for history endpoint and chart rendering (15 tests passing)
+
+
+## 🏘️ Similar Properties Nearby
+
+- [x] Create tRPC endpoint to find properties within 0.5 mile radius (parcels.getNearbyProperties)
+- [x] Calculate distance using Haversine formula
+- [x] Sort by distance (closest first)
+- [x] Limit to 5 most comparable properties
+- [x] Add "Similar Properties Nearby" section to PropertyDetailModal
+- [x] Display table with address, value, sqft, year built, distance
+- [x] Test with Benton County property data (map visible, ready for click testing)
+- [x] Write tests for nearby properties endpoint (20 tests passing)
