@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "DISTRICT_NAME": "Richland School District",
+        "DISTRICT_ID": "RSD-400",
+        "ENROLLMENT": 14500,
+        "GRADE_LEVELS": "K-12",
+        "WEBSITE": "https://www.rsd.edu"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.30, 46.26],
+          [-119.24, 46.26],
+          [-119.24, 46.30],
+          [-119.30, 46.30],
+          [-119.30, 46.26]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "DISTRICT_NAME": "Kennewick School District",
+        "DISTRICT_ID": "KSD-17",
+        "ENROLLMENT": 18000,
+        "GRADE_LEVELS": "K-12",
+        "WEBSITE": "https://www.ksd.org"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.24, 46.18],
+          [-119.10, 46.18],
+          [-119.10, 46.24],
+          [-119.24, 46.24],
+          [-119.24, 46.18]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "DISTRICT_NAME": "Pasco School District",
+        "DISTRICT_ID": "PSD-1",
+        "ENROLLMENT": 17500,
+        "GRADE_LEVELS": "K-12",
+        "WEBSITE": "https://www.psd1.org"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.15, 46.22],
+          [-119.05, 46.22],
+          [-119.05, 46.28],
+          [-119.15, 46.28],
+          [-119.15, 46.22]
+        ]]
+      }
+    }
+  ]
+}

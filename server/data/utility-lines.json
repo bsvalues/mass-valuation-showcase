@@ -1,0 +1,76 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "UTILITY_TYPE": "Electric Transmission",
+        "VOLTAGE": "500 kV",
+        "OPERATOR": "Bonneville Power Administration",
+        "LINE_NAME": "BPA Transmission Line 1"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-119.32, 46.25],
+          [-119.28, 46.27],
+          [-119.24, 46.29],
+          [-119.20, 46.30]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "UTILITY_TYPE": "Water Main",
+        "DIAMETER": "24 inch",
+        "OPERATOR": "City of Richland",
+        "LINE_NAME": "Main Water Trunk Line"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-119.30, 46.26],
+          [-119.28, 46.27],
+          [-119.26, 46.28],
+          [-119.24, 46.29]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "UTILITY_TYPE": "Sewer Main",
+        "DIAMETER": "18 inch",
+        "OPERATOR": "City of Richland",
+        "LINE_NAME": "Sewer Trunk Line A"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-119.29, 46.27],
+          [-119.27, 46.28],
+          [-119.25, 46.29]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "UTILITY_TYPE": "Natural Gas",
+        "PRESSURE": "High Pressure",
+        "OPERATOR": "Cascade Natural Gas",
+        "LINE_NAME": "Gas Distribution Line 3"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-119.28, 46.26],
+          [-119.26, 46.27],
+          [-119.24, 46.28],
+          [-119.22, 46.29]
+        ]
+      }
+    }
+  ]
+}

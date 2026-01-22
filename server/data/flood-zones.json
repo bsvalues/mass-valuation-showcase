@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "FLD_ZONE": "AE",
+        "ZONE_SUBTY": "FLOODWAY",
+        "FLOOD_RISK": "High Risk",
+        "BASE_FLOOD_ELEVATION": 380,
+        "STATIC_BFE": 385
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.28, 46.275],
+          [-119.26, 46.275],
+          [-119.26, 46.280],
+          [-119.28, 46.280],
+          [-119.28, 46.275]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "FLD_ZONE": "AE",
+        "ZONE_SUBTY": "100-YEAR",
+        "FLOOD_RISK": "High Risk",
+        "BASE_FLOOD_ELEVATION": 375,
+        "STATIC_BFE": 380
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.26, 46.270],
+          [-119.24, 46.270],
+          [-119.24, 46.275],
+          [-119.26, 46.275],
+          [-119.26, 46.270]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "FLD_ZONE": "X",
+        "ZONE_SUBTY": "500-YEAR",
+        "FLOOD_RISK": "Moderate Risk",
+        "BASE_FLOOD_ELEVATION": null,
+        "STATIC_BFE": null
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.30, 46.285],
+          [-119.27, 46.285],
+          [-119.27, 46.290],
+          [-119.30, 46.290],
+          [-119.30, 46.285]
+        ]]
+      }
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ZONE_CODE": "R-1",
+        "ZONE_NAME": "Single Family Residential",
+        "ZONE_DESC": "Low density residential - single family homes",
+        "MIN_LOT_SIZE": 7500,
+        "MAX_HEIGHT": 35
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.28, 46.27],
+          [-119.26, 46.27],
+          [-119.26, 46.29],
+          [-119.28, 46.29],
+          [-119.28, 46.27]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZONE_CODE": "R-2",
+        "ZONE_NAME": "Medium Density Residential",
+        "ZONE_DESC": "Medium density residential - duplexes and townhomes",
+        "MIN_LOT_SIZE": 5000,
+        "MAX_HEIGHT": 35
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.26, 46.27],
+          [-119.24, 46.27],
+          [-119.24, 46.29],
+          [-119.26, 46.29],
+          [-119.26, 46.27]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZONE_CODE": "C-1",
+        "ZONE_NAME": "Neighborhood Commercial",
+        "ZONE_DESC": "Small scale retail and services",
+        "MIN_LOT_SIZE": 3000,
+        "MAX_HEIGHT": 45
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.29, 46.29],
+          [-119.27, 46.29],
+          [-119.27, 46.30],
+          [-119.29, 46.30],
+          [-119.29, 46.29]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZONE_CODE": "C-2",
+        "ZONE_NAME": "General Commercial",
+        "ZONE_DESC": "General retail, offices, and services",
+        "MIN_LOT_SIZE": 5000,
+        "MAX_HEIGHT": 60
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.27, 46.29],
+          [-119.25, 46.29],
+          [-119.25, 46.30],
+          [-119.27, 46.30],
+          [-119.27, 46.29]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZONE_CODE": "I-1",
+        "ZONE_NAME": "Light Industrial",
+        "ZONE_DESC": "Light manufacturing and warehousing",
+        "MIN_LOT_SIZE": 10000,
+        "MAX_HEIGHT": 45
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.30, 46.26],
+          [-119.28, 46.26],
+          [-119.28, 46.27],
+          [-119.30, 46.27],
+          [-119.30, 46.26]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ZONE_CODE": "AG",
+        "ZONE_NAME": "Agricultural",
+        "ZONE_DESC": "Agricultural and farming operations",
+        "MIN_LOT_SIZE": 43560,
+        "MAX_HEIGHT": 35
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.32, 46.25],
+          [-119.28, 46.25],
+          [-119.28, 46.26],
+          [-119.32, 46.26],
+          [-119.32, 46.25]
+        ]]
+      }
+    }
+  ]
+}

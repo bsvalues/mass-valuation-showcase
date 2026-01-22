@@ -1,0 +1,85 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "PARK_NAME": "Howard Amon Park",
+        "PARK_TYPE": "Regional Park",
+        "ACRES": 48,
+        "AMENITIES": "Trails, Playground, Boat Launch",
+        "ADDRESS": "2100 Columbia Park Trail, Richland, WA"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.275, 46.278],
+          [-119.270, 46.278],
+          [-119.270, 46.282],
+          [-119.275, 46.282],
+          [-119.275, 46.278]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "PARK_NAME": "Badger Mountain Trailhead",
+        "PARK_TYPE": "Nature Preserve",
+        "ACRES": 120,
+        "AMENITIES": "Hiking Trails, Scenic Views",
+        "ADDRESS": "3801 S Quillan St, Kennewick, WA"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.180, 46.195],
+          [-119.170, 46.195],
+          [-119.170, 46.205],
+          [-119.180, 46.205],
+          [-119.180, 46.195]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "PARK_NAME": "Columbia Park",
+        "PARK_TYPE": "Community Park",
+        "ACRES": 400,
+        "AMENITIES": "Sports Fields, Picnic Areas, Golf Course",
+        "ADDRESS": "2701 Columbia Park Trail, Richland, WA"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.265, 46.285],
+          [-119.255, 46.285],
+          [-119.255, 46.295],
+          [-119.265, 46.295],
+          [-119.265, 46.285]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "PARK_NAME": "Leslie Groves Park",
+        "PARK_TYPE": "Neighborhood Park",
+        "ACRES": 15,
+        "AMENITIES": "Playground, Basketball Court, Picnic Shelter",
+        "ADDRESS": "3101 W Sylvester St, Pasco, WA"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-119.110, 46.245],
+          [-119.105, 46.245],
+          [-119.105, 46.250],
+          [-119.110, 46.250],
+          [-119.110, 46.245]
+        ]]
+      }
+    }
+  ]
+}

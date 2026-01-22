@@ -478,6 +478,167 @@ export default function MapExplorer() {
     });
   }, [bufferZoneQuery.data, bufferZoneVisible]);
 
+  // Render GIS layers based on visibility toggles
+  useEffect(() => {
+    if (!map.current) return;
+    const mapInstance = map.current;
+
+    // Wait for map to be loaded
+    if (!mapInstance.isStyleLoaded()) {
+      mapInstance.on('load', () => {
+        renderLayers();
+      });
+      return;
+    }
+
+    renderLayers();
+
+    function renderLayers() {
+      if (!mapInstance) return;
+
+      layers.forEach((layer) => {
+        const sourceId = `layer-${layer.id}`;
+        const layerId = `layer-render-${layer.id}`;
+
+        if (layer.visible) {
+          // Fetch layer data and add to map
+          fetchLayerData(layer.id).then((geojson) => {
+            // Remove existing layer/source if present
+            if (mapInstance.getLayer(layerId)) {
+              mapInstance.removeLayer(layerId);
+            }
+            if (mapInstance.getSource(sourceId)) {
+              mapInstance.removeSource(sourceId);
+            }
+
+            // Add source
+            mapInstance.addSource(sourceId, {
+              type: 'geojson',
+              data: geojson
+            });
+
+            // Add layer based on geometry type
+            const firstFeature = geojson.features[0];
+            if (!firstFeature) return;
+
+            const geometryType = firstFeature.geometry.type;
+
+            if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
+              // Polygon layers (zoning, school districts, flood zones, parks)
+              mapInstance.addLayer({
+                id: layerId,
+                type: 'fill',
+                source: sourceId,
+                paint: {
+                  'fill-color': getLayerColor(layer.id),
+                  'fill-opacity': layer.opacity / 100,
+                  'fill-outline-color': getLayerOutlineColor(layer.id)
+                }
+              });
+
+              // Add outline layer
+              mapInstance.addLayer({
+                id: `${layerId}-outline`,
+                type: 'line',
+                source: sourceId,
+                paint: {
+                  'line-color': getLayerOutlineColor(layer.id),
+                  'line-width': 2,
+                  'line-opacity': layer.opacity / 100
+                }
+              });
+            } else if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
+              // Line layers (transit routes, utility lines)
+              mapInstance.addLayer({
+                id: layerId,
+                type: 'line',
+                source: sourceId,
+                paint: {
+                  'line-color': getLayerColor(layer.id),
+                  'line-width': 3,
+                  'line-opacity': layer.opacity / 100
+                }
+              });
+            }
+          });
+        } else {
+          // Remove layer if not visible
+          if (mapInstance.getLayer(layerId)) {
+            mapInstance.removeLayer(layerId);
+          }
+          if (mapInstance.getLayer(`${layerId}-outline`)) {
+            mapInstance.removeLayer(`${layerId}-outline`);
+          }
+          if (mapInstance.getSource(sourceId)) {
+            mapInstance.removeSource(sourceId);
+          }
+        }
+      });
+    }
+
+    async function fetchLayerData(layerId: string): Promise<GeoJSON.FeatureCollection> {
+      // Map layer IDs to API endpoints
+      const endpointMap: Record<string, string> = {
+        'zoning': '/api/trpc/layerData.getZoningDistricts',
+        'schools': '/api/trpc/layerData.getSchoolDistricts',
+        'floods': '/api/trpc/layerData.getFloodZones',
+        'transit': '/api/trpc/layerData.getTransitRoutes',
+        'parks': '/api/trpc/layerData.getParksRecreation',
+        'utilities': '/api/trpc/layerData.getUtilityLines',
+      };
+
+      const endpoint = endpointMap[layerId];
+      if (!endpoint) {
+        return { type: 'FeatureCollection', features: [] };
+      }
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        return result.result.data;
+      } catch (error) {
+        console.error(`Error fetching layer data for ${layerId}:`, error);
+        return { type: 'FeatureCollection', features: [] };
+      }
+    }
+
+    function getLayerColor(layerId: string): string {
+      const colors: Record<string, string> = {
+        'zoning': '#FFD700',      // Gold for zoning
+        'schools': '#4169E1',     // Royal blue for schools
+        'floods': '#1E90FF',      // Dodger blue for flood zones
+        'transit': '#FF6347',     // Tomato red for transit
+        'parks': '#32CD32',       // Lime green for parks
+        'utilities': '#FF8C00',   // Dark orange for utilities
+        'properties': '#00FFFF'   // Cyan for properties (already handled)
+      };
+      return colors[layerId] || '#808080';
+    }
+
+    function getLayerOutlineColor(layerId: string): string {
+      const colors: Record<string, string> = {
+        'zoning': '#DAA520',      // Goldenrod outline
+        'schools': '#000080',     // Navy outline
+        'floods': '#00008B',      // Dark blue outline
+        'transit': '#8B0000',     // Dark red outline
+        'parks': '#006400',       // Dark green outline
+        'utilities': '#FF4500',   // Orange red outline
+      };
+      return colors[layerId] || '#000000';
+    }
+  }, [layers]);
+
   // Handle layer visibility changes
   const handleLayerToggle = (layerId: string, visible: boolean) => {
     setLayers(layers.map(layer => 

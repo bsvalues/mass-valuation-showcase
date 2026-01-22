@@ -1,0 +1,64 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ROUTE_NAME": "Route 20 - Richland Loop",
+        "ROUTE_NUMBER": "20",
+        "ROUTE_TYPE": "Local Bus",
+        "OPERATOR": "Ben Franklin Transit",
+        "FREQUENCY": "30 min"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-119.28, 46.27],
+          [-119.27, 46.28],
+          [-119.26, 46.29],
+          [-119.25, 46.28],
+          [-119.26, 46.27],
+          [-119.28, 46.27]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ROUTE_NAME": "Route 30 - Express to Kennewick",
+        "ROUTE_NUMBER": "30",
+        "ROUTE_TYPE": "Express Bus",
+        "OPERATOR": "Ben Franklin Transit",
+        "FREQUENCY": "60 min"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-119.28, 46.28],
+          [-119.24, 46.26],
+          [-119.20, 46.24],
+          [-119.15, 46.21]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "ROUTE_NAME": "Route 40 - Columbia Center Mall",
+        "ROUTE_NUMBER": "40",
+        "ROUTE_TYPE": "Local Bus",
+        "OPERATOR": "Ben Franklin Transit",
+        "FREQUENCY": "45 min"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-119.27, 46.29],
+          [-119.25, 46.28],
+          [-119.23, 46.27],
+          [-119.21, 46.26]
+        ]
+      }
+    }
+  ]
+}

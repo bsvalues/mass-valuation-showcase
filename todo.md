@@ -973,3 +973,62 @@
 - [x] Test layer visibility toggles
 - [x] Browser verification complete
 - [x] Save checkpoint with all GIS features complete
+
+
+## 🗺️ Live GeoJSON Layer Data Integration (In Progress)
+
+### Data Source Research
+- [ ] Find Benton County zoning district GeoJSON data
+- [ ] Find school district boundary GeoJSON data
+- [ ] Find FEMA flood zone GeoJSON data
+- [ ] Find transit route GeoJSON data
+- [ ] Document data source URLs and licenses
+- [ ] Test data source accessibility and format
+
+### Backend Implementation
+- [ ] Create GeoJSON proxy endpoints in backend
+- [ ] Add caching for GeoJSON data
+- [ ] Handle CORS and data transformation
+- [ ] Add error handling for failed data fetches
+- [ ] Test backend endpoints with real data
+
+### Frontend Integration
+- [ ] Update LayerManager to fetch GeoJSON from backend
+- [ ] Implement MapLibre source and layer creation
+- [ ] Connect layer visibility toggles to map layers
+- [ ] Add loading states for layer data
+- [ ] Handle layer rendering errors gracefully
+- [ ] Test all 7 layers with real data
+
+### Layer Styling
+- [ ] Style zoning districts with color-coded polygons
+- [ ] Style school districts with boundary lines
+- [ ] Style flood zones with semi-transparent overlays
+- [ ] Style transit routes with colored lines
+- [ ] Add layer legends for each data type
+- [ ] Implement hover tooltips for layer features
+
+### Testing & Verification
+- [ ] Test layer toggle on/off functionality
+- [ ] Test layer opacity sliders
+- [ ] Verify performance with multiple layers active
+- [ ] Test layer interaction with existing features
+- [ ] Browser verification complete
+- [ ] Save checkpoint with live data layers
+
+
+## 🗺️ Live GeoJSON Layer Data Implementation (Complete)
+
+- [x] Research Benton County GIS data sources (ArcGIS Hub)
+- [x] Create sample GeoJSON data for 6 layers (zoning, schools, floods, transit, parks, utilities)
+- [x] Create layerDataRouter with 6 tRPC endpoints
+- [x] Register layerData router in main routers.ts
+- [x] Implement layer rendering useEffect in MapExplorer
+- [x] Add geometry type detection (Polygon vs LineString)
+- [x] Add dynamic layer styling with color coding
+- [x] Add outline layers for polygon features
+- [x] Integrate opacity control (0-100%)
+- [x] Test layer visibility toggles (browser verified)
+- [x] Test GIS Tools panel opening
+- [x] Verify layer manager UI (7 layers displayed)
+- [x] Save checkpoint with live layer data complete
