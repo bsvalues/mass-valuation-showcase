@@ -27,7 +27,6 @@ export default function MapExplorer() {
   const [spatialQueryMode, setSpatialQueryMode] = useState(false);
   const [queryResults, setQueryResults] = useState<any>(null);
   const [measurementMode, setMeasurementMode] = useState<"distance" | "area" | null>(null);
-  const [fabMenuOpen, setFabMenuOpen] = useState(false);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -934,158 +933,345 @@ export default function MapExplorer() {
           </div>
         );
     }
-  };  return (
+  };
+
+  return (
     <DashboardLayout>
-      {/* Full-screen map container */}
-      <div className="fixed inset-0 top-16">
-        <div ref={mapContainer} className="w-full h-full" />
-
-        {/* Floating search bar - top center */}
-        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="w-96 bg-background/95 backdrop-blur-xl rounded-full shadow-2xl border border-primary/20">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search properties..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-12 h-12 border-0 bg-transparent rounded-full focus-visible:ring-0"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+      <div className="space-y-6">
+        <Card className="terra-card border-primary/20">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl text-primary flex items-center gap-2">
+                  🗺️ TerraGAMA GIS Explorer
+                </CardTitle>
+                <CardDescription>
+                  Advanced spatial analysis and property mapping • {properties.length} properties loaded
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={heatmapVisible ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setHeatmapVisible(!heatmapVisible)}
+                  className="gap-2 bg-black/40 backdrop-blur-xl border-white/10 rounded-full shadow-lg hover:scale-105 transition-all duration-200"
                 >
-                  <X className="h-5 w-5" />
-                </button>
+                  <Flame className="h-4 w-4" />
+                  {heatmapVisible ? "Hide" : "Show"} Heatmap
+                </Button>
+                <Button
+                  variant={gisToolsOpen ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setGisToolsOpen(!gisToolsOpen)}
+                  className="gap-2 bg-black/40 backdrop-blur-xl border-white/10 rounded-full shadow-lg hover:scale-105 transition-all duration-200"
+                >
+                  <Settings className="h-4 w-4" />
+                  GIS Tools
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              {/* Property List Sidebar - Glassmorphism Applied */}
+              {sidebarOpen && (
+                <div className="w-72 flex-shrink-0 space-y-4 bg-background/50 rounded-xl p-4 border border-primary/10 transition-all duration-300 ease-in-out">
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search address or parcel..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 pr-10"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Property Count */}
+                  <div className="text-sm text-muted-foreground">
+                    {filteredProperties.length === properties.length
+                      ? `${properties.length} properties`
+                      : `${filteredProperties.length} of ${properties.length} properties`}
+                  </div>
+
+                  {/* Property List */}
+                  <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                    {isLoading ? (
+                      <div className="text-sm text-muted-foreground">Loading properties...</div>
+                    ) : filteredProperties.length === 0 ? (
+                      <div className="text-sm text-muted-foreground">
+                        {searchQuery ? "No properties match your search" : "No properties found"}
+                      </div>
+                    ) : (
+                      filteredProperties.map((property: any) => (
+                        <button
+                          key={property.id}
+                          onClick={() => setSelectedProperty(property.id)}
+                          className={`w-full text-left p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] ${
+                            selectedProperty === property.id
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/50 hover:bg-muted/50"
+                          }`}
+                        >
+                          <div className="font-medium text-sm">
+                            {property.address || "Unknown Address"}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Parcel: {property.parcelNumber || "N/A"}
+                          </div>
+                          <div className="text-xs text-primary mt-1 font-mono">
+                            ${property.assessedValue?.toLocaleString() || "N/A"}
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
+
+              {/* Toggle Sidebar Button */}
+              <div className="flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="h-full"
+                >
+                  {sidebarOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </Button>
+              </div>
+
+              {/* Map Container */}
+              <div className="flex-1 flex gap-4">
+                <div className="flex-1 relative">
+                  <div
+                    ref={mapContainer}
+                    className="w-full h-[600px] rounded-lg overflow-hidden border border-border"
+                  />
+                  {/* Map Legend */}
+                  <MapLegend
+                    layers={layers}
+                    onLayerToggle={handleLayerToggle}
+                  />
+                  {/* Measurement Tools */}
+                  <MeasurementTools
+                    map={map.current}
+                    mode={measurementMode}
+                    onModeChange={setMeasurementMode}
+                  />
+                </div>
+
+                {/* GIS Tools Panel */}
+                {gisToolsOpen && (
+                  <div className="w-72 flex-shrink-0 space-y-4 bg-background/50 rounded-xl p-4 border border-primary/10 transition-all duration-300 ease-in-out">
+                    <GISTools
+                      onBufferZone={handleBufferZone}
+                      onMeasureDistance={handleMeasureDistance}
+                      onDrawPolygon={handleDrawPolygon}
+                      onClearTools={handleClearTools}
+                      selectedProperty={selectedPropertyData ? {
+                        latitude: parseFloat(selectedPropertyData.latitude || "0"),
+                        longitude: parseFloat(selectedPropertyData.longitude || "0")
+                      } : null}
+                      spatialQueryMode={spatialQueryMode}
+                      onToggleSpatialQuery={() => setSpatialQueryMode(!spatialQueryMode)}
+                    />
+                    <LayerManager
+                      layers={layers}
+                      onLayerToggle={handleLayerToggle}
+                      onLayerOpacityChange={handleLayerOpacityChange}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          {filteredProperties.length > 0 && searchQuery && (
-            <div className="mt-2 text-center">
-              <Badge variant="secondary" className="bg-background/95 backdrop-blur-xl">
-                {filteredProperties.length} properties found
-              </Badge>
-            </div>
-          )}
-        </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              ✨ Click clusters to zoom in • Click individual markers to view property details
+              {bufferZoneVisible && " • Buffer zone active (1-mile radius)"}
+            </p>
+          </CardContent>
+        </Card>
 
-        {/* Property count badge - top left */}
-        <div className="absolute top-6 left-6 z-10">
-          <Badge className="bg-background/95 backdrop-blur-xl text-foreground border-primary/20 px-4 py-2 text-sm">
-            {properties.length} Properties
-          </Badge>
-        </div>
+        {/* Neighborhood Statistics Panel */}
+        {selectedProperty && neighborhoodStats && (
+          <Card className="border-primary/20 neighborhood-stats-panel">
+            <CardHeader>
+              <CardTitle className="text-primary">Neighborhood Statistics</CardTitle>
+              <CardDescription>
+                Within 1-mile radius • {neighborhoodStats.propertyCount} properties analyzed
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="text-sm text-muted-foreground">Median Home Value</div>
+                  <div className="text-2xl font-bold text-foreground">
+                    ${neighborhoodStats.medianValue?.toLocaleString() || "N/A"}
+                  </div>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="text-sm text-muted-foreground">Avg Square Footage</div>
+                  <div className="text-2xl font-bold text-foreground">
+                    {neighborhoodStats.avgSquareFootage?.toLocaleString() || "N/A"} sqft
+                  </div>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="text-sm text-muted-foreground">Avg Price/sqft</div>
+                  <div className="text-2xl font-bold text-foreground">
+                    ${neighborhoodStats.avgPricePerSqFt?.toFixed(2) || "N/A"}
+                  </div>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="text-sm text-muted-foreground">Property Count</div>
+                  <div className="text-2xl font-bold text-foreground">
+                    {neighborhoodStats.propertyCount}
+                  </div>
+                </div>
+              </div>
 
-        {/* Map Legend */}
-        <MapLegend
-          layers={layers}
-          onLayerToggle={handleLayerToggle}
-        />
+              {neighborhoodStats.propertyTypeDistribution && neighborhoodStats.propertyTypeDistribution.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium text-foreground mb-3">Property Type Distribution</h3>
+                  <div className="space-y-2">
+                    {neighborhoodStats.propertyTypeDistribution.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <div className="w-32 text-sm text-muted-foreground">{item.type}</div>
+                        <div className="flex-1 h-8 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-primary/60 to-primary flex items-center justify-end pr-3"
+                            style={{ width: `${item.percentage}%` }}
+                          >
+                            <span className="text-xs font-medium text-primary-foreground">
+                              {item.percentage.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-16 text-sm text-muted-foreground text-right">{item.count}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* Measurement Tools */}
-        <MeasurementTools
-          map={map.current}
-          mode={measurementMode}
-          onModeChange={setMeasurementMode}
-        />
+              {neighborhoodStats.avgAge !== null && (
+                <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                  <div className="text-sm text-muted-foreground">Average Age of Homes</div>
+                  <div className="text-xl font-bold text-foreground">
+                    {neighborhoodStats.avgAge} years old
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-        {/* FAB Menu - bottom right */}
-        <div className="absolute bottom-8 right-8 z-10 flex flex-col items-end gap-3">
-          {/* Expanded FAB options */}
-          {fabMenuOpen && (
-            <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-4 duration-200">
-              <Button
-                size="lg"
-                variant={heatmapVisible ? "default" : "outline"}
-                onClick={() => setHeatmapVisible(!heatmapVisible)}
-                className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
-              >
-                <Flame className="h-6 w-6" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => setGisToolsOpen(!gisToolsOpen)}
-                className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
-              >
-                <Settings className="h-6 w-6" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  if (selectedPropertyData && neighborhoodStats && queryResults) {
-                    exportSpatialQueryToCSV(
-                      {
-                        id: selectedPropertyData.id,
-                        address: selectedPropertyData.address || "N/A",
-                        parcelNumber: selectedPropertyData.parcelId || "N/A",
-                        assessedValue: selectedPropertyData.totalValue || 0,
-                        squareFootage: selectedPropertyData.squareFeet || 0,
-                        yearBuilt: selectedPropertyData.yearBuilt || 0,
-                        propertyType: selectedPropertyData.propertyType || "N/A",
-                        latitude: selectedPropertyData.latitude || "0",
-                        longitude: selectedPropertyData.longitude || "0"
-                      },
-                      {
-                        medianValue: neighborhoodStats.medianValue,
-                        medianSquareFootage: neighborhoodStats.avgSquareFootage,
-                        medianPricePerSqFt: neighborhoodStats.avgPricePerSqFt,
-                        propertyTypes: {},
-                        averageAge: neighborhoodStats.avgAge,
-                        propertyCount: neighborhoodStats.propertyCount
-                      },
-                      queryResults
-                    );
-                  }
-                }}
-                className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
-              >
-                <Download className="h-6 w-6" />
-              </Button>
-            </div>
-          )}
+        {/* Spatial Query Results Panel */}
+        {queryResults && (
+          <Card className="neighborhood-stats-panel bg-card border-border shadow-lg">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    Spatial Query Results
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    Intersecting layers at ({queryResults.point.lat.toFixed(6)}, {queryResults.point.lng.toFixed(6)})
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (selectedPropertyData && neighborhoodStats) {
+                        exportSpatialQueryToCSV(
+                          {
+                            id: selectedPropertyData.id,
+                            address: selectedPropertyData.address || "N/A",
+                            parcelNumber: selectedPropertyData.parcelId || "N/A",
+                            assessedValue: selectedPropertyData.totalValue || 0,
+                            squareFootage: selectedPropertyData.squareFeet || 0,
+                            yearBuilt: selectedPropertyData.yearBuilt || 0,
+                            propertyType: selectedPropertyData.propertyType || "Unknown",
+                            latitude: selectedPropertyData.latitude || "0",
+                            longitude: selectedPropertyData.longitude || "0"
+                          },
+                          {
+                            medianValue: neighborhoodStats.medianValue,
+                            medianSquareFootage: neighborhoodStats.avgSquareFootage,
+                            medianPricePerSqFt: neighborhoodStats.avgPricePerSqFt,
+                            propertyTypes: neighborhoodStats.propertyTypeDistribution.reduce((acc: Record<string, number>, item: any) => {
+                              acc[item.type] = item.count;
+                              return acc;
+                            }, {}),
+                            averageAge: neighborhoodStats.avgAge,
+                            propertyCount: neighborhoodStats.propertyCount
+                          },
+                          queryResults.layers
+                        );
+                      }
+                    }}
+                    disabled={!selectedPropertyData || !neighborhoodStats}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Export CSV
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setQueryResults(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Object.keys(queryResults.layers).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No layers intersect at this location</p>
+                  <p className="text-sm mt-1">Try enabling more layers or clicking a different area</p>
+                </div>
+              ) : (
+                Object.entries(queryResults.layers).map(([layerId, features]: [string, any]) => {
+                  const layer = layers.find(l => l.id === layerId);
+                  if (!layer) return null;
 
-          {/* Main FAB toggle */}
-          <Button
-            size="lg"
-            onClick={() => setFabMenuOpen(!fabMenuOpen)}
-            className="rounded-full w-16 h-16 shadow-2xl bg-primary hover:bg-primary/90 hover:scale-110 transition-all"
-          >
-            <Target className={`h-7 w-7 transition-transform ${fabMenuOpen ? "rotate-45" : ""}`} />
-          </Button>
-        </div>
-
-        {/* GIS Tools Panel - slide from right */}
-        {gisToolsOpen && (
-          <div className="absolute top-0 right-0 bottom-0 w-80 bg-background/98 backdrop-blur-2xl border-l border-primary/20 shadow-2xl z-30 animate-in slide-in-from-right duration-300 p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold">GIS Tools</h3>
-              <Button variant="ghost" size="sm" onClick={() => setGisToolsOpen(false)}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <GISTools
-              onBufferZone={handleBufferZone}
-              onMeasureDistance={handleMeasureDistance}
-              onDrawPolygon={handleDrawPolygon}
-              onClearTools={handleClearTools}
-              selectedProperty={selectedPropertyData ? {
-                latitude: parseFloat(selectedPropertyData.latitude || "0"),
-                longitude: parseFloat(selectedPropertyData.longitude || "0")
-              } : null}
-              spatialQueryMode={spatialQueryMode}
-              onToggleSpatialQuery={() => setSpatialQueryMode(!spatialQueryMode)}
-            />
-            <div className="mt-6">
-              <LayerManager
-                layers={layers}
-                onLayerToggle={handleLayerToggle}
-                onLayerOpacityChange={handleLayerOpacityChange}
-              />
-            </div>
-          </div>
+                  return (
+                    <div key={layerId} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-4 h-4 rounded"
+                          style={{ backgroundColor: getLayerColorForDisplay(layerId) }}
+                        />
+                        <h3 className="text-sm font-semibold">{layer.name}</h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {features.length} feature{features.length > 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+                      <div className="ml-6 space-y-2">
+                        {features.map((feature: any, idx: number) => (
+                          <div key={idx} className="p-3 bg-muted/50 rounded-lg text-sm">
+                            {formatFeatureAttributes(layerId, feature)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </DashboardLayout>
