@@ -1392,3 +1392,5 @@
 - [x] Add floating search bar and FAB menu
 - [x] Integrate clustering, markers, heatmap logic
 - [ ] Add slide-up property detail panel
+
+- [x] Implement slide-up property detail panel on marker click

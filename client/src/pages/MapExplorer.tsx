@@ -1087,6 +1087,141 @@ export default function MapExplorer() {
             </div>
           </div>
         )}
+
+        {/* Slide-up Property Detail Panel */}
+        {selectedProperty && selectedPropertyData && (
+          <div className="absolute bottom-0 left-0 right-0 z-40 animate-in slide-in-from-bottom duration-300">
+            <div className="bg-background/98 backdrop-blur-2xl border-t border-primary/20 shadow-2xl rounded-t-3xl max-h-[70vh] overflow-y-auto">
+              {/* Panel Header */}
+              <div className="sticky top-0 bg-background/95 backdrop-blur-xl border-b border-primary/10 p-6 flex items-start justify-between">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-foreground mb-1">
+                    {selectedPropertyData.address || "Unknown Address"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Parcel: {selectedPropertyData.parcelId || "N/A"}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedProperty(null)}
+                  className="rounded-full hover:bg-muted"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Panel Content */}
+              <div className="p-6 space-y-6">
+                {/* Key Metrics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <div className="text-xs text-muted-foreground mb-1">Assessed Value</div>
+                    <div className="text-xl font-bold text-primary">
+                      ${selectedPropertyData.totalValue?.toLocaleString() || "N/A"}
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <div className="text-xs text-muted-foreground mb-1">Square Footage</div>
+                    <div className="text-xl font-bold text-foreground">
+                      {selectedPropertyData.squareFeet?.toLocaleString() || "N/A"} sqft
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <div className="text-xs text-muted-foreground mb-1">Year Built</div>
+                    <div className="text-xl font-bold text-foreground">
+                      {selectedPropertyData.yearBuilt || "N/A"}
+                    </div>
+                  </div>
+                  <div className="bg-muted/50 rounded-xl p-4">
+                    <div className="text-xs text-muted-foreground mb-1">Property Type</div>
+                    <div className="text-xl font-bold text-foreground">
+                      {selectedPropertyData.propertyType || "N/A"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Neighborhood Stats */}
+                {neighborhoodStats && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      Neighborhood Statistics
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Within 1-mile radius • {neighborhoodStats.propertyCount} properties analyzed
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div className="bg-muted/30 rounded-lg p-3">
+                        <div className="text-xs text-muted-foreground">Median Value</div>
+                        <div className="text-lg font-bold text-foreground">
+                          ${neighborhoodStats.medianValue?.toLocaleString() || "N/A"}
+                        </div>
+                      </div>
+                      <div className="bg-muted/30 rounded-lg p-3">
+                        <div className="text-xs text-muted-foreground">Avg Sqft</div>
+                        <div className="text-lg font-bold text-foreground">
+                          {neighborhoodStats.avgSquareFootage?.toLocaleString() || "N/A"}
+                        </div>
+                      </div>
+                      <div className="bg-muted/30 rounded-lg p-3">
+                        <div className="text-xs text-muted-foreground">Avg Price/sqft</div>
+                        <div className="text-lg font-bold text-foreground">
+                          ${neighborhoodStats.avgPricePerSqFt?.toFixed(2) || "N/A"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <Button
+                    variant="default"
+                    className="flex-1 rounded-full"
+                    onClick={() => {
+                      if (selectedPropertyData && neighborhoodStats && queryResults) {
+                        exportSpatialQueryToCSV(
+                          {
+                            id: selectedPropertyData.id,
+                            address: selectedPropertyData.address || "N/A",
+                            parcelNumber: selectedPropertyData.parcelId || "N/A",
+                            assessedValue: selectedPropertyData.totalValue || 0,
+                            squareFootage: selectedPropertyData.squareFeet || 0,
+                            yearBuilt: selectedPropertyData.yearBuilt || 0,
+                            propertyType: selectedPropertyData.propertyType || "N/A",
+                            latitude: selectedPropertyData.latitude || "0",
+                            longitude: selectedPropertyData.longitude || "0"
+                          },
+                          {
+                            medianValue: neighborhoodStats.medianValue,
+                            medianSquareFootage: neighborhoodStats.avgSquareFootage,
+                            medianPricePerSqFt: neighborhoodStats.avgPricePerSqFt,
+                            propertyTypes: {},
+                            averageAge: neighborhoodStats.avgAge,
+                            propertyCount: neighborhoodStats.propertyCount
+                          },
+                          queryResults
+                        );
+                      }
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Report
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-full"
+                    onClick={() => setBufferZoneVisible(!bufferZoneVisible)}
+                  >
+                    {bufferZoneVisible ? "Hide" : "Show"} Buffer Zone
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
