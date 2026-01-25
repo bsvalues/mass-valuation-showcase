@@ -1396,3 +1396,4 @@
 - [x] Implement slide-up property detail panel on marker click
 
 - [x] Implement multi-property comparison mode with side-by-side layout
+- [ ] Add CSV/PDF export for property comparison reports

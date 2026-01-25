@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X, Flame, ChevronLeft, ChevronRight, Settings, Target, Download } from "lucide-react";
+import { Search, X, Flame, ChevronLeft, ChevronRight, Settings, Target, Download, FileText } from "lucide-react";
 import { exportSpatialQueryToCSV } from "@/lib/csvExport";
 
 export default function MapExplorer() {
@@ -1138,21 +1138,31 @@ export default function MapExplorer() {
                     </p>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (comparisonMode) {
-                      setSelectedProperties([]);
-                      setComparisonMode(false);
-                    } else {
-                      setSelectedProperty(null);
-                    }
-                  }}
-                  className="rounded-full hover:bg-muted"
-                >
-                  <X className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {comparisonMode && selectedProperties.length > 0 && (
+                    <>
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                        const data = selectedProperties.map(id => properties.find((p: any) => p.id === id)).filter(Boolean).map((p: any) => ({
+                          id: p.id, address: p.address || "N/A", parcelId: p.parcelId || "N/A", totalValue: p.totalValue || 0,
+                          squareFeet: p.squareFeet || 0, yearBuilt: p.yearBuilt || 0, propertyType: p.propertyType || "N/A",
+                          latitude: p.latitude || "0", longitude: p.longitude || "0"
+                        }));
+                        import('@/lib/comparisonExport').then(({ exportComparisonCSV }) => exportComparisonCSV(data));
+                      }}><Download className="h-4 w-4" />CSV</Button>
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                        const data = selectedProperties.map(id => properties.find((p: any) => p.id === id)).filter(Boolean).map((p: any) => ({
+                          id: p.id, address: p.address || "N/A", parcelId: p.parcelId || "N/A", totalValue: p.totalValue || 0,
+                          squareFeet: p.squareFeet || 0, yearBuilt: p.yearBuilt || 0, propertyType: p.propertyType || "N/A",
+                          latitude: p.latitude || "0", longitude: p.longitude || "0"
+                        }));
+                        import('@/lib/comparisonExport').then(({ exportComparisonPDF }) => exportComparisonPDF(data));
+                      }}><FileText className="h-4 w-4" />PDF</Button>
+                    </>
+                  )}
+                  <Button variant="ghost" size="sm" className="rounded-full hover:bg-muted" onClick={() => {
+                    if (comparisonMode) { setSelectedProperties([]); setComparisonMode(false); } else { setSelectedProperty(null); }
+                  }}><X className="h-5 w-5" /></Button>
+                </div>
               </div>
 
               {/* Panel Content */}
