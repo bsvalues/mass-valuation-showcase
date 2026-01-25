@@ -18,6 +18,8 @@ export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [selectedProperties, setSelectedProperties] = useState<number[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [gisToolsOpen, setGisToolsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -334,7 +336,22 @@ export default function MapExplorer() {
 
         const propertyId = features[0].properties?.id;
         console.log("✅ Unclustered point clicked! Property ID:", propertyId);
-        setSelectedProperty(propertyId);
+        
+        // Handle comparison mode vs single selection
+        if (comparisonMode) {
+          setSelectedProperties(prev => {
+            if (prev.includes(propertyId)) {
+              // Remove if already selected
+              return prev.filter(id => id !== propertyId);
+            } else if (prev.length < 4) {
+              // Add if less than 4 properties selected
+              return [...prev, propertyId];
+            }
+            return prev; // Max 4 properties
+          });
+        } else {
+          setSelectedProperty(propertyId);
+        }
 
         // Scroll to stats panel
         setTimeout(() => {
@@ -1005,6 +1022,23 @@ export default function MapExplorer() {
               </Button>
               <Button
                 size="lg"
+                variant={comparisonMode ? "default" : "outline"}
+                onClick={() => {
+                  setComparisonMode(!comparisonMode);
+                  if (!comparisonMode) {
+                    setSelectedProperty(null);
+                    setSelectedProperties([]);
+                  }
+                }}
+                className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
+                title="Compare Properties"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </Button>
+              <Button
+                size="lg"
                 variant="outline"
                 onClick={() => setGisToolsOpen(!gisToolsOpen)}
                 className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
@@ -1089,23 +1123,32 @@ export default function MapExplorer() {
         )}
 
         {/* Slide-up Property Detail Panel */}
-        {selectedProperty && selectedPropertyData && (
+        {((selectedProperty && selectedPropertyData) || (comparisonMode && selectedProperties.length > 0)) && (
           <div className="absolute bottom-0 left-0 right-0 z-40 animate-in slide-in-from-bottom duration-300">
             <div className="bg-background/98 backdrop-blur-2xl border-t border-primary/20 shadow-2xl rounded-t-3xl max-h-[70vh] overflow-y-auto">
               {/* Panel Header */}
               <div className="sticky top-0 bg-background/95 backdrop-blur-xl border-b border-primary/10 p-6 flex items-start justify-between">
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold text-foreground mb-1">
-                    {selectedPropertyData.address || "Unknown Address"}
+                    {comparisonMode ? `Comparing ${selectedProperties.length} Properties` : (selectedPropertyData?.address || "Unknown Address")}
                   </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Parcel: {selectedPropertyData.parcelId || "N/A"}
-                  </p>
+                  {!comparisonMode && (
+                    <p className="text-sm text-muted-foreground">
+                      Parcel: {selectedPropertyData?.parcelId || "N/A"}
+                    </p>
+                  )}
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setSelectedProperty(null)}
+                  onClick={() => {
+                    if (comparisonMode) {
+                      setSelectedProperties([]);
+                      setComparisonMode(false);
+                    } else {
+                      setSelectedProperty(null);
+                    }
+                  }}
                   className="rounded-full hover:bg-muted"
                 >
                   <X className="h-5 w-5" />
@@ -1114,36 +1157,91 @@ export default function MapExplorer() {
 
               {/* Panel Content */}
               <div className="p-6 space-y-6">
-                {/* Key Metrics */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <div className="text-xs text-muted-foreground mb-1">Assessed Value</div>
-                    <div className="text-xl font-bold text-primary">
-                      ${selectedPropertyData.totalValue?.toLocaleString() || "N/A"}
-                    </div>
+                {/* Comparison Mode: Side-by-side properties */}
+                {comparisonMode && selectedProperties.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {selectedProperties.map(propId => {
+                      const prop = properties.find((p: any) => p.id === propId);
+                      if (!prop) return null;
+                      
+                      const values = selectedProperties.map(id => {
+                        const p = properties.find((p: any) => p.id === id);
+                        return p?.totalValue || 0;
+                      });
+                      const maxValue = Math.max(...values);
+                      const minValue = Math.min(...values.filter(v => v > 0));
+                      const isHighest = prop.totalValue === maxValue;
+                      const isLowest = prop.totalValue === minValue && minValue > 0;
+                      
+                      return (
+                        <div key={propId} className="bg-muted/30 rounded-xl p-4 space-y-3 relative">
+                          <button
+                            onClick={() => setSelectedProperties(prev => prev.filter(id => id !== propId))}
+                            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          <div>
+                            <div className="text-xs font-semibold text-primary mb-1">Property {selectedProperties.indexOf(propId) + 1}</div>
+                            <div className="text-sm font-medium text-foreground line-clamp-2">{prop.address || "Unknown"}</div>
+                            <div className="text-xs text-muted-foreground">{prop.parcelId}</div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className={`p-2 rounded-lg ${isHighest ? 'bg-green-500/20 border border-green-500/30' : 'bg-muted/50'}`}>
+                              <div className="text-xs text-muted-foreground">Value</div>
+                              <div className="text-lg font-bold">${prop.totalValue?.toLocaleString() || "N/A"}</div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-muted/50">
+                              <div className="text-xs text-muted-foreground">Sqft</div>
+                              <div className="text-sm font-semibold">{prop.squareFeet?.toLocaleString() || "N/A"}</div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-muted/50">
+                              <div className="text-xs text-muted-foreground">Year</div>
+                              <div className="text-sm font-semibold">{prop.yearBuilt || "N/A"}</div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-muted/50">
+                              <div className="text-xs text-muted-foreground">Type</div>
+                              <div className="text-sm font-semibold">{prop.propertyType || "N/A"}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <div className="text-xs text-muted-foreground mb-1">Square Footage</div>
-                    <div className="text-xl font-bold text-foreground">
-                      {selectedPropertyData.squareFeet?.toLocaleString() || "N/A"} sqft
+                ) : selectedPropertyData ? (
+                  <>
+                    {/* Single Property View: Key Metrics */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-muted/50 rounded-xl p-4">
+                        <div className="text-xs text-muted-foreground mb-1">Assessed Value</div>
+                        <div className="text-xl font-bold text-primary">
+                          ${selectedPropertyData.totalValue?.toLocaleString() || "N/A"}
+                        </div>
+                      </div>
+                      <div className="bg-muted/50 rounded-xl p-4">
+                        <div className="text-xs text-muted-foreground mb-1">Square Footage</div>
+                        <div className="text-xl font-bold text-foreground">
+                          {selectedPropertyData.squareFeet?.toLocaleString() || "N/A"} sqft
+                        </div>
+                      </div>
+                      <div className="bg-muted/50 rounded-xl p-4">
+                        <div className="text-xs text-muted-foreground mb-1">Year Built</div>
+                        <div className="text-xl font-bold text-foreground">
+                          {selectedPropertyData.yearBuilt || "N/A"}
+                        </div>
+                      </div>
+                      <div className="bg-muted/50 rounded-xl p-4">
+                        <div className="text-xs text-muted-foreground mb-1">Property Type</div>
+                        <div className="text-xl font-bold text-foreground">
+                          {selectedPropertyData.propertyType || "N/A"}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <div className="text-xs text-muted-foreground mb-1">Year Built</div>
-                    <div className="text-xl font-bold text-foreground">
-                      {selectedPropertyData.yearBuilt || "N/A"}
-                    </div>
-                  </div>
-                  <div className="bg-muted/50 rounded-xl p-4">
-                    <div className="text-xs text-muted-foreground mb-1">Property Type</div>
-                    <div className="text-xl font-bold text-foreground">
-                      {selectedPropertyData.propertyType || "N/A"}
-                    </div>
-                  </div>
-                </div>
+                  </>
+                ) : null}
 
-                {/* Neighborhood Stats */}
-                {neighborhoodStats && (
+                {/* Neighborhood Stats - only show in single property mode */}
+                {!comparisonMode && neighborhoodStats && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                       <Target className="h-5 w-5 text-primary" />

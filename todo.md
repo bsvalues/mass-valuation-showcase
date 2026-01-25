@@ -1394,3 +1394,5 @@
 - [ ] Add slide-up property detail panel
 
 - [x] Implement slide-up property detail panel on marker click
+
+- [x] Implement multi-property comparison mode with side-by-side layout
