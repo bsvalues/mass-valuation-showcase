@@ -1398,3 +1398,4 @@
 - [x] Implement multi-property comparison mode with side-by-side layout
 - [ ] Add CSV/PDF export for property comparison reports
 - [x] Add historical value charts to comparison view
+- [x] Add aggregate statistics to comparison panel

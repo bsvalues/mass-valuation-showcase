@@ -1190,6 +1190,7 @@ export default function MapExplorer() {
               <div className="p-6 space-y-6">
                 {/* Comparison Mode: Side-by-side properties */}
                 {comparisonMode && selectedProperties.length > 0 ? (
+                  <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {selectedProperties.map(propId => {
                       const prop = properties.find((p: any) => p.id === propId);
@@ -1243,6 +1244,46 @@ export default function MapExplorer() {
                       );
                     })}
                   </div>
+                  
+                  {/* Aggregate Statistics */}
+                  <div className="mt-6 pt-6 border-t border-primary/10">
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-4">Comparison Summary</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {(() => {
+                        const validProps = selectedProperties.map(id => properties.find((p: any) => p.id === id)).filter(Boolean);
+                        const values = validProps.map((p: any) => p.totalValue || 0).filter(v => v > 0);
+                        const sqfts = validProps.map((p: any) => p.squareFeet || 0).filter(v => v > 0);
+                        const years = validProps.map((p: any) => p.yearBuilt || 0).filter(v => v > 0);
+                        
+                        const avgValue = values.length > 0 ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
+                        const medianSqft = sqfts.length > 0 ? sqfts.sort((a, b) => a - b)[Math.floor(sqfts.length / 2)] : 0;
+                        const avgYear = years.length > 0 ? Math.round(years.reduce((a, b) => a + b, 0) / years.length) : 0;
+                        const avgPricePerSqft = values.length > 0 && sqfts.length > 0 ? Math.round(values.reduce((a, b) => a + b, 0) / sqfts.reduce((a, b) => a + b, 0)) : 0;
+                        
+                        return (
+                          <>
+                            <div className="bg-primary/10 rounded-xl p-4 border border-primary/20">
+                              <div className="text-xs text-muted-foreground mb-1">Average Value</div>
+                              <div className="text-xl font-bold text-primary">${avgValue.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-muted/30 rounded-xl p-4">
+                              <div className="text-xs text-muted-foreground mb-1">Median Sqft</div>
+                              <div className="text-xl font-bold text-foreground">{medianSqft.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-muted/30 rounded-xl p-4">
+                              <div className="text-xs text-muted-foreground mb-1">Avg Year Built</div>
+                              <div className="text-xl font-bold text-foreground">{avgYear}</div>
+                            </div>
+                            <div className="bg-muted/30 rounded-xl p-4">
+                              <div className="text-xs text-muted-foreground mb-1">Avg $/Sqft</div>
+                              <div className="text-xl font-bold text-foreground">${avgPricePerSqft}</div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  </>
                 ) : selectedPropertyData ? (
                   <>
                     {/* Single Property View: Key Metrics */}
