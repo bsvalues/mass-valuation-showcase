@@ -12,7 +12,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, X, Flame, ChevronLeft, ChevronRight, Settings, Target, Download, FileText } from "lucide-react";
+import { ValueTrendChart } from "@/components/ValueTrendChart";
 import { exportSpatialQueryToCSV } from "@/lib/csvExport";
+
+// Property History Chart Component
+function PropertyHistoryChart({ propertyId }: { propertyId: number }) {
+  const { data: history, isLoading } = trpc.parcels.getHistory.useQuery({ parcelId: propertyId });
+  
+  if (isLoading) {
+    return <div className="h-[60px] flex items-center justify-center text-xs text-muted-foreground">Loading...</div>;
+  }
+  
+  if (!history || history.length === 0) {
+    return <div className="h-[60px] flex items-center justify-center text-xs text-muted-foreground">No data</div>;
+  }
+  
+  const chartData = history.map(h => ({
+    year: h.assessmentYear,
+    value: h.totalValue || 0
+  }));
+  
+  return <ValueTrendChart data={chartData} height={60} />;
+}
 
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -1200,6 +1221,10 @@ export default function MapExplorer() {
                             <div className={`p-2 rounded-lg ${isHighest ? 'bg-green-500/20 border border-green-500/30' : 'bg-muted/50'}`}>
                               <div className="text-xs text-muted-foreground">Value</div>
                               <div className="text-lg font-bold">${prop.totalValue?.toLocaleString() || "N/A"}</div>
+                            </div>
+                            <div className="p-2 rounded-lg bg-muted/50">
+                              <div className="text-xs text-muted-foreground mb-2">Value Trend</div>
+                              <PropertyHistoryChart propertyId={propId} />
                             </div>
                             <div className="p-2 rounded-lg bg-muted/50">
                               <div className="text-xs text-muted-foreground">Sqft</div>
