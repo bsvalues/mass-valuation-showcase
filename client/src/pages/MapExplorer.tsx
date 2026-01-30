@@ -15,6 +15,68 @@ import { Search, X, Flame, ChevronLeft, ChevronRight, Settings, Target, Download
 import { ValueTrendChart } from "@/components/ValueTrendChart";
 import { exportSpatialQueryToCSV } from "@/lib/csvExport";
 
+// Property Image Preview Component
+function PropertyImagePreview({ 
+  propertyId, 
+  latitude, 
+  longitude, 
+  mapType, 
+  onToggle 
+}: { 
+  propertyId: number;
+  latitude: number;
+  longitude: number;
+  mapType: 'roadmap' | 'satellite';
+  onToggle: (type: 'roadmap' | 'satellite') => void;
+}) {
+  const { data, isLoading } = trpc.parcels.getStaticMapUrl.useQuery({
+    latitude,
+    longitude,
+    mapType,
+    zoom: mapType === 'satellite' ? 19 : 18,
+    width: 400,
+    height: 200,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="relative rounded-lg overflow-hidden bg-muted/50 h-32 flex items-center justify-center">
+        <div className="text-xs text-muted-foreground">Loading map...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative rounded-lg overflow-hidden bg-muted/50 h-32">
+      {data?.url && (
+        <img
+          src={data.url}
+          alt="Property view"
+          className="w-full h-full object-cover"
+        />
+      )}
+      <div className="absolute bottom-2 right-2 flex gap-1">
+        <Button
+          size="sm"
+          variant={mapType === 'roadmap' ? 'default' : 'outline'}
+          className="h-6 px-2 text-xs"
+          onClick={() => onToggle('roadmap')}
+        >
+          Street
+        </Button>
+        <Button
+          size="sm"
+          variant={mapType === 'satellite' ? 'default' : 'outline'}
+          className="h-6 px-2 text-xs"
+          onClick={() => onToggle('satellite')}
+        >
+          Satellite
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // Property History Chart Component
 function PropertyHistoryChart({ propertyId }: { propertyId: number }) {
   const { data: history, isLoading } = trpc.parcels.getHistory.useQuery({ parcelId: propertyId });
@@ -41,6 +103,7 @@ export default function MapExplorer() {
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [selectedProperties, setSelectedProperties] = useState<number[]>([]);
+  const [propertyImageViews, setPropertyImageViews] = useState<Record<number, 'roadmap' | 'satellite'>>({});
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [gisToolsOpen, setGisToolsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1218,6 +1281,18 @@ export default function MapExplorer() {
                             <div className="text-sm font-medium text-foreground line-clamp-2">{prop.address || "Unknown"}</div>
                             <div className="text-xs text-muted-foreground">{prop.parcelId}</div>
                           </div>
+                          
+                          {/* Property Image Preview */}
+                          {prop.latitude && prop.longitude && (
+                            <PropertyImagePreview
+                              propertyId={propId}
+                              latitude={parseFloat(prop.latitude)}
+                              longitude={parseFloat(prop.longitude)}
+                              mapType={propertyImageViews[propId] || 'roadmap'}
+                              onToggle={(type) => setPropertyImageViews(prev => ({ ...prev, [propId]: type }))}
+                            />
+                          )}
+                          
                           <div className="space-y-2">
                             <div className={`p-2 rounded-lg ${isHighest ? 'bg-green-500/20 border border-green-500/30' : 'bg-muted/50'}`}>
                               <div className="text-xs text-muted-foreground">Value</div>

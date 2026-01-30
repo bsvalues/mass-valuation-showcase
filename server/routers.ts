@@ -364,6 +364,33 @@ export const appRouter = router({
           avgAge,
         };
       }),
+
+    getStaticMapUrl: protectedProcedure
+      .input(z.object({
+        latitude: z.number(),
+        longitude: z.number(),
+        mapType: z.enum(['roadmap', 'satellite']).default('roadmap'),
+        zoom: z.number().default(18),
+        width: z.number().default(400),
+        height: z.number().default(200),
+      }))
+      .query(async ({ input }) => {
+        const { ENV } = await import('./_core/env');
+        
+        const baseUrl = ENV.forgeApiUrl.replace(/\/+$/, '');
+        const apiKey = ENV.forgeApiKey;
+        
+        // Construct authenticated static map URL through Manus proxy
+        const url = new URL(`${baseUrl}/v1/maps/proxy/maps/api/staticmap`);
+        url.searchParams.append('key', apiKey);
+        url.searchParams.append('center', `${input.latitude},${input.longitude}`);
+        url.searchParams.append('zoom', input.zoom.toString());
+        url.searchParams.append('size', `${input.width}x${input.height}`);
+        url.searchParams.append('maptype', input.mapType);
+        url.searchParams.append('markers', `color:cyan|${input.latitude},${input.longitude}`);
+        
+        return { url: url.toString() };
+      }),
   }),
   sales: router({
     list: protectedProcedure.query(async ({ ctx }) => {
