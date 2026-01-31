@@ -1098,17 +1098,15 @@ export default function MapExplorer() {
           {/* Expanded FAB options */}
           {fabMenuOpen && (
             <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-4 duration-200">
-              <Button
-                size="lg"
-                variant={heatmapVisible ? "default" : "outline"}
+              <TactileButton
+                variant={heatmapVisible ? "neon" : "clay"}
                 onClick={() => setHeatmapVisible(!heatmapVisible)}
-                className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
+                className="rounded-full w-14 h-14"
               >
                 <Flame className="h-6 w-6" />
-              </Button>
-              <Button
-                size="lg"
-                variant={comparisonMode ? "default" : "outline"}
+              </TactileButton>
+              <TactileButton
+                variant={comparisonMode ? "neon" : "clay"}
                 onClick={() => {
                   setComparisonMode(!comparisonMode);
                   if (!comparisonMode) {
@@ -1116,24 +1114,22 @@ export default function MapExplorer() {
                     setSelectedProperties([]);
                   }
                 }}
-                className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
+                className="rounded-full w-14 h-14"
                 title="Compare Properties"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
+              </TactileButton>
+              <TactileButton
+                variant="clay"
                 onClick={() => setGisToolsOpen(!gisToolsOpen)}
-                className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
+                className="rounded-full w-14 h-14"
               >
                 <Settings className="h-6 w-6" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
+              </TactileButton>
+              <TactileButton
+                variant="clay"
                 onClick={() => {
                   if (selectedPropertyData && neighborhoodStats && queryResults) {
                     exportSpatialQueryToCSV(
@@ -1160,10 +1156,10 @@ export default function MapExplorer() {
                     );
                   }
                 }}
-                className="rounded-full w-14 h-14 shadow-2xl bg-background/95 backdrop-blur-xl border-primary/20 hover:scale-110 transition-all"
+                className="rounded-full w-14 h-14"
               >
                 <Download className="h-6 w-6" />
-              </Button>
+              </TactileButton>
             </div>
           )}
 
