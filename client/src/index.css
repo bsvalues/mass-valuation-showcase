@@ -4,6 +4,20 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* 2026 Design System - Cyber-Gradients */
+  --color-neon-cyan: oklch(0.8 0.2 195);
+  --color-neon-magenta: oklch(0.7 0.25 330);
+  --color-neon-gold: oklch(0.85 0.15 85);
+  --color-deep-charcoal: oklch(0.15 0.01 240);
+  --color-chrome-light: oklch(0.95 0.01 240);
+  --color-chrome-dark: oklch(0.3 0.02 240);
+  
+  /* 2026 Animations */
+  --animate-squish: squish 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --animate-breathe: breathe 3s ease-in-out infinite;
+  --animate-warp: warp 0.5s ease-out;
+  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
+  
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -234,5 +248,65 @@
   
   .animate-pulse-core {
     animation: pulse-core 3s ease-in-out infinite;
+  }
+  
+  /* 2026 Design System Animations */
+  @keyframes squish {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.92) scaleY(1.08); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.02); filter: brightness(1.1); }
+  }
+  
+  @keyframes warp {
+    0% { transform: perspective(1000px) rotateY(0deg); }
+    50% { transform: perspective(1000px) rotateY(5deg); }
+    100% { transform: perspective(1000px) rotateY(0deg); }
+  }
+  
+  @keyframes glow-pulse {
+    0%, 100% { 
+      box-shadow: 0 0 20px rgba(0, 255, 238, 0.3),
+                  0 0 40px rgba(0, 255, 238, 0.1),
+                  inset 0 0 20px rgba(0, 255, 238, 0.05);
+    }
+    50% { 
+      box-shadow: 0 0 30px rgba(0, 255, 238, 0.5),
+                  0 0 60px rgba(0, 255, 238, 0.2),
+                  inset 0 0 30px rgba(0, 255, 238, 0.1);
+    }
+  }
+  
+  /* Liquid Glass Utility */
+  .liquid-glass {
+    background: linear-gradient(
+      135deg,
+      rgba(11, 16, 32, 0.8) 0%,
+      rgba(11, 16, 32, 0.6) 100%
+    );
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(0, 255, 238, 0.15);
+    box-shadow: 
+      0 8px 32px 0 rgba(0, 0, 0, 0.37),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Reduced Motion Fallback */
+  @media (prefers-reduced-motion: reduce) {
+    .liquid-glass {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

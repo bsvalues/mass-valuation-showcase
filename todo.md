@@ -1399,3 +1399,10 @@
 - [ ] Add CSV/PDF export for property comparison reports
 - [x] Add historical value charts to comparison view
 - [x] Add aggregate statistics to comparison panel
+
+## 2026 Design System Upgrade
+- [ ] Create Tailwind design tokens (cyber-gradients, animations, glass textures)
+- [ ] Implement TactileButton component with squishy physics
+- [ ] Implement LiquidPanel component with refractive glass effect
+- [ ] Add global CSS utilities for liquid glass
+- [ ] Apply new design system to Map Explorer

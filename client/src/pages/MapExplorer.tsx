@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Search, X, Flame, ChevronLeft, ChevronRight, Settings, Target, Download, FileText } from "lucide-react";
 import { ValueTrendChart } from "@/components/ValueTrendChart";
 import { exportSpatialQueryToCSV } from "@/lib/csvExport";
+import { TactileButton } from "@/components/TactileButton";
+import { LiquidPanel } from "@/components/LiquidPanel";
 
 // Property Image Preview Component
 function PropertyImagePreview({ 
@@ -1166,18 +1168,21 @@ export default function MapExplorer() {
           )}
 
           {/* Main FAB toggle */}
-          <Button
-            size="lg"
+          <TactileButton
+            variant="neon"
             onClick={() => setFabMenuOpen(!fabMenuOpen)}
-            className="rounded-full w-16 h-16 shadow-2xl bg-primary hover:bg-primary/90 hover:scale-110 transition-all"
+            className="rounded-full w-16 h-16 shadow-2xl"
           >
             <Target className={`h-7 w-7 transition-transform ${fabMenuOpen ? "rotate-45" : ""}`} />
-          </Button>
+          </TactileButton>
         </div>
 
         {/* GIS Tools Panel - slide from right */}
         {gisToolsOpen && (
-          <div className="absolute top-0 right-0 bottom-0 w-80 bg-background/98 backdrop-blur-2xl border-l border-primary/20 shadow-2xl z-30 animate-in slide-in-from-right duration-300 p-6 overflow-y-auto">
+          <LiquidPanel 
+            enableWarp
+            className="absolute top-0 right-0 bottom-0 w-80 z-30 animate-in slide-in-from-right duration-300 p-6 overflow-y-auto rounded-l-3xl"
+          >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold">GIS Tools</h3>
               <Button variant="ghost" size="sm" onClick={() => setGisToolsOpen(false)}>
@@ -1203,7 +1208,7 @@ export default function MapExplorer() {
                 onLayerOpacityChange={handleLayerOpacityChange}
               />
             </div>
-          </div>
+          </LiquidPanel>
         )}
 
         {/* Slide-up Property Detail Panel */}
