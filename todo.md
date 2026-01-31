@@ -1406,3 +1406,4 @@
 - [ ] Implement LiquidPanel component with refractive glass effect
 - [ ] Add global CSS utilities for liquid glass
 - [ ] Apply new design system to Map Explorer
+- [x] Apply 2026 design to property details panel (LiquidPanel + TactileButton)

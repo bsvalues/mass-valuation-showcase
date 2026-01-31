@@ -1214,7 +1214,10 @@ export default function MapExplorer() {
         {/* Slide-up Property Detail Panel */}
         {((selectedProperty && selectedPropertyData) || (comparisonMode && selectedProperties.length > 0)) && (
           <div className="absolute bottom-0 left-0 right-0 z-40 animate-in slide-in-from-bottom duration-300">
-            <div className="bg-background/98 backdrop-blur-2xl border-t border-primary/20 shadow-2xl rounded-t-3xl max-h-[70vh] overflow-y-auto">
+            <LiquidPanel 
+              enableBreathe
+              className="border-t border-primary/20 shadow-2xl rounded-t-3xl max-h-[70vh] overflow-y-auto"
+            >
               {/* Panel Header */}
               <div className="sticky top-0 bg-background/95 backdrop-blur-xl border-b border-primary/10 p-6 flex items-start justify-between">
                 <div className="flex-1">
@@ -1230,22 +1233,22 @@ export default function MapExplorer() {
                 <div className="flex items-center gap-2">
                   {comparisonMode && selectedProperties.length > 0 && (
                     <>
-                      <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                      <TactileButton variant="chrome" className="gap-2 px-4 py-2 text-sm" onClick={() => {
                         const data = selectedProperties.map(id => properties.find((p: any) => p.id === id)).filter(Boolean).map((p: any) => ({
                           id: p.id, address: p.address || "N/A", parcelId: p.parcelId || "N/A", totalValue: p.totalValue || 0,
                           squareFeet: p.squareFeet || 0, yearBuilt: p.yearBuilt || 0, propertyType: p.propertyType || "N/A",
                           latitude: p.latitude || "0", longitude: p.longitude || "0"
                         }));
                         import('@/lib/comparisonExport').then(({ exportComparisonCSV }) => exportComparisonCSV(data));
-                      }}><Download className="h-4 w-4" />CSV</Button>
-                      <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                      }}><Download className="h-4 w-4" />CSV</TactileButton>
+                      <TactileButton variant="chrome" className="gap-2 px-4 py-2 text-sm" onClick={() => {
                         const data = selectedProperties.map(id => properties.find((p: any) => p.id === id)).filter(Boolean).map((p: any) => ({
                           id: p.id, address: p.address || "N/A", parcelId: p.parcelId || "N/A", totalValue: p.totalValue || 0,
                           squareFeet: p.squareFeet || 0, yearBuilt: p.yearBuilt || 0, propertyType: p.propertyType || "N/A",
                           latitude: p.latitude || "0", longitude: p.longitude || "0"
                         }));
                         import('@/lib/comparisonExport').then(({ exportComparisonPDF }) => exportComparisonPDF(data));
-                      }}><FileText className="h-4 w-4" />PDF</Button>
+                      }}><FileText className="h-4 w-4" />PDF</TactileButton>
                     </>
                   )}
                   <Button variant="ghost" size="sm" className="rounded-full hover:bg-muted" onClick={() => {
@@ -1473,7 +1476,7 @@ export default function MapExplorer() {
                   </Button>
                 </div>
               </div>
-            </div>
+            </LiquidPanel>
           </div>
         )}
       </div>
