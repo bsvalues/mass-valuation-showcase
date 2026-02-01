@@ -1259,7 +1259,7 @@ export default function MapExplorer() {
                 {/* Comparison Mode: Side-by-side properties */}
                 {comparisonMode && selectedProperties.length > 0 ? (
                   <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                     {selectedProperties.map(propId => {
                       const prop = properties.find((p: any) => p.id === propId);
                       if (!prop) return null;
