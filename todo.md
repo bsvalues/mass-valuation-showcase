@@ -1408,3 +1408,4 @@
 - [ ] Apply new design system to Map Explorer
 - [x] Apply 2026 design to property details panel (LiquidPanel + TactileButton)
 - [x] Apply TactileButton to expanded FAB menu options
+- [x] Implement kinetic typography on panel headers (scroll-reactive font weight)

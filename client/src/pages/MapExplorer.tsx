@@ -16,6 +16,7 @@ import { ValueTrendChart } from "@/components/ValueTrendChart";
 import { exportSpatialQueryToCSV } from "@/lib/csvExport";
 import { TactileButton } from "@/components/TactileButton";
 import { LiquidPanel } from "@/components/LiquidPanel";
+import { KineticText } from "@/components/KineticText";
 
 // Property Image Preview Component
 function PropertyImagePreview({ 
@@ -1326,7 +1327,9 @@ export default function MapExplorer() {
                   
                   {/* Aggregate Statistics */}
                   <div className="mt-6 pt-6 border-t border-primary/10">
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-4">Comparison Summary</h3>
+                    <KineticText className="text-sm font-semibold mb-4">
+                      Comparison Summary
+                    </KineticText>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {(() => {
                         const validProps = selectedProperties.map(id => properties.find((p: any) => p.id === id)).filter(Boolean);
