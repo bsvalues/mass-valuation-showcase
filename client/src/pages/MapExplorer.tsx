@@ -268,16 +268,21 @@ export default function MapExplorer() {
         }))
       };
 
-      // Add clustered GeoJSON source
+      // Add clustered GeoJSON source with value-based properties
       mapInstance.addSource('properties', {
         type: 'geojson',
         data: geojson,
         cluster: true,
         clusterMaxZoom: 14, // Max zoom to cluster points on
-        clusterRadius: 50 // Radius of each cluster when clustering points
+        clusterRadius: 50, // Radius of each cluster when clustering points
+        clusterProperties: {
+          // Calculate average assessed value for each cluster
+          avgValue: ['+', ['get', 'assessedValue']],
+          count: ['+', 1]
+        }
       });
 
-      // Add cluster circle layer
+      // Add cluster circle layer with value-based color coding
       mapInstance.addLayer({
         id: 'clusters',
         type: 'circle',
@@ -286,12 +291,12 @@ export default function MapExplorer() {
         paint: {
           'circle-color': [
             'step',
-            ['get', 'point_count'],
-            '#00FFFF',  // Cyan for small clusters (< 10)
-            10,
-            '#00D9D9',  // Darker cyan for medium clusters (10-30)
-            30,
-            '#00B8B8'   // Even darker for large clusters (30+)
+            ['/', ['get', 'avgValue'], ['get', 'count']], // Calculate average value
+            '#22c55e',  // Green for low value (<$200k)
+            200000,
+            '#eab308',  // Yellow for medium value ($200k-$400k)
+            400000,
+            '#ef4444'   // Red for high value (>$400k)
           ],
           'circle-radius': [
             'step',
@@ -302,7 +307,7 @@ export default function MapExplorer() {
             30,
             40   // 40px for large clusters
           ],
-          'circle-opacity': 0.8,
+          'circle-opacity': 0.85,
           'circle-stroke-width': 2,
           'circle-stroke-color': '#FFFFFF'
         }
@@ -324,14 +329,22 @@ export default function MapExplorer() {
         }
       });
 
-      // Add unclustered point layer (individual properties)
+      // Add unclustered point layer (individual properties) with value-based colors
       mapInstance.addLayer({
         id: 'unclustered-point',
         type: 'circle',
         source: 'properties',
         filter: ['!', ['has', 'point_count']],
         paint: {
-          'circle-color': '#00FFFF',
+          'circle-color': [
+            'step',
+            ['get', 'assessedValue'],
+            '#22c55e',  // Green for low value (<$200k)
+            200000,
+            '#eab308',  // Yellow for medium value ($200k-$400k)
+            400000,
+            '#ef4444'   // Red for high value (>$400k)
+          ],
           'circle-radius': 8,
           'circle-stroke-width': 2,
           'circle-stroke-color': '#FFFFFF',
@@ -1134,10 +1147,40 @@ export default function MapExplorer() {
         </div>
 
         {/* Property count badge - top left */}
-        <div className="absolute top-6 left-6 z-10">
+        <div className="absolute top-6 left-6 z-10 flex flex-col gap-3">
           <Badge className="bg-background/95 backdrop-blur-xl text-foreground border-primary/20 px-4 py-2 text-sm">
             {properties.length} Properties
           </Badge>
+          
+          {/* Value Range Legend */}
+          <div 
+            className="rounded-2xl shadow-lg overflow-hidden"
+            style={{
+              background: "rgba(11, 16, 32, 0.85)",
+              backdropFilter: "blur(24px) saturate(180%)",
+              border: "1px solid rgba(0, 255, 238, 0.2)",
+            }}
+          >
+            <div className="px-3 py-2">
+              <div className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider mb-2">
+                Market Value
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="text-xs text-white/80">&lt; $200k</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <span className="text-xs text-white/80">$200k - $400k</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span className="text-xs text-white/80">&gt; $400k</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Map Legend */}
