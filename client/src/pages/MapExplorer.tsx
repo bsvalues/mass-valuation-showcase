@@ -17,6 +17,7 @@ import { exportSpatialQueryToCSV } from "@/lib/csvExport";
 import { TactileButton } from "@/components/TactileButton";
 import { LiquidPanel } from "@/components/LiquidPanel";
 import { KineticText } from "@/components/KineticText";
+import { SearchAutocomplete, type SearchSuggestion } from "@/components/ui/SearchAutocomplete";
 
 // Property Image Preview Component
 function PropertyImagePreview({ 
@@ -110,6 +111,8 @@ export default function MapExplorer() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [gisToolsOpen, setGisToolsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [autocompleteOpen, setAutocompleteOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<number[]>([]);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
   const [layers, setLayers] = useState<Layer[]>(defaultLayers);
   const [bufferZoneVisible, setBufferZoneVisible] = useState(false);
@@ -136,6 +139,32 @@ export default function MapExplorer() {
 
   // Get selected property details
   const selectedPropertyData = properties.find((p: any) => p.id === selectedProperty);
+
+  // Generate search suggestions based on query
+  const getSearchSuggestions = (): SearchSuggestion[] => {
+    if (!searchQuery.trim()) {
+      // Show recent searches when no query
+      return recentSearches
+        .map(id => properties.find((p: any) => p.id === id))
+        .filter(Boolean)
+        .map((p: any) => ({
+          id: p.id.toString(),
+          address: p.address || 'Unknown Address',
+          parcelNumber: p.parcelNumber || 'N/A',
+          assessedValue: p.assessedValue || 0,
+          type: 'recent' as const,
+        }));
+    }
+
+    // Filter and return matching properties (limit to 8)
+    return filteredProperties.slice(0, 8).map((p: any) => ({
+      id: p.id.toString(),
+      address: p.address || 'Unknown Address',
+      parcelNumber: p.parcelNumber || 'N/A',
+      assessedValue: p.assessedValue || 0,
+      type: 'property' as const,
+    }));
+  };
 
   // Fetch neighborhood stats for selected property
   const { data: neighborhoodStats } = trpc.parcels.getNeighborhoodStats.useQuery(
@@ -1052,26 +1081,56 @@ export default function MapExplorer() {
               <Input
                 placeholder="Search properties..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setAutocompleteOpen(e.target.value.length > 0);
+                }}
+                onFocus={() => setAutocompleteOpen(searchQuery.length > 0)}
                 className="pl-12 pr-12 h-12 border-0 bg-transparent rounded-full focus-visible:ring-0"
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setAutocompleteOpen(false);
+                  }}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </button>
               )}
             </div>
+            
+            {/* Autocomplete Dropdown */}
+            <SearchAutocomplete
+              suggestions={getSearchSuggestions()}
+              onSelect={(suggestion) => {
+                // Save to recent searches
+                const propertyId = parseInt(suggestion.id);
+                setRecentSearches(prev => {
+                  const updated = [propertyId, ...prev.filter(id => id !== propertyId)];
+                  return updated.slice(0, 5); // Keep only 5 most recent
+                });
+                
+                // Select property and fly to it
+                setSelectedProperty(propertyId);
+                setSearchQuery("");
+                setAutocompleteOpen(false);
+                
+                // Fly to property on map
+                const property = properties.find((p: any) => p.id === propertyId);
+                if (property && property.longitude && property.latitude && map.current) {
+                  map.current.flyTo({
+                    center: [parseFloat(property.longitude), parseFloat(property.latitude)],
+                    zoom: 16,
+                    duration: 1500,
+                  });
+                }
+              }}
+              isOpen={autocompleteOpen}
+              searchQuery={searchQuery}
+            />
           </div>
-          {filteredProperties.length > 0 && searchQuery && (
-            <div className="mt-2 text-center">
-              <Badge variant="secondary" className="bg-background/95 backdrop-blur-xl">
-                {filteredProperties.length} properties found
-              </Badge>
-            </div>
-          )}
         </div>
 
         {/* Property count badge - top left */}
