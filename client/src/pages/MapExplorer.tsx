@@ -18,6 +18,7 @@ import { TactileButton } from "@/components/TactileButton";
 import { LiquidPanel } from "@/components/LiquidPanel";
 import { KineticText } from "@/components/KineticText";
 import { SearchAutocomplete, type SearchSuggestion } from "@/components/ui/SearchAutocomplete";
+import { ClusterTooltip } from "@/components/ClusterTooltip";
 
 // Property Image Preview Component
 function PropertyImagePreview({ 
@@ -120,6 +121,12 @@ export default function MapExplorer() {
   const [queryResults, setQueryResults] = useState<any>(null);
   const [measurementMode, setMeasurementMode] = useState<"distance" | "area" | null>(null);
   const [fabMenuOpen, setFabMenuOpen] = useState(false);
+  const [clusterTooltip, setClusterTooltip] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    propertyIds: number[];
+  } | null>(null);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -428,7 +435,7 @@ export default function MapExplorer() {
       });
       }
 
-      // Click handler for clusters - zoom in
+      // Click handler for clusters - show tooltip
       mapInstance.on('click', 'clusters', (e) => {
         const features = mapInstance.queryRenderedFeatures(e.point, {
           layers: ['clusters']
@@ -438,20 +445,20 @@ export default function MapExplorer() {
 
         const clusterId = features[0].properties?.cluster_id;
         const source = mapInstance.getSource('properties') as maplibregl.GeoJSONSource;
-        const coordinates = (features[0].geometry as GeoJSON.Point).coordinates;
 
-        // Zoom into the cluster
-        source.getClusterExpansionZoom(clusterId).then((zoom: number) => {
-          mapInstance.easeTo({
-            center: [coordinates[0], coordinates[1]],
-            zoom: zoom || 14
+        // Get property IDs in the cluster
+        source.getClusterLeaves(clusterId, 1000, 0).then((leaves: any[]) => {
+          const propertyIds = leaves.map(leaf => leaf.properties.id);
+          
+          // Show tooltip at click position
+          setClusterTooltip({
+            visible: true,
+            x: e.point.x,
+            y: e.point.y,
+            propertyIds,
           });
-        }).catch(() => {
-          // Fallback zoom if expansion zoom fails
-          mapInstance.easeTo({
-            center: [coordinates[0], coordinates[1]],
-            zoom: 14
-          });
+        }).catch((err) => {
+          console.error('Failed to get cluster leaves:', err);
         });
       });
 
@@ -1579,6 +1586,16 @@ export default function MapExplorer() {
               </div>
             </LiquidPanel>
           </div>
+        )}
+        
+        {/* Cluster Tooltip */}
+        {clusterTooltip && clusterTooltip.visible && (
+          <ClusterTooltip
+            x={clusterTooltip.x}
+            y={clusterTooltip.y}
+            propertyIds={clusterTooltip.propertyIds}
+            onClose={() => setClusterTooltip(null)}
+          />
         )}
       </div>
     </DashboardLayout>

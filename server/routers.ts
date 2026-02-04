@@ -391,6 +391,51 @@ export const appRouter = router({
         
         return { url: url.toString() };
       }),
+    getClusterStats: protectedProcedure
+      .input(z.object({
+        propertyIds: z.array(z.number()),
+      }))
+      .query(async ({ input }) => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { inArray } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Fetch properties in the cluster
+        const properties = await db
+          .select()
+          .from(parcels)
+          .where(inArray(parcels.id, input.propertyIds));
+        
+        if (properties.length === 0) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'No properties found in cluster' });
+        }
+        
+        // Calculate aggregate statistics
+        const values = properties
+          .map(p => p.totalValue || 0)
+          .filter(v => v > 0);
+        
+        const avgValue = values.length > 0 
+          ? values.reduce((sum, v) => sum + v, 0) / values.length 
+          : 0;
+        
+        const minValue = values.length > 0 ? Math.min(...values) : 0;
+        const maxValue = values.length > 0 ? Math.max(...values) : 0;
+        
+        return {
+          count: properties.length,
+          avgValue: Math.round(avgValue),
+          minValue,
+          maxValue,
+          properties: properties.slice(0, 5).map(p => ({
+            id: p.id,
+            address: p.address || 'Unknown',
+            assessedValue: p.totalValue || 0,
+          })),
+        };
+      }),
   }),
   sales: router({
     list: protectedProcedure.query(async ({ ctx }) => {
