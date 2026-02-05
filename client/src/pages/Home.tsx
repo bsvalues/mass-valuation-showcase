@@ -86,7 +86,7 @@ export default function Home() {
           <Card className="border-t-4 border-t-chart-1 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <div className="w-12 h-12 rounded-lg bg-chart-1/10 flex items-center justify-center mb-4">
-                <img src="/images/icon-foundation.png" alt="Foundation" className="w-8 h-8 object-contain" />
+                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663028539184/KksIhXyfcDIzAVuD.png" alt="Foundation" className="w-8 h-8 object-contain" />
               </div>
               <CardTitle className="text-xl">Level 3: Foundation</CardTitle>
               <CardDescription>Stability & Security</CardDescription>
@@ -105,7 +105,7 @@ export default function Home() {
           <Card className="border-t-4 border-t-chart-2 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <div className="w-12 h-12 rounded-lg bg-chart-2/10 flex items-center justify-center mb-4">
-                <img src="/images/icon-amplification.png" alt="Amplification" className="w-8 h-8 object-contain" />
+                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663028539184/WxrisZCUUtRCVHWh.png" alt="Amplification" className="w-8 h-8 object-contain" />
               </div>
               <CardTitle className="text-xl">Level 6: Amplification</CardTitle>
               <CardDescription>Synergy & Insight</CardDescription>
@@ -124,7 +124,7 @@ export default function Home() {
           <Card className="border-t-4 border-t-chart-3 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <div className="w-12 h-12 rounded-lg bg-chart-3/10 flex items-center justify-center mb-4">
-                <img src="/images/icon-ultimate-power.png" alt="Ultimate Power" className="w-8 h-8 object-contain" />
+                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663028539184/JUmpbZnzWtIOLQdM.png" alt="Ultimate Power" className="w-8 h-8 object-contain" />
               </div>
               <CardTitle className="text-xl">Level 9: Ultimate Power</CardTitle>
               <CardDescription>Global Normalization</CardDescription>

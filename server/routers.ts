@@ -436,6 +436,13 @@ export const appRouter = router({
           })),
         };
       }),
+    
+    seedHistoricalData: adminProcedure
+      .mutation(async () => {
+        const { seedHistoricalData } = await import('./seedHistoricalData');
+        const result = await seedHistoricalData();
+        return result;
+      }),
   }),
   sales: router({
     list: protectedProcedure.query(async ({ ctx }) => {

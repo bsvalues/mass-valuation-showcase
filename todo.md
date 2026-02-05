@@ -1413,3 +1413,4 @@
 - [x] Implement search autocomplete dropdown with address suggestions
 - [x] Implement value-based color-coded clusters (green/yellow/red) for market segmentation
 - [x] Implement cluster click tooltip showing aggregate statistics
+- [x] Seed historical property data (5-10 years) for trend visualization
