@@ -26,6 +26,7 @@ import AVMStudio from "./pages/AVMStudio";
 import ModelManagement from "./pages/ModelManagement";
 import DataImport from "./pages/DataImport";
 import BatchValuation from "./pages/BatchValuation";
+import WADataIngestion from "./pages/WADataIngestion";
 
 
 function Router() {
@@ -48,6 +49,7 @@ function Router() {
       <Route path={"/admin/users"} component={AdminUsers} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
+      <Route path={"/wa-data-ingestion"} component={WADataIngestion} />
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
