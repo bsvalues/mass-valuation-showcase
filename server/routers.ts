@@ -443,6 +443,23 @@ export const appRouter = router({
         const result = await seedHistoricalData();
         return result;
       }),
+
+    // WA State Parcel Fabric API Integration
+    getWACounties: protectedProcedure
+      .query(async () => {
+        const { getWACounties } = await import('./waParcelFabric');
+        return await getWACounties();
+      }),
+
+    loadWACountyParcels: protectedProcedure
+      .input(z.object({
+        countyName: z.string(),
+        limit: z.number().default(1000),
+      }))
+      .mutation(async ({ input }) => {
+        const { loadWACountyParcels } = await import('./waParcelFabric');
+        return await loadWACountyParcels(input.countyName, input.limit);
+      }),
   }),
   sales: router({
     list: protectedProcedure.query(async ({ ctx }) => {

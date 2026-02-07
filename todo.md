@@ -1421,3 +1421,9 @@
 - [x] Create Capability Unlock Dashboard with gamification
 - [x] Add WA County onboarding wizard integration
 - [x] Implement cross-county field mapping learning system
+
+### WA Parcel Fabric API Integration
+- [x] Create tRPC endpoint to fetch parcel geometries from WA Geo Portal
+- [x] Build county selector component with one-click parcel loading
+- [x] Integrate loaded parcels with Map Explorer visualization
+- [x] Add parcel count and coverage statistics display

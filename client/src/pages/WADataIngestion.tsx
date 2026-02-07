@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { VisualDataFlowPipeline, type PipelineStageData } from "@/components/wa-data/VisualDataFlowPipeline";
 import { AIFieldMappingCoPilot, type FieldMapping } from "@/components/wa-data/AIFieldMappingCoPilot";
 import { CapabilityUnlockDashboard, type Capability } from "@/components/wa-data/CapabilityUnlockDashboard";
+import { WAParcelLoader } from "@/components/wa-data/WAParcelLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -214,7 +215,8 @@ export default function WADataIngestion() {
           <TabsList className="bg-muted/50">
             <TabsTrigger value="pipeline">Data Flow Pipeline</TabsTrigger>
             <TabsTrigger value="mapping">AI Field Mapping</TabsTrigger>
-            <TabsTrigger value="capabilities">Capability Unlocks</TabsTrigger>
+            <TabsTrigger value="capabilities">Capability Unlock</TabsTrigger>
+          <TabsTrigger value="parcels">Parcel Loader</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pipeline" className="space-y-6">
@@ -320,6 +322,42 @@ export default function WADataIngestion() {
                 </ul>
                 <p className="text-xs italic">
                   Gamification creates dopamine-driven onboarding that counties actually enjoy
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="parcels" className="space-y-6">
+            <WAParcelLoader
+              onParcelsLoaded={(result) => {
+                toast.success(`Loaded ${result.parcelCount} parcels - ready to visualize on map`);
+              }}
+            />
+
+            <Card className="bg-background/60 backdrop-blur-xl border-primary/20">
+              <CardHeader>
+                <CardTitle>About WA Parcel Fabric Integration</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  The <strong className="text-foreground">WA Parcel Fabric Loader</strong> connects directly to the Washington State Geospatial Portal:
+                </p>
+                <ul className="list-disc list-inside space-y-1 ml-4">
+                  <li>
+                    <strong className="text-foreground">One-click loading:</strong> Select any WA county and load real parcel geometries instantly
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Live data:</strong> Always current with the latest statewide parcel fabric (updated September 2025)
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Complete attributes:</strong> Includes geometry, ownership, assessment values, and property characteristics
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Map-ready:</strong> GeoJSON format with bounds calculation for instant visualization
+                  </li>
+                </ul>
+                <p className="text-xs italic">
+                  Eliminates manual parcel data downloads and shapefile conversions
                 </p>
               </CardContent>
             </Card>
