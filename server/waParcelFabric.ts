@@ -6,7 +6,9 @@
 import axios from 'axios';
 
 // WA State ArcGIS REST API endpoint for parcel data
-const WA_PARCEL_SERVICE_URL = 'https://services.arcgis.com/jsIt88o09Q0r1j8h/arcgis/rest/services/Parcels_2025/FeatureServer/0';
+// Using Previous_Parcels (2024) as the confirmed working service
+// Current_Parcels should have the same structure when available
+const WA_PARCEL_SERVICE_URL = 'https://services.arcgis.com/jsIt88o09Q0r1j8h/arcgis/rest/services/Previous_Parcels/FeatureServer/0';
 
 export interface ParcelFeature {
   type: 'Feature';
@@ -16,17 +18,20 @@ export interface ParcelFeature {
   };
   properties: {
     OBJECTID: number;
-    PARCEL_ID: string;
-    COUNTY_NAME: string;
-    COUNTY_FIPS: string;
-    PARCEL_AREA_SQFT?: number;
-    PARCEL_AREA_ACRES?: number;
+    PARCEL_ID_NR: string;
+    COUNTY_NM: string;
+    FIPS_NR: string;
     SITUS_ADDRESS?: string;
-    OWNER_NAME?: string;
-    ASSESSED_VALUE?: number;
-    LAND_VALUE?: number;
-    BUILDING_VALUE?: number;
-    TAX_YEAR?: number;
+    SUB_ADDRESS?: string;
+    SITUS_CITY_NM?: string;
+    SITUS_ZIP_NR?: string;
+    LANDUSE_CD?: number;
+    VALUE_LAND?: number;
+    VALUE_BLDG?: number;
+    DATA_LINK?: string;
+    FILE_DATE?: string;
+    Shape__Area?: number;
+    Shape__Length?: number;
   };
 }
 
@@ -51,7 +56,7 @@ export async function loadWACountyParcels(countyName: string, limit: number = 10
   try {
     // Query parameters for ArcGIS REST API
     const params = {
-      where: `COUNTY_NAME = '${countyName.toUpperCase()}'`,
+      where: `COUNTY_NM = '${countyName.toUpperCase()}'`,
       outFields: '*',
       returnGeometry: 'true',
       f: 'geojson',
