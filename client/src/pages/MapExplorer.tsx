@@ -5,6 +5,7 @@ import { MapLegend } from "@/components/MapLegend";
 import { MeasurementTools } from "@/components/MeasurementTools";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useRef, useState } from "react";
+import { useWAParcels } from "@/contexts/WAParcelContext";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,6 +106,7 @@ function PropertyHistoryChart({ propertyId }: { propertyId: number }) {
 export default function MapExplorer() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const { loadedParcels, clearLoadedParcels } = useWAParcels();
   const [selectedProperty, setSelectedProperty] = useState<number | null>(null);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [selectedProperties, setSelectedProperties] = useState<number[]>([]);
@@ -556,6 +558,66 @@ export default function MapExplorer() {
       mapInstance.on('load', addClustering);
     }
   }, [properties]);
+
+  // Handle WA County Parcel Loading
+  useEffect(() => {
+    if (!map.current || !loadedParcels) return;
+
+    const mapInstance = map.current;
+    const sourceId = 'wa-parcels';
+    const layerId = 'wa-parcels-layer';
+
+    // Remove existing WA parcel layer if it exists
+    if (mapInstance.getLayer(layerId)) {
+      mapInstance.removeLayer(layerId);
+    }
+    if (mapInstance.getSource(sourceId)) {
+      mapInstance.removeSource(sourceId);
+    }
+
+    // Add WA parcel source
+    mapInstance.addSource(sourceId, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: loadedParcels.features,
+      },
+    });
+
+    // Add WA parcel layer
+    mapInstance.addLayer({
+      id: layerId,
+      type: 'fill',
+      source: sourceId,
+      paint: {
+        'fill-color': '#00FFEE',
+        'fill-opacity': 0.2,
+        'fill-outline-color': '#00FFEE',
+      },
+    });
+
+    // Fly to county bounds
+    const { bounds } = loadedParcels;
+    mapInstance.fitBounds(
+      [
+        [bounds.minLng, bounds.minLat],
+        [bounds.maxLng, bounds.maxLat],
+      ],
+      {
+        padding: 50,
+        duration: 2000,
+      }
+    );
+
+    return () => {
+      if (mapInstance.getLayer(layerId)) {
+        mapInstance.removeLayer(layerId);
+      }
+      if (mapInstance.getSource(sourceId)) {
+        mapInstance.removeSource(sourceId);
+      }
+    };
+  }, [loadedParcels]);
 
   // Handle property selection - fly to location and highlight
   useEffect(() => {

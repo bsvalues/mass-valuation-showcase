@@ -4,12 +4,14 @@
  */
 
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
+import { useWAParcels } from '@/contexts/WAParcelContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Download, MapPin, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Download, MapPin, Loader2, CheckCircle2, AlertCircle, Map } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ParcelLoadResult } from '../../../../server/waParcelFabric';
 
@@ -20,6 +22,8 @@ interface WAParcelLoaderProps {
 export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
   const [selectedCounty, setSelectedCounty] = useState<string>('');
   const [loadResult, setLoadResult] = useState<ParcelLoadResult | null>(null);
+  const [, setLocation] = useLocation();
+  const { setLoadedParcels } = useWAParcels();
 
   const { data: counties, isLoading: countiesLoading } = trpc.parcels.getWACounties.useQuery();
   const loadParcelsMutation = trpc.parcels.loadWACountyParcels.useMutation({
@@ -148,6 +152,25 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
                 )}
               </div>
             </div>
+            {loadResult.success && (
+              <Button
+                onClick={() => {
+                  setLoadedParcels({
+                    countyName: loadResult.countyName,
+                    features: loadResult.features,
+                    bounds: loadResult.bounds!,
+                    parcelCount: loadResult.parcelCount,
+                    loadedAt: new Date(),
+                  });
+                  setLocation('/map-explorer');
+                  toast.success('Opening Map Explorer...');
+                }}
+                className="w-full mt-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30"
+              >
+                <Map className="w-4 h-4 mr-2" />
+                View on Map
+              </Button>
+            )}
           </div>
         )}
 

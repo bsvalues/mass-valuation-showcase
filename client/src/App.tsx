@@ -10,6 +10,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AdaptiveThemeProvider } from "./contexts/AdaptiveThemeContext";
+import { WAParcelProvider } from "./contexts/WAParcelContext";
 import Home from "./pages/Home";
 import Governance from "./pages/Governance";
 import CostMatrix from "./pages/CostMatrix";
@@ -77,15 +78,17 @@ function App() {
         switchable
       >
         <AdaptiveThemeProvider>
-          <GlobalSimulationProvider>
-            <GodModeProvider>
+      <GlobalSimulationProvider>
+        <WAParcelProvider>
+          <GodModeProvider>
               <TooltipProvider>
               <GodModeTerminal />
               <Toaster />
               <Router />
               </TooltipProvider>
             </GodModeProvider>
-          </GlobalSimulationProvider>
+          </WAParcelProvider>
+        </GlobalSimulationProvider>
         </AdaptiveThemeProvider>
       </ThemeProvider>
     </ErrorBoundary>
