@@ -104,4 +104,78 @@ describe('Save WA Parcels to Database', () => {
     expect(parcelsToInsert[0].buildingValue).toBeNull();
     expect(parcelsToInsert[0].totalValue).toBe(0);
   });
+
+  it('should filter out duplicate parcel IDs', () => {
+    const mockFeatures = [
+      {
+        type: 'Feature',
+        properties: {
+          PARCEL_ID_NR: 'WA-TEST-001',
+          SITUS_ADDRESS: '123 Test St',
+          VALUE_LAND: 100000,
+          VALUE_BLDG: 200000,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [-122.5, 47.5],
+            [-122.5, 47.6],
+            [-122.4, 47.6],
+            [-122.4, 47.5],
+            [-122.5, 47.5],
+          ]],
+        },
+      },
+      {
+        type: 'Feature',
+        properties: {
+          PARCEL_ID_NR: 'WA-TEST-002',
+          SITUS_ADDRESS: '456 Test Ave',
+          VALUE_LAND: 150000,
+          VALUE_BLDG: 250000,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [-122.5, 47.5],
+            [-122.5, 47.6],
+            [-122.4, 47.6],
+            [-122.4, 47.5],
+            [-122.5, 47.5],
+          ]],
+        },
+      },
+    ];
+
+    const countyName = 'Test County';
+    const userId = 1;
+
+    const parcelsToInsert = mockFeatures.map((feature: any) => {
+      const props = feature.properties;
+      const coords = feature.geometry.coordinates[0][0];
+      
+      return {
+        parcelId: props.PARCEL_ID_NR || `WA-${props.OBJECTID}`,
+        address: props.SITUS_ADDRESS || null,
+        latitude: coords[1]?.toString() || null,
+        longitude: coords[0]?.toString() || null,
+        landValue: props.VALUE_LAND || null,
+        buildingValue: props.VALUE_BLDG || null,
+        totalValue: (props.VALUE_LAND || 0) + (props.VALUE_BLDG || 0),
+        neighborhood: countyName,
+        propertyType: 'Unknown',
+        uploadedBy: userId,
+      };
+    });
+
+    // Simulate existing parcels
+    const existingParcelIds = new Set(['WA-TEST-001']);
+    
+    // Filter out duplicates
+    const newParcels = parcelsToInsert.filter(p => !existingParcelIds.has(p.parcelId));
+    
+    expect(newParcels).toHaveLength(1);
+    expect(newParcels[0].parcelId).toBe('WA-TEST-002');
+    expect(parcelsToInsert.length - newParcels.length).toBe(1); // 1 skipped
+  });
 });

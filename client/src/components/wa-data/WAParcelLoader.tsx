@@ -28,7 +28,10 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
   const { data: counties, isLoading: countiesLoading } = trpc.parcels.getWACounties.useQuery();
   const saveToDbMutation = trpc.parcels.saveWAParcelsToDatabase.useMutation({
     onSuccess: (result) => {
-      toast.success(`Saved ${result.savedCount.toLocaleString()} parcels to database`);
+      const message = result.skippedCount > 0
+        ? `Saved ${result.savedCount.toLocaleString()} new parcels (${result.skippedCount.toLocaleString()} duplicates skipped)`
+        : `Saved ${result.savedCount.toLocaleString()} parcels to database`;
+      toast.success(message);
     },
     onError: (error) => {
       toast.error(`Failed to save: ${error.message}`);

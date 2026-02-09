@@ -1434,3 +1434,9 @@
 - [x] Implement data transformation from WA schema to local parcels schema
 - [x] Add progress indicator for bulk insert operations
 - [x] Display success message with count of saved parcels
+
+### WA Parcel Duplicate Detection
+- [x] Implement parcel ID uniqueness check in saveWAParcelsToDatabase endpoint
+- [x] Filter out existing parcels before batch insert
+- [x] Display statistics showing new vs skipped parcels in success message
+- [x] Add test coverage for duplicate detection logic

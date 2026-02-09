@@ -469,9 +469,11 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const { parcels } = await import('../drizzle/schema');
         const { getDb } = await import('./db');
+        const { inArray } = await import('drizzle-orm');
         const db = await getDb();
         if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
 
+        // Transform features to parcel records
         const parcelsToInsert = input.features.map((feature: any) => {
           const props = feature.properties;
           const coords = feature.geometry.coordinates[0][0]; // First coordinate of polygon
@@ -490,12 +492,28 @@ export const appRouter = router({
           };
         });
 
-        // Batch insert
-        await db.insert(parcels).values(parcelsToInsert);
+        // Check for existing parcel IDs
+        const parcelIds = parcelsToInsert.map(p => p.parcelId);
+        const existingParcels = await db
+          .select({ parcelId: parcels.parcelId })
+          .from(parcels)
+          .where(inArray(parcels.parcelId, parcelIds));
+        
+        const existingParcelIds = new Set(existingParcels.map(p => p.parcelId));
+        
+        // Filter out duplicates
+        const newParcels = parcelsToInsert.filter(p => !existingParcelIds.has(p.parcelId));
+        
+        // Batch insert only new parcels
+        if (newParcels.length > 0) {
+          await db.insert(parcels).values(newParcels);
+        }
 
         return {
           success: true,
-          savedCount: parcelsToInsert.length,
+          savedCount: newParcels.length,
+          skippedCount: parcelsToInsert.length - newParcels.length,
+          totalCount: parcelsToInsert.length,
           countyName: input.countyName,
         };
       }),
