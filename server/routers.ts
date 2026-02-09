@@ -1363,6 +1363,48 @@ export const appRouter = router({
           },
         };
       }),
+
+    getCountyStatistics: protectedProcedure.query(async () => {
+      const { parcels } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { sql } = await import('drizzle-orm');
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+      // Get all WA counties (39 counties)
+      const waCounties = [
+        'Adams', 'Asotin', 'Benton', 'Chelan', 'Clallam', 'Clark', 'Columbia', 'Cowlitz',
+        'Douglas', 'Ferry', 'Franklin', 'Garfield', 'Grant', 'Grays Harbor', 'Island',
+        'Jefferson', 'King', 'Kitsap', 'Kittitas', 'Klickitat', 'Lewis', 'Lincoln',
+        'Mason', 'Okanogan', 'Pacific', 'Pend Oreille', 'Pierce', 'San Juan', 'Skagit',
+        'Skamania', 'Snohomish', 'Spokane', 'Stevens', 'Thurston', 'Wahkiakum', 'Walla Walla',
+        'Whatcom', 'Whitman', 'Yakima'
+      ];
+
+      // Query parcel counts and last update by county
+      const countyStats = await db
+        .select({
+          county: sql<string>`SUBSTRING_INDEX(${parcels.parcelId}, '-', 2)`,
+          parcelCount: sql<number>`COUNT(*)`,
+          lastUpdate: sql<Date>`MAX(${parcels.updatedAt})`,
+        })
+        .from(parcels)
+        .where(sql`${parcels.parcelId} LIKE 'WA-%'`)
+        .groupBy(sql`SUBSTRING_INDEX(${parcels.parcelId}, '-', 2)`);
+
+      // Build result with all counties
+      const result = waCounties.map(county => {
+        const stats = countyStats.find(s => s.county === `WA-${county.toUpperCase().replace(/ /g, '-')}`);
+        return {
+          county,
+          parcelCount: stats?.parcelCount || 0,
+          lastUpdate: stats?.lastUpdate || null,
+          hasData: !!stats,
+        };
+      });
+
+      return result;
+    }),
   }),
   
   admin: router({

@@ -1447,3 +1447,10 @@
 - [x] Add "Update Existing" checkbox to WAParcelLoader component
 - [x] Display statistics showing updated vs inserted vs skipped counts
 - [x] Add test coverage for update mode
+
+### County Progress Dashboard
+- [x] Create tRPC endpoint to aggregate county import statistics
+- [x] Build CountyProgressDashboard component with data table
+- [x] Display county name, last import timestamp, parcel count, data completeness %
+- [x] Add route at /admin/counties for dashboard access
+- [x] Implement sorting and filtering for county table
