@@ -1427,3 +1427,10 @@
 - [x] Build county selector component with one-click parcel loading
 - [x] Integrate loaded parcels with Map Explorer visualization
 - [x] Add parcel count and coverage statistics display
+
+### WA Parcel Database Persistence
+- [x] Create tRPC endpoint to import WA parcel GeoJSON into local parcels table
+- [x] Add "Save to Database" button to WAParcelLoader component
+- [x] Implement data transformation from WA schema to local parcels schema
+- [x] Add progress indicator for bulk insert operations
+- [x] Display success message with count of saved parcels

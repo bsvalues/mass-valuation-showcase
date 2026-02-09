@@ -460,6 +460,45 @@ export const appRouter = router({
         const { loadWACountyParcels } = await import('./waParcelFabric');
         return await loadWACountyParcels(input.countyName, input.limit);
       }),
+
+    saveWAParcelsToDatabase: protectedProcedure
+      .input(z.object({
+        countyName: z.string(),
+        features: z.array(z.any()),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+        const parcelsToInsert = input.features.map((feature: any) => {
+          const props = feature.properties;
+          const coords = feature.geometry.coordinates[0][0]; // First coordinate of polygon
+          
+          return {
+            parcelId: props.PARCEL_ID_NR || `WA-${props.OBJECTID}`,
+            address: props.SITUS_ADDRESS || null,
+            latitude: coords[1]?.toString() || null,
+            longitude: coords[0]?.toString() || null,
+            landValue: props.VALUE_LAND || null,
+            buildingValue: props.VALUE_BLDG || null,
+            totalValue: (props.VALUE_LAND || 0) + (props.VALUE_BLDG || 0),
+            neighborhood: input.countyName,
+            propertyType: 'Unknown',
+            uploadedBy: ctx.user.id,
+          };
+        });
+
+        // Batch insert
+        await db.insert(parcels).values(parcelsToInsert);
+
+        return {
+          success: true,
+          savedCount: parcelsToInsert.length,
+          countyName: input.countyName,
+        };
+      }),
   }),
   sales: router({
     list: protectedProcedure.query(async ({ ctx }) => {

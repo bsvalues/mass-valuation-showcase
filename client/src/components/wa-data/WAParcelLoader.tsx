@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Download, MapPin, Loader2, CheckCircle2, AlertCircle, Map } from 'lucide-react';
+import { Download, MapPin, Loader2, CheckCircle2, AlertCircle, Map, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ParcelLoadResult } from '../../../../server/waParcelFabric';
 
@@ -26,6 +26,15 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
   const { setLoadedParcels } = useWAParcels();
 
   const { data: counties, isLoading: countiesLoading } = trpc.parcels.getWACounties.useQuery();
+  const saveToDbMutation = trpc.parcels.saveWAParcelsToDatabase.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Saved ${result.savedCount.toLocaleString()} parcels to database`);
+    },
+    onError: (error) => {
+      toast.error(`Failed to save: ${error.message}`);
+    },
+  });
+
   const loadParcelsMutation = trpc.parcels.loadWACountyParcels.useMutation({
     onSuccess: (result) => {
       setLoadResult(result);
@@ -169,6 +178,30 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
               >
                 <Map className="w-4 h-4 mr-2" />
                 View on Map
+              </Button>
+            )}
+            {loadResult.success && (
+              <Button
+                onClick={() => {
+                  saveToDbMutation.mutate({
+                    countyName: loadResult.countyName,
+                    features: loadResult.features,
+                  });
+                }}
+                disabled={saveToDbMutation.isPending}
+                className="w-full mt-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
+              >
+                {saveToDbMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Database className="w-4 h-4 mr-2" />
+                    Save to Database
+                  </>
+                )}
               </Button>
             )}
           </div>
