@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Download, MapPin, Loader2, CheckCircle2, AlertCircle, Map, Database } from 'lucide-react';
+import { Download, MapPin, Loader2, CheckCircle2, AlertCircle, Map, Database, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ParcelLoadResult } from '../../../../server/waParcelFabric';
 
@@ -22,15 +22,21 @@ interface WAParcelLoaderProps {
 export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
   const [selectedCounty, setSelectedCounty] = useState<string>('');
   const [loadResult, setLoadResult] = useState<ParcelLoadResult | null>(null);
+  const [updateExisting, setUpdateExisting] = useState(false);
   const [, setLocation] = useLocation();
   const { setLoadedParcels } = useWAParcels();
 
   const { data: counties, isLoading: countiesLoading } = trpc.parcels.getWACounties.useQuery();
   const saveToDbMutation = trpc.parcels.saveWAParcelsToDatabase.useMutation({
     onSuccess: (result) => {
-      const message = result.skippedCount > 0
-        ? `Saved ${result.savedCount.toLocaleString()} new parcels (${result.skippedCount.toLocaleString()} duplicates skipped)`
-        : `Saved ${result.savedCount.toLocaleString()} parcels to database`;
+      let message = '';
+      if (result.updatedCount > 0) {
+        message = `Updated ${result.updatedCount.toLocaleString()} parcels, inserted ${result.insertedCount.toLocaleString()} new`;
+      } else if (result.skippedCount > 0) {
+        message = `Inserted ${result.insertedCount.toLocaleString()} new parcels (${result.skippedCount.toLocaleString()} duplicates skipped)`;
+      } else {
+        message = `Inserted ${result.insertedCount.toLocaleString()} parcels to database`;
+      }
       toast.success(message);
     },
     onError: (error) => {
@@ -184,28 +190,44 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
               </Button>
             )}
             {loadResult.success && (
-              <Button
-                onClick={() => {
-                  saveToDbMutation.mutate({
-                    countyName: loadResult.countyName,
-                    features: loadResult.features,
-                  });
-                }}
-                disabled={saveToDbMutation.isPending}
-                className="w-full mt-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
-              >
-                {saveToDbMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Database className="w-4 h-4 mr-2" />
-                    Save to Database
-                  </>
-                )}
-              </Button>
+              <div className="space-y-2 mt-2">
+                <div className="flex items-center space-x-2 px-2">
+                  <input
+                    type="checkbox"
+                    id="updateExisting"
+                    checked={updateExisting}
+                    onChange={(e) => setUpdateExisting(e.target.checked)}
+                    className="w-4 h-4 rounded border-border/50 bg-background text-primary focus:ring-primary focus:ring-offset-0"
+                  />
+                  <label htmlFor="updateExisting" className="text-sm text-muted-foreground cursor-pointer flex items-center">
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Update Existing Parcels
+                  </label>
+                </div>
+                <Button
+                  onClick={() => {
+                    saveToDbMutation.mutate({
+                      countyName: loadResult.countyName,
+                      features: loadResult.features,
+                      updateExisting,
+                    });
+                  }}
+                  disabled={saveToDbMutation.isPending}
+                  className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30"
+                >
+                  {saveToDbMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Database className="w-4 h-4 mr-2" />
+                      {updateExisting ? 'Update & Insert' : 'Save to Database'}
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
           </div>
         )}

@@ -465,6 +465,7 @@ export const appRouter = router({
       .input(z.object({
         countyName: z.string(),
         features: z.array(z.any()),
+        updateExisting: z.boolean().default(false),
       }))
       .mutation(async ({ input, ctx }) => {
         const { parcels } = await import('../drizzle/schema');
@@ -495,24 +496,60 @@ export const appRouter = router({
         // Check for existing parcel IDs
         const parcelIds = parcelsToInsert.map(p => p.parcelId);
         const existingParcels = await db
-          .select({ parcelId: parcels.parcelId })
+          .select({ parcelId: parcels.parcelId, id: parcels.id })
           .from(parcels)
           .where(inArray(parcels.parcelId, parcelIds));
         
-        const existingParcelIds = new Set(existingParcels.map(p => p.parcelId));
+        const existingParcelMap = new Map(existingParcels.map(p => [p.parcelId, p.id]));
         
-        // Filter out duplicates
-        const newParcels = parcelsToInsert.filter(p => !existingParcelIds.has(p.parcelId));
-        
-        // Batch insert only new parcels
-        if (newParcels.length > 0) {
-          await db.insert(parcels).values(newParcels);
+        let insertedCount = 0;
+        let updatedCount = 0;
+        let skippedCount = 0;
+
+        if (input.updateExisting) {
+          // Update existing + insert new
+          const { eq } = await import('drizzle-orm');
+          
+          for (const parcel of parcelsToInsert) {
+            const existingId = existingParcelMap.get(parcel.parcelId);
+            
+            if (existingId) {
+              // Update existing parcel
+              await db.update(parcels)
+                .set({
+                  address: parcel.address,
+                  latitude: parcel.latitude,
+                  longitude: parcel.longitude,
+                  landValue: parcel.landValue,
+                  buildingValue: parcel.buildingValue,
+                  totalValue: parcel.totalValue,
+                  neighborhood: parcel.neighborhood,
+                  propertyType: parcel.propertyType,
+                })
+                .where(eq(parcels.id, existingId));
+              updatedCount++;
+            } else {
+              // Insert new parcel
+              await db.insert(parcels).values(parcel);
+              insertedCount++;
+            }
+          }
+        } else {
+          // Skip duplicates, insert only new
+          const newParcels = parcelsToInsert.filter(p => !existingParcelMap.has(p.parcelId));
+          skippedCount = parcelsToInsert.length - newParcels.length;
+          
+          if (newParcels.length > 0) {
+            await db.insert(parcels).values(newParcels);
+            insertedCount = newParcels.length;
+          }
         }
 
         return {
           success: true,
-          savedCount: newParcels.length,
-          skippedCount: parcelsToInsert.length - newParcels.length,
+          insertedCount,
+          updatedCount,
+          skippedCount,
           totalCount: parcelsToInsert.length,
           countyName: input.countyName,
         };

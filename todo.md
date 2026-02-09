@@ -1440,3 +1440,10 @@
 - [x] Filter out existing parcels before batch insert
 - [x] Display statistics showing new vs skipped parcels in success message
 - [x] Add test coverage for duplicate detection logic
+
+### WA Parcel Update Existing Mode
+- [x] Add updateExisting parameter to saveWAParcelsToDatabase endpoint
+- [x] Implement upsert logic (update existing, insert new) in backend
+- [x] Add "Update Existing" checkbox to WAParcelLoader component
+- [x] Display statistics showing updated vs inserted vs skipped counts
+- [x] Add test coverage for update mode

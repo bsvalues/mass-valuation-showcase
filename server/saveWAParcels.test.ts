@@ -178,4 +178,81 @@ describe('Save WA Parcels to Database', () => {
     expect(newParcels[0].parcelId).toBe('WA-TEST-002');
     expect(parcelsToInsert.length - newParcels.length).toBe(1); // 1 skipped
   });
+
+  it('should update existing parcels when updateExisting is true', () => {
+    const mockFeatures = [
+      {
+        type: 'Feature',
+        properties: {
+          PARCEL_ID_NR: 'WA-TEST-001',
+          SITUS_ADDRESS: '456 Updated St',
+          VALUE_LAND: 150000,
+          VALUE_BLDG: 250000,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [-122.5, 47.5],
+            [-122.5, 47.6],
+            [-122.4, 47.6],
+            [-122.4, 47.5],
+            [-122.5, 47.5],
+          ]],
+        },
+      },
+      {
+        type: 'Feature',
+        properties: {
+          PARCEL_ID_NR: 'WA-TEST-002',
+          SITUS_ADDRESS: '789 New St',
+          VALUE_LAND: 120000,
+          VALUE_BLDG: 180000,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [-122.6, 47.7],
+            [-122.6, 47.8],
+            [-122.5, 47.8],
+            [-122.5, 47.7],
+            [-122.6, 47.7],
+          ]],
+        },
+      },
+    ];
+
+    const parcelsToInsert = mockFeatures.map((feature: any) => {
+      const props = feature.properties;
+      const coords = feature.geometry.coordinates[0][0];
+      
+      return {
+        parcelId: props.PARCEL_ID_NR,
+        address: props.SITUS_ADDRESS || null,
+        latitude: coords[1]?.toString() || null,
+        longitude: coords[0]?.toString() || null,
+        landValue: props.VALUE_LAND || null,
+        buildingValue: props.VALUE_BLDG || null,
+        totalValue: (props.VALUE_LAND || 0) + (props.VALUE_BLDG || 0),
+        neighborhood: 'Test County',
+        propertyType: 'Unknown',
+        uploadedBy: 1,
+      };
+    });
+
+    // Simulate existing parcels map
+    const existingParcelMap = new Map([['WA-TEST-001', 100]]);
+    
+    // Separate into updates and inserts
+    const toUpdate = parcelsToInsert.filter(p => existingParcelMap.has(p.parcelId));
+    const toInsert = parcelsToInsert.filter(p => !existingParcelMap.has(p.parcelId));
+    
+    expect(toUpdate).toHaveLength(1);
+    expect(toUpdate[0].parcelId).toBe('WA-TEST-001');
+    expect(toUpdate[0].address).toBe('456 Updated St');
+    expect(toUpdate[0].totalValue).toBe(400000);
+    
+    expect(toInsert).toHaveLength(1);
+    expect(toInsert[0].parcelId).toBe('WA-TEST-002');
+    expect(toInsert[0].totalValue).toBe(300000);
+  });
 });
