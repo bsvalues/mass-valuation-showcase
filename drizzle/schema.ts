@@ -272,13 +272,20 @@ export const backgroundJobs = mysqlTable("backgroundJobs", {
   id: varchar("id", { length: 36 }).primaryKey(), // UUID
   userId: int("userId").notNull(),
   jobType: mysqlEnum("jobType", ["parcel_load"]).notNull(),
-  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
-  progress: int("progress").default(0), // Current count (e.g., 10000 parcels loaded)
-  total: int("total").default(0), // Total expected (e.g., 80000 parcels)
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "paused"]).default("pending").notNull(),
+  traceId: varchar("traceId", { length: 36 }), // For distributed tracing
   countyName: varchar("countyName", { length: 100 }),
   parcelLimit: int("parcelLimit"),
+  // Progress tracking
+  total: int("total").default(0), // Total expected (e.g., 80000 parcels)
+  processed: int("processed").default(0), // Total processed (succeeded + failed)
+  succeeded: int("succeeded").default(0), // Successfully inserted/updated
+  failed: int("failed").default(0), // Failed to process
+  // Payload and results
+  payloadJson: text("payloadJson"), // JSON with source params, options
   resultSummary: text("resultSummary"), // JSON with parcel count, bounds, etc.
-  errorMessage: text("errorMessage"),
+  errorSummary: text("errorSummary"), // Aggregated error messages
+  // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   startedAt: timestamp("startedAt"),
   completedAt: timestamp("completedAt"),
@@ -286,6 +293,21 @@ export const backgroundJobs = mysqlTable("backgroundJobs", {
 
 export type BackgroundJob = typeof backgroundJobs.$inferSelect;
 export type InsertBackgroundJob = typeof backgroundJobs.$inferInsert;
+
+/**
+ * Job events table - append-only audit trail for job progress and errors
+ */
+export const jobEvents = mysqlTable("jobEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  jobId: varchar("jobId", { length: 36 }).notNull(),
+  eventType: mysqlEnum("eventType", ["started", "progress", "error", "completed", "failed", "paused"]).notNull(),
+  message: text("message"),
+  metadata: text("metadata"), // JSON with chunk info, error details, etc.
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type JobEvent = typeof jobEvents.$inferSelect;
+export type InsertJobEvent = typeof jobEvents.$inferInsert;
 
 /**
  * County statistics table - aggregated data for WA counties

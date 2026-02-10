@@ -1546,3 +1546,36 @@
 - [x] Integrate with WA Data Ingestion API for parcel loading
 - [x] Add progress tracking and success/error feedback
 - [x] Test wizard with multiple counties
+
+### 1) Background Job Queue System with Live Progress (IAAO-Compliant)
+- [x] Enhance jobs schema with trace_id, payload_json, error_summary fields
+- [x] Create job_events table for append-only audit trail
+- [x] Add job management APIs (create, status, list)
+- [x] Create idempotent parcel load worker with progress tracking
+- [ ] Implement polling-based live progress updates (simpler than SSE)
+- [ ] Build Quantum Glass Job Drawer component with real-time updates
+- [ ] Integrate "Queue Background Job" button in WA Parcel Loader (10K+ threshold)
+- [ ] Add error CSV download functionality
+- [ ] Test job survival across UI reloads and worker failures
+
+### 2) County Detail: Parcel Search + Filtering
+- [ ] Add address_search normalized field to waCountyParcels table
+- [ ] Create database indexes (parcel_id, address_search, total_value)
+- [ ] Implement server-side search API with debounce (parcel ID, address)
+- [ ] Add value range filters (min/max for land, building, total)
+- [ ] Create search UI with debounced input (250-400ms)
+- [ ] Add filter controls for value ranges
+- [ ] Implement server-side pagination and sorting
+- [ ] Test search performance (<300ms target with indexes)
+
+### 3) County Detail: Interactive Parcel Map Visualization
+- [ ] Set up vector tile endpoint (MVT format) for parcel boundaries
+- [ ] Add spatial index (GIST) to parcel geometry column
+- [ ] Implement ST_AsMVTGeom + ST_AsMVT for tile generation
+- [ ] Add zoom-based geometry simplification
+- [ ] Integrate MapLibre GL with React wrapper
+- [ ] Create parcel boundary layers (fill + line)
+- [ ] Implement hover tooltips (parcel ID, address, value)
+- [ ] Add click selection with side panel details
+- [ ] Connect map filters to search/value range params
+- [ ] Test map performance and smooth panning

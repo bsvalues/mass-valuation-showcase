@@ -85,7 +85,7 @@ async function processParcelLoadJob(job: any) {
       await db
         .update(backgroundJobs)
         .set({
-          progress: current,
+          processed: current,
           total: total,
         })
         .where(eq(backgroundJobs.id, job.id));
@@ -111,7 +111,9 @@ async function processParcelLoadJob(job: any) {
       .update(backgroundJobs)
       .set({
         status: 'completed',
-        progress: result.parcelCount,
+        processed: result.parcelCount,
+        succeeded: result.parcelCount,
+        failed: 0,
         total: result.parcelCount,
         completedAt: new Date(),
         resultSummary: JSON.stringify({
@@ -140,7 +142,7 @@ async function processParcelLoadJob(job: any) {
       .set({
         status: 'failed',
         completedAt: new Date(),
-        errorMessage: error.message || 'Unknown error',
+        errorSummary: error.message || 'Unknown error',
       })
       .where(eq(backgroundJobs.id, job.id));
     
