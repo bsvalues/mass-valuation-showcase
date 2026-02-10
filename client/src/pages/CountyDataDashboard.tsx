@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { MapPin, TrendingUp, DollarSign, Home, Calendar, Loader2, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useLocation } from "wouter";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -31,6 +32,12 @@ ChartJS.register(
 
 export default function CountyDataDashboard() {
   const { data: countyStats, isLoading } = trpc.countyStats.getAllCountyStats.useQuery();
+  const [, setLocation] = useLocation();
+
+  // Handle chart bar click to navigate to county detail
+  const handleChartClick = (countyName: string) => {
+    setLocation(`/county-detail/${encodeURIComponent(countyName)}`);
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -122,6 +129,21 @@ export default function CountyDataDashboard() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    onHover: (event: any, elements: any) => {
+      const target = event.native?.target as HTMLElement;
+      if (target) {
+        target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+      }
+    },
+    onClick: (event: any, elements: any) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        const countyName = top10Counties[index]?.countyName;
+        if (countyName) {
+          handleChartClick(countyName);
+        }
+      }
+    },
     plugins: {
       legend: {
         display: false,

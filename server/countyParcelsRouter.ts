@@ -1,0 +1,140 @@
+/**
+ * County Parcels Router - tRPC procedures for fetching parcel data by county
+ */
+
+import { z } from "zod";
+import { publicProcedure, router } from "./_core/trpc";
+import { getDb } from "./db";
+import { waCountyParcels } from "../drizzle/schema";
+import { eq, sql } from "drizzle-orm";
+
+export const countyParcelsRouter = router({
+  /**
+   * Get all parcels for a specific county
+   */
+  getParcelsByCounty: publicProcedure
+    .input(
+      z.object({
+        countyName: z.string(),
+        limit: z.number().optional().default(100),
+        offset: z.number().optional().default(0),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database connection failed");
+      const { countyName, limit, offset } = input;
+
+      const parcels = await db
+        .select()
+        .from(waCountyParcels)
+        .where(eq(waCountyParcels.countyName, countyName))
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count for pagination
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(waCountyParcels)
+        .where(eq(waCountyParcels.countyName, countyName));
+
+      return {
+        parcels,
+        total: countResult?.count || 0,
+        limit,
+        offset,
+      };
+    }),
+
+  /**
+   * Get value distribution statistics for a county
+   */
+  getCountyValueDistribution: publicProcedure
+    .input(z.object({ countyName: z.string() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database connection failed");
+      const { countyName } = input;
+
+      // Get min, max, avg, median for land and building values
+      const stats = await db
+        .select({
+          minLandValue: sql<number>`MIN(${waCountyParcels.valueLand})`,
+          maxLandValue: sql<number>`MAX(${waCountyParcels.valueLand})`,
+          avgLandValue: sql<number>`AVG(${waCountyParcels.valueLand})`,
+          minBuildingValue: sql<number>`MIN(${waCountyParcels.valueBuilding})`,
+          maxBuildingValue: sql<number>`MAX(${waCountyParcels.valueBuilding})`,
+          avgBuildingValue: sql<number>`AVG(${waCountyParcels.valueBuilding})`,
+          parcelCount: sql<number>`COUNT(*)`,
+        })
+        .from(waCountyParcels)
+        .where(eq(waCountyParcels.countyName, countyName));
+
+      return stats[0] || null;
+    }),
+
+  /**
+   * Get value distribution histogram data
+   */
+  getValueHistogram: publicProcedure
+    .input(
+      z.object({
+        countyName: z.string(),
+        valueType: z.enum(["land", "building", "total"]),
+        bucketCount: z.number().optional().default(10),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database connection failed");
+      const { countyName, valueType, bucketCount } = input;
+
+      // Determine which value column to use
+      const valueColumn =
+        valueType === "land"
+          ? waCountyParcels.valueLand
+          : valueType === "building"
+          ? waCountyParcels.valueBuilding
+          : sql`${waCountyParcels.valueLand} + ${waCountyParcels.valueBuilding}`;
+
+      // Get min and max values to calculate bucket ranges
+      const [rangeResult] = await db
+        .select({
+          minValue: sql<number>`MIN(${valueColumn})`,
+          maxValue: sql<number>`MAX(${valueColumn})`,
+        })
+        .from(waCountyParcels)
+        .where(eq(waCountyParcels.countyName, countyName));
+
+      if (!rangeResult || rangeResult.minValue === null || rangeResult.maxValue === null) {
+        return { buckets: [], minValue: 0, maxValue: 0 };
+      }
+
+      const { minValue, maxValue } = rangeResult;
+      const bucketSize = (maxValue - minValue) / bucketCount;
+
+      // Create histogram buckets
+      const buckets: Array<{ range: string; count: number; minValue: number; maxValue: number }> = [];
+
+      for (let i = 0; i < bucketCount; i++) {
+        const bucketMin = minValue + i * bucketSize;
+        const bucketMax = minValue + (i + 1) * bucketSize;
+
+        const [countResult] = await db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(waCountyParcels)
+          .where(
+            sql`${waCountyParcels.countyName} = ${countyName} AND ${valueColumn} >= ${bucketMin} AND ${valueColumn} < ${bucketMax}`
+          );
+
+        buckets.push({
+          range: `$${Math.round(bucketMin).toLocaleString()} - $${Math.round(bucketMax).toLocaleString()}`,
+          count: countResult?.count || 0,
+          minValue: bucketMin,
+          maxValue: bucketMax,
+        });
+      }
+
+      return { buckets, minValue, maxValue };
+    }),
+});

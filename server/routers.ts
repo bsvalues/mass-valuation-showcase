@@ -11,6 +11,7 @@ import { gisRouter } from "./gisRouter";
 import { layerDataRouter } from "./layerDataRouter";
 import { backgroundJobsRouter } from "./backgroundJobsRouter";
 import { countyStatisticsRouter } from "./countyStatisticsRouter";
+import { countyParcelsRouter } from "./countyParcelsRouter";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -27,6 +28,7 @@ export const appRouter = router({
   layerData: layerDataRouter,
   backgroundJobs: backgroundJobsRouter,
   countyStats: countyStatisticsRouter,
+  countyParcels: countyParcelsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
