@@ -21,6 +21,7 @@ interface WAParcelLoaderProps {
 
 export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
   const [selectedCounty, setSelectedCounty] = useState<string>('');
+  const [parcelLimit, setParcelLimit] = useState<number>(10000);
   const [loadResult, setLoadResult] = useState<ParcelLoadResult | null>(null);
   const [updateExisting, setUpdateExisting] = useState(false);
   const [, setLocation] = useLocation();
@@ -71,7 +72,7 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
       toast.error('Please select a county first');
       return;
     }
-    loadParcelsMutation.mutate({ countyName: selectedCounty, limit: 1000 });
+    loadParcelsMutation.mutate({ countyName: selectedCounty, limit: parcelLimit });
   };
 
   return (
@@ -110,6 +111,27 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
                   {county} County
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Parcel Limit Selector */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground/80">Parcel Limit</label>
+          <Select
+            value={parcelLimit.toString()}
+            onValueChange={(value) => setParcelLimit(parseInt(value))}
+            disabled={loadParcelsMutation.isPending}
+          >
+            <SelectTrigger className="bg-background/40 border-primary/20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1000">1,000 parcels</SelectItem>
+              <SelectItem value="5000">5,000 parcels</SelectItem>
+              <SelectItem value="10000">10,000 parcels (default)</SelectItem>
+              <SelectItem value="25000">25,000 parcels</SelectItem>
+              <SelectItem value="50000">50,000 parcels (entire county)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -235,8 +257,8 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
         {/* Info */}
         <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/50">
           <p>• Data source: Washington State Geospatial Portal</p>
-          <p>• Limit: 1,000 parcels per load (configurable)</p>
-          <p>• Includes geometry, owner, and assessment data</p>
+          <p>• Default limit: 10,000 parcels (configurable up to 50,000)</p>
+          <p>• Includes geometry, parcel ID, address, and assessment values</p>
         </div>
       </CardContent>
     </Card>

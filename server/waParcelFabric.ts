@@ -52,7 +52,7 @@ export interface ParcelLoadResult {
 /**
  * Load parcels for a specific WA county
  */
-export async function loadWACountyParcels(countyName: string, limit: number = 1000): Promise<ParcelLoadResult> {
+export async function loadWACountyParcels(countyName: string, limit: number = 10000): Promise<ParcelLoadResult> {
   try {
     // Query parameters for ArcGIS REST API
     const params = {

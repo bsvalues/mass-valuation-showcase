@@ -1469,3 +1469,10 @@
 - [x] Add loading states and progress indicators (already implemented)
 - [x] Test with multiple counties to ensure reliability (Benton County tested successfully)
 - [x] Validate data quality after import (bounds calculation working)
+
+### WA Parcel Loader Improvements
+- [x] Remove owner name requirement from parcel schema (not required - API doesn't provide it)
+- [x] Increase default parcel limit from 1,000 to 10,000
+- [x] Add configurable parcel limit in UI (dropdown: 1K, 5K, 10K, 25K, 50K)
+- [x] Test loading larger datasets (tested 5K request, API returned 2K - server limit)
+- [x] Update documentation to reflect new limits
