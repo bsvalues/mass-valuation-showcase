@@ -310,6 +310,22 @@ export type JobEvent = typeof jobEvents.$inferSelect;
 export type InsertJobEvent = typeof jobEvents.$inferInsert;
 
 /**
+ * Job errors table - durable error log for failed parcel processing
+ */
+export const jobErrors = mysqlTable("jobErrors", {
+  id: int("id").autoincrement().primaryKey(),
+  jobId: varchar("jobId", { length: 36 }).notNull(),
+  rowNumber: int("rowNumber"),
+  parcelId: varchar("parcelId", { length: 100 }),
+  errorMessage: text("errorMessage").notNull(),
+  rawJson: text("rawJson"), // Original parcel data that failed
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type JobError = typeof jobErrors.$inferSelect;
+export type InsertJobError = typeof jobErrors.$inferInsert;
+
+/**
  * County statistics table - aggregated data for WA counties
  */
 export const countyStatistics = mysqlTable("countyStatistics", {

@@ -1552,10 +1552,22 @@
 - [x] Create job_events table for append-only audit trail
 - [x] Add job management APIs (create, status, list)
 - [x] Create idempotent parcel load worker with progress tracking
-- [ ] Implement polling-based live progress updates (simpler than SSE)
-- [ ] Build Quantum Glass Job Drawer component with real-time updates
-- [ ] Integrate "Queue Background Job" button in WA Parcel Loader (10K+ threshold)
-- [ ] Add error CSV download functionality
+- [x] Create job_errors table for durable error logging
+- [x] Build Quantum Glass Job Drawer component:
+  - [x] Global drawer with Jobs icon in header (component ready, needs integration)
+  - [x] Status badge (QUEUED/RUNNING/SUCCEEDED/FAILED/CANCELED)
+  - [x] Progress bar with processed/total counters
+  - [x] ETA calculation with rolling window rate (last 10 samples)
+  - [x] Error summary and Download Error CSV button
+  - [x] Job details display (ID, created, started, completed times)
+  - [x] Polling every 1.5s for RUNNING jobs, 8s otherwise
+- [ ] Implement job events API endpoint (GET /api/background-jobs/:id/events)
+- [ ] Implement error CSV download endpoint (GET /api/background-jobs/:id/errors.csv)
+- [ ] Integrate "Queue Background Job" button in WA Parcel Loader:
+  - [ ] Add estimate endpoint for record count
+  - [ ] Show Queue button for 10K+ threshold
+  - [ ] Add confirmation dialog with record count
+  - [ ] Auto-open Job Drawer on queue success
 - [ ] Test job survival across UI reloads and worker failures
 
 ### 2) County Detail: Parcel Search + Filtering
