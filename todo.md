@@ -1476,3 +1476,17 @@
 - [x] Add configurable parcel limit in UI (dropdown: 1K, 5K, 10K, 25K, 50K)
 - [x] Test loading larger datasets (tested 5K request, API returned 2K - server limit)
 - [x] Update documentation to reflect new limits
+
+### Navigation Consistency Fix
+- [x] Audit sidebar navigation vs top menu navigation
+- [x] Identify mismatched menu items between sidebar and top navigation (Data Import vs WA Data Ingestion)
+- [x] Update DashboardLayout sidebar to match top menu structure
+- [x] Ensure all routes are accessible from both navigation methods
+
+### Full County Parcel Upload Support
+- [x] Research WA State API pagination capabilities for 80,000+ parcels
+- [x] Implement chunked/paginated loading for large datasets (loadAllWACountyParcels with resultOffset)
+- [x] Add "All Parcels" option to UI dropdown (limit=0 triggers pagination)
+- [ ] Test full Benton County load (80,000+ parcels) - ready for testing
+- [ ] Add progress indicator UI for multi-chunk loads
+- [ ] Optimize database batch insert for large datasets

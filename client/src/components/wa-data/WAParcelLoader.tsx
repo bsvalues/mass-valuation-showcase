@@ -131,7 +131,8 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
               <SelectItem value="5000">5,000 parcels</SelectItem>
               <SelectItem value="10000">10,000 parcels (default)</SelectItem>
               <SelectItem value="25000">25,000 parcels</SelectItem>
-              <SelectItem value="50000">50,000 parcels (entire county)</SelectItem>
+              <SelectItem value="50000">50,000 parcels</SelectItem>
+              <SelectItem value="0">All Parcels (80K+ for large counties)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -257,7 +258,8 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
         {/* Info */}
         <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/50">
           <p>• Data source: Washington State Geospatial Portal</p>
-          <p>• Default limit: 10,000 parcels (configurable up to 50,000)</p>
+          <p>• Default limit: 10,000 parcels (configurable, or load all with pagination)</p>
+          <p>• "All Parcels" option loads entire county (80K+ for Benton) using automatic chunking</p>
           <p>• Includes geometry, parcel ID, address, and assessment values</p>
         </div>
       </CardContent>

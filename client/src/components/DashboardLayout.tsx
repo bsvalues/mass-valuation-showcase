@@ -83,7 +83,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: TrendingUp, label: "Regression Studio", href: "/regression" },
     { icon: Brain, label: "AVM Studio", href: "/avm-studio" },
     { icon: Layers, label: "Model Management", href: "/model-management" },
-    { icon: Upload, label: "Data Import", href: "/data-import" },
+    { icon: Upload, label: "WA Data Ingestion", href: "/wa-data-ingestion" },
     { icon: Zap, label: "Batch Valuation", href: "/batch-valuation" },
     { icon: Shield, label: "Defense Studio", href: "/defense" },
     { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
