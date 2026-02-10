@@ -1529,3 +1529,11 @@
 - [x] Display county-specific statistics (min/max/median values, parcel count)
 - [x] Add "Back to Dashboard" navigation button
 - [x] Implement TerraFusion styling for detail page
+
+### Fix County Data Dashboard tRPC Error
+- [x] Investigate server logs to identify why tRPC returns HTML instead of JSON (heap memory crash)
+- [x] Check countyStatisticsRouter for errors or missing database tables
+- [x] Verify database schema and migrations are applied
+- [x] Optimize histogram query to use single SQL query instead of loop (memory fix)
+- [x] Test getAllCountyStats endpoint directly
+- [x] Fix root cause and verify dashboard loads correctly

@@ -113,27 +113,36 @@ export const countyParcelsRouter = router({
       const { minValue, maxValue } = rangeResult;
       const bucketSize = (maxValue - minValue) / bucketCount;
 
-      // Create histogram buckets
-      const buckets: Array<{ range: string; count: number; minValue: number; maxValue: number }> = [];
-
+      // Use a single optimized query with CASE statements for histogram
+      const bucketConditions = [];
       for (let i = 0; i < bucketCount; i++) {
         const bucketMin = minValue + i * bucketSize;
         const bucketMax = minValue + (i + 1) * bucketSize;
-
-        const [countResult] = await db
-          .select({ count: sql<number>`COUNT(*)` })
-          .from(waCountyParcels)
-          .where(
-            sql`${waCountyParcels.countyName} = ${countyName} AND ${valueColumn} >= ${bucketMin} AND ${valueColumn} < ${bucketMax}`
-          );
-
-        buckets.push({
+        bucketConditions.push({
+          min: bucketMin,
+          max: bucketMax,
           range: `$${Math.round(bucketMin).toLocaleString()} - $${Math.round(bucketMax).toLocaleString()}`,
-          count: countResult?.count || 0,
-          minValue: bucketMin,
-          maxValue: bucketMax,
         });
       }
+
+      // Build CASE statement for all buckets
+      const caseStatements = bucketConditions
+        .map(
+          (b, i) =>
+            `SUM(CASE WHEN ${valueType === "land" ? "value_land" : valueType === "building" ? "value_building" : "(value_land + value_building)"} >= ${b.min} AND ${valueType === "land" ? "value_land" : valueType === "building" ? "value_building" : "(value_land + value_building)"} < ${b.max} THEN 1 ELSE 0 END) as bucket_${i}`
+        )
+        .join(", ");
+
+      const [histogramResult] = await db.execute(
+        sql.raw(`SELECT ${caseStatements} FROM wa_county_parcels WHERE county_name = '${countyName}'`)
+      );
+
+      const buckets = bucketConditions.map((b, i) => ({
+        range: b.range,
+        count: (histogramResult as any)[`bucket_${i}`] || 0,
+        minValue: b.min,
+        maxValue: b.max,
+      }));
 
       return { buckets, minValue, maxValue };
     }),
