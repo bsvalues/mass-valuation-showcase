@@ -1405,6 +1405,31 @@ export const appRouter = router({
 
       return result;
     }),
+
+    deleteCountyParcels: protectedProcedure
+      .input(z.object({ county: z.string() }))
+      .mutation(async ({ input }) => {
+        const { parcels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { sql } = await import('drizzle-orm');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+
+        const countyPrefix = `WA-${input.county.toUpperCase().replace(/ /g, '-')}`;
+        
+        // Count parcels before deletion
+        const countResult = await db
+          .select({ count: sql<number>`COUNT(*)` })
+          .from(parcels)
+          .where(sql`${parcels.parcelId} LIKE ${countyPrefix + '%'}`);
+        
+        const deletedCount = countResult[0]?.count || 0;
+
+        // Delete all parcels for this county
+        await db.delete(parcels).where(sql`${parcels.parcelId} LIKE ${countyPrefix + '%'}`);
+
+        return { deletedCount, county: input.county };
+      }),
   }),
   
   admin: router({

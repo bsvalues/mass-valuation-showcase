@@ -10,11 +10,51 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function CountyProgressDashboard() {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedCounty, setSelectedCounty] = useState<{ name: string; count: number } | null>(null);
+  
+  const utils = trpc.useUtils();
   const { data: countyStats, isLoading } = (trpc.parcels as any).getCountyStatistics.useQuery();
+  
+  const deleteCountyMutation = (trpc.parcels as any).deleteCountyParcels.useMutation({
+    onSuccess: (data: any) => {
+      toast.success(`Deleted ${data.deletedCount.toLocaleString()} parcels from ${data.county} County`);
+      utils.parcels.getCountyStatistics.invalidate();
+      setDeleteDialogOpen(false);
+      setSelectedCounty(null);
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete county data: ${error.message}`);
+    },
+  });
+  
+  const handleDeleteClick = (county: string, count: number) => {
+    setSelectedCounty({ name: county, count });
+    setDeleteDialogOpen(true);
+  };
+  
+  const handleConfirmDelete = () => {
+    if (selectedCounty) {
+      deleteCountyMutation.mutate({ county: selectedCounty.name });
+    }
+  };
 
   const stats = countyStats || [];
   const countiesWithData = stats.filter((s: any) => s.hasData).length;
@@ -103,6 +143,7 @@ export default function CountyProgressDashboard() {
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Parcel Count</TableHead>
                     <TableHead>Last Updated</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -130,6 +171,18 @@ export default function CountyProgressDashboard() {
                           ? formatDistanceToNow(new Date(county.lastUpdate), { addSuffix: true })
                           : '-'}
                       </TableCell>
+                      <TableCell className="text-right">
+                        {county.hasData && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(county.county, county.parcelCount)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -138,6 +191,28 @@ export default function CountyProgressDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear County Data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{selectedCounty?.count.toLocaleString()} parcels</strong> from{" "}
+              <strong>{selectedCounty?.name} County</strong>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCountyMutation.isPending ? "Deleting..." : "Delete County Data"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

@@ -1454,3 +1454,10 @@
 - [x] Display county name, last import timestamp, parcel count, data completeness %
 - [x] Add route at /admin/counties for dashboard access
 - [x] Implement sorting and filtering for county table
+
+### Clear County Data Feature
+- [x] Create tRPC endpoint to delete all parcels for a selected county
+- [x] Add "Clear County Data" button to County Progress Dashboard table rows
+- [x] Implement confirmation dialog with county name and parcel count
+- [x] Display success/error toast after deletion
+- [x] Refresh dashboard statistics after successful deletion
