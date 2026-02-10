@@ -1591,3 +1591,8 @@
 - [ ] Add click selection with side panel details
 - [ ] Connect map filters to search/value range params
 - [ ] Test map performance and smooth panning
+
+### Fix Database Column Name Mismatch (traceid vs traceId)
+- [x] Check actual database column names in backgroundJobs table
+- [x] Update Drizzle schema to map camelCase fields to lowercase database columns
+- [x] Restart server and verify County Data Dashboard loads without errors

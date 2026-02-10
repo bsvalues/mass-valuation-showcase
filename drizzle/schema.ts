@@ -270,25 +270,25 @@ export type InsertWACountyParcel = typeof waCountyParcels.$inferInsert;
  */
 export const backgroundJobs = mysqlTable("backgroundJobs", {
   id: varchar("id", { length: 36 }).primaryKey(), // UUID
-  userId: int("userId").notNull(),
-  jobType: mysqlEnum("jobType", ["parcel_load"]).notNull(),
+  userId: int("userid").notNull(),
+  jobType: mysqlEnum("jobtype", ["parcel_load"]).notNull(),
   status: mysqlEnum("status", ["pending", "running", "completed", "failed", "paused"]).default("pending").notNull(),
-  traceId: varchar("traceId", { length: 36 }), // For distributed tracing
-  countyName: varchar("countyName", { length: 100 }),
-  parcelLimit: int("parcelLimit"),
+  traceId: varchar("traceid", { length: 36 }), // For distributed tracing
+  countyName: varchar("countyname", { length: 100 }),
+  parcelLimit: int("parcellimit"),
   // Progress tracking
   total: int("total").default(0), // Total expected (e.g., 80000 parcels)
   processed: int("processed").default(0), // Total processed (succeeded + failed)
   succeeded: int("succeeded").default(0), // Successfully inserted/updated
   failed: int("failed").default(0), // Failed to process
   // Payload and results
-  payloadJson: text("payloadJson"), // JSON with source params, options
-  resultSummary: text("resultSummary"), // JSON with parcel count, bounds, etc.
-  errorSummary: text("errorSummary"), // Aggregated error messages
+  payloadJson: text("payloadjson"), // JSON with source params, options
+  resultSummary: text("resultsummary"), // JSON with parcel count, bounds, etc.
+  errorSummary: text("errorsummary"), // Aggregated error messages
   // Timestamps
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  startedAt: timestamp("startedAt"),
-  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdat").defaultNow().notNull(),
+  startedAt: timestamp("startedat"),
+  completedAt: timestamp("completedat"),
 });
 
 export type BackgroundJob = typeof backgroundJobs.$inferSelect;
