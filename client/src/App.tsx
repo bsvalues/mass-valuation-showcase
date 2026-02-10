@@ -29,6 +29,7 @@ import DataImport from "./pages/DataImport";
 import BatchValuation from "./pages/BatchValuation";
 import WADataIngestion from "./pages/WADataIngestion";
 import CountyProgressDashboard from "./pages/CountyProgressDashboard";
+import CountyDataDashboard from "./pages/CountyDataDashboard";
 
 
 function Router() {
@@ -48,8 +49,8 @@ function Router() {
       <Route path={"/analysis"} component={MarketAnalysis} />
       <Route path={"/defense"} component={DefenseStudio} />
       <Route path={"/neural-core"} component={NeuralCore} />
-      <Route path={"/admin/users"} component={AdminUsers} />
-      <Route path={"/admin/counties"} component={CountyProgressDashboard} />
+      <Route path={"/admin/users"} component={AdminUsers} />      <Route path={"/county-progress"} component={CountyProgressDashboard} />
+      <Route path={"/county-data-dashboard"} component={CountyDataDashboard} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />

@@ -243,3 +243,67 @@ export const batchResults = mysqlTable("batchResults", {
 
 export type BatchResult = typeof batchResults.$inferSelect;
 export type InsertBatchResult = typeof batchResults.$inferInsert;
+
+/**
+ * WA County Parcels table - stores parcel data from WA State Geo Portal
+ */
+export const waCountyParcels = mysqlTable("waCountyParcels", {
+  id: int("id").autoincrement().primaryKey(),
+  parcelId: varchar("parcelId", { length: 64 }).notNull(),
+  countyName: varchar("countyName", { length: 100 }).notNull(),
+  fipsCode: varchar("fipsCode", { length: 10 }),
+  situsAddress: text("situsAddress"),
+  situsCity: varchar("situsCity", { length: 100 }),
+  situsZip: varchar("situsZip", { length: 10 }),
+  valueLand: int("valueLand"),
+  valueBuilding: int("valueBuilding"),
+  geometry: text("geometry"), // GeoJSON geometry
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WACountyParcel = typeof waCountyParcels.$inferSelect;
+export type InsertWACountyParcel = typeof waCountyParcels.$inferInsert;
+
+/**
+ * Background jobs table - tracks long-running parcel load operations
+ */
+export const backgroundJobs = mysqlTable("backgroundJobs", {
+  id: varchar("id", { length: 36 }).primaryKey(), // UUID
+  userId: int("userId").notNull(),
+  jobType: mysqlEnum("jobType", ["parcel_load"]).notNull(),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  progress: int("progress").default(0), // Current count (e.g., 10000 parcels loaded)
+  total: int("total").default(0), // Total expected (e.g., 80000 parcels)
+  countyName: varchar("countyName", { length: 100 }),
+  parcelLimit: int("parcelLimit"),
+  resultSummary: text("resultSummary"), // JSON with parcel count, bounds, etc.
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+});
+
+export type BackgroundJob = typeof backgroundJobs.$inferSelect;
+export type InsertBackgroundJob = typeof backgroundJobs.$inferInsert;
+
+/**
+ * County statistics table - aggregated data for WA counties
+ */
+export const countyStatistics = mysqlTable("countyStatistics", {
+  id: int("id").autoincrement().primaryKey(),
+  countyName: varchar("countyName", { length: 100 }).notNull().unique(),
+  parcelCount: int("parcelCount").default(0),
+  lastUpdated: timestamp("lastUpdated").defaultNow().onUpdateNow().notNull(),
+  avgLandValue: int("avgLandValue"),
+  avgBuildingValue: int("avgBuildingValue"),
+  totalAssessedValue: varchar("totalAssessedValue", { length: 20 }), // Store as string to avoid bigint issues
+  minLandValue: int("minLandValue"),
+  maxLandValue: int("maxLandValue"),
+  minBuildingValue: int("minBuildingValue"),
+  maxBuildingValue: int("maxBuildingValue"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CountyStatistic = typeof countyStatistics.$inferSelect;
+export type InsertCountyStatistic = typeof countyStatistics.$inferInsert;

@@ -84,6 +84,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: Brain, label: "AVM Studio", href: "/avm-studio" },
     { icon: Layers, label: "Model Management", href: "/model-management" },
     { icon: Upload, label: "WA Data Ingestion", href: "/wa-data-ingestion" },
+    { icon: MapIcon, label: "County Data Dashboard", href: "/county-data-dashboard" },
     { icon: Zap, label: "Batch Valuation", href: "/batch-valuation" },
     { icon: Shield, label: "Defense Studio", href: "/defense" },
     { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },

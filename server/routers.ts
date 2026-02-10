@@ -9,6 +9,8 @@ import { broadcastToAll } from "./websocket";
 import type { Server as SocketIOServer } from "socket.io";
 import { gisRouter } from "./gisRouter";
 import { layerDataRouter } from "./layerDataRouter";
+import { backgroundJobsRouter } from "./backgroundJobsRouter";
+import { countyStatisticsRouter } from "./countyStatisticsRouter";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -23,6 +25,8 @@ export const appRouter = router({
   system: systemRouter,
   gis: gisRouter,
   layerData: layerDataRouter,
+  backgroundJobs: backgroundJobsRouter,
+  countyStats: countyStatisticsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

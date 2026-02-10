@@ -64,6 +64,20 @@
       "when": 1769042350145,
       "tag": "0008_tranquil_vivisector",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1770738516922,
+      "tag": "0009_furry_hellion",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1770738801093,
+      "tag": "0010_huge_wendell_rand",
+      "breakpoints": true
     }
   ]
 }
