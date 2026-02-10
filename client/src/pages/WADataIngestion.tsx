@@ -7,7 +7,7 @@ import { WAParcelLoader } from "@/components/wa-data/WAParcelLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { MapIcon, TrendingUp, FileText, Zap, Shield } from "lucide-react";
+import { MapIcon, TrendingUp, FileText, Zap, Shield, Upload, CheckSquare, Map, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 export default function WADataIngestion() {
@@ -16,7 +16,7 @@ export default function WADataIngestion() {
     {
       id: "upload",
       label: "Upload Data",
-      icon: require("lucide-react").Upload,
+      icon: Upload,
       status: "completed",
       qualityScore: 98,
       message: "County roll file uploaded successfully",
@@ -24,7 +24,7 @@ export default function WADataIngestion() {
     {
       id: "validate",
       label: "Validate Structure",
-      icon: require("lucide-react").CheckSquare,
+      icon: CheckSquare,
       status: "completed",
       qualityScore: 95,
       message: "All required fields detected",
@@ -32,7 +32,7 @@ export default function WADataIngestion() {
     {
       id: "map",
       label: "Map Fields",
-      icon: require("lucide-react").Map,
+      icon: Map,
       status: "active",
       progress: 65,
       estimatedTime: "2 min remaining",
@@ -41,14 +41,14 @@ export default function WADataIngestion() {
     {
       id: "enrich",
       label: "Enrich Data",
-      icon: require("lucide-react").Zap,
+      icon: Zap,
       status: "pending",
       message: "Waiting for field mapping",
     },
     {
       id: "activate",
       label: "Activate",
-      icon: require("lucide-react").Eye,
+      icon: Eye,
       status: "pending",
       message: "Ready to go live",
     },

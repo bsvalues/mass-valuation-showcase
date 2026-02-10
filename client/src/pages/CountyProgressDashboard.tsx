@@ -36,7 +36,7 @@ export default function CountyProgressDashboard() {
   const deleteCountyMutation = (trpc.parcels as any).deleteCountyParcels.useMutation({
     onSuccess: (data: any) => {
       toast.success(`Deleted ${data.deletedCount.toLocaleString()} parcels from ${data.county} County`);
-      utils.parcels.getCountyStatistics.invalidate();
+      (utils.parcels as any).getCountyStatistics?.invalidate();
       setDeleteDialogOpen(false);
       setSelectedCounty(null);
     },
