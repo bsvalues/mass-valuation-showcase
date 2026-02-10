@@ -3,11 +3,13 @@
  */
 
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { LoadDataWizard } from "@/components/LoadDataWizard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { MapPin, TrendingUp, DollarSign, Home, Calendar, Loader2, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Bar } from "react-chartjs-2";
 import {
@@ -33,6 +35,8 @@ ChartJS.register(
 export default function CountyDataDashboard() {
   const { data: countyStats, isLoading } = trpc.countyStats.getAllCountyStats.useQuery();
   const [, setLocation] = useLocation();
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [selectedCounty, setSelectedCounty] = useState("");
 
   // Handle chart bar click to navigate to county detail
   const handleChartClick = (countyName: string) => {
@@ -430,6 +434,20 @@ export default function CountyDataDashboard() {
                               {freshness.label}
                             </span>
                           </div>
+                          {(county.parcelCount ?? 0) === 0 && (
+                            <div className="pt-3 border-t border-border/50 mt-3">
+                              <button
+                                onClick={() => {
+                                  setSelectedCounty(county.countyName);
+                                  setWizardOpen(true);
+                                }}
+                                className="w-full py-2 px-3 bg-primary/20 hover:bg-primary/30 border border-primary/40 rounded-lg text-sm font-medium text-primary transition-colors flex items-center justify-center gap-2"
+                              >
+                                <Loader2 className="w-4 h-4" />
+                                Load Data
+                              </button>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     </motion.div>
@@ -440,6 +458,13 @@ export default function CountyDataDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Load Data Wizard */}
+      <LoadDataWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        countyName={selectedCounty}
+      />
     </DashboardLayout>
   );
 }

@@ -1537,3 +1537,12 @@
 - [x] Optimize histogram query to use single SQL query instead of loop (memory fix)
 - [x] Test getAllCountyStats endpoint directly
 - [x] Fix root cause and verify dashboard loads correctly
+
+### County Data Loading Wizard
+- [x] Design wizard flow (select county → choose load method → configure options → execute)
+- [x] Create LoadDataWizard dialog component with TerraFusion styling
+- [x] Add wizard trigger button on county cards with "No data" status
+- [x] Implement step-by-step wizard navigation (4 steps)
+- [x] Integrate with WA Data Ingestion API for parcel loading
+- [x] Add progress tracking and success/error feedback
+- [x] Test wizard with multiple counties
