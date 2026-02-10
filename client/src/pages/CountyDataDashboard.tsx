@@ -6,8 +6,28 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { MapPin, TrendingUp, DollarSign, Home, Calendar, Loader2 } from "lucide-react";
+import { MapPin, TrendingUp, DollarSign, Home, Calendar, Loader2, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function CountyDataDashboard() {
   const { data: countyStats, isLoading } = trpc.countyStats.getAllCountyStats.useQuery();
@@ -53,6 +73,94 @@ export default function CountyDataDashboard() {
   const totalParcels = countyStats?.reduce((sum, county) => sum + (county.parcelCount ?? 0), 0) || 0;
   const countiesWithData = countyStats?.filter(c => (c.parcelCount ?? 0) > 0).length || 0;
   const totalCounties = 39; // WA State has 39 counties
+
+  // Prepare chart data - Top 10 counties by parcel count
+  const top10Counties = countyStats
+    ?.filter(c => (c.parcelCount ?? 0) > 0)
+    .sort((a, b) => (b.parcelCount ?? 0) - (a.parcelCount ?? 0))
+    .slice(0, 10) || [];
+
+  const parcelCountChartData = {
+    labels: top10Counties.map(c => c.countyName),
+    datasets: [
+      {
+        label: 'Parcel Count',
+        data: top10Counties.map(c => c.parcelCount ?? 0),
+        backgroundColor: 'rgba(0, 255, 238, 0.2)',
+        borderColor: 'rgba(0, 255, 238, 0.8)',
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const landValueChartData = {
+    labels: top10Counties.map(c => c.countyName),
+    datasets: [
+      {
+        label: 'Average Land Value',
+        data: top10Counties.map(c => c.avgLandValue ?? 0),
+        backgroundColor: 'rgba(0, 255, 238, 0.2)',
+        borderColor: 'rgba(0, 255, 238, 0.8)',
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const buildingValueChartData = {
+    labels: top10Counties.map(c => c.countyName),
+    datasets: [
+      {
+        label: 'Average Building Value',
+        data: top10Counties.map(c => c.avgBuildingValue ?? 0),
+        backgroundColor: 'rgba(0, 255, 238, 0.2)',
+        borderColor: 'rgba(0, 255, 238, 0.8)',
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgba(10, 14, 26, 0.9)',
+        titleColor: '#00FFEE',
+        bodyColor: '#fff',
+        borderColor: 'rgba(0, 255, 238, 0.3)',
+        borderWidth: 1,
+        padding: 12,
+        displayColors: false,
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          font: {
+            size: 11,
+          },
+        },
+        grid: {
+          color: 'rgba(0, 255, 238, 0.1)',
+        },
+      },
+      y: {
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          font: {
+            size: 11,
+          },
+        },
+        grid: {
+          color: 'rgba(0, 255, 238, 0.1)',
+        },
+      },
+    },
+  };
 
   return (
     <DashboardLayout>
@@ -105,6 +213,133 @@ export default function CountyDataDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Comparison Charts */}
+        {top10Counties.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Parcel Count Chart */}
+            <Card className="terra-card bg-[rgba(10,14,26,0.6)] border-primary/20">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-[#00FFFF]">Top 10 Counties by Parcel Count</CardTitle>
+                </div>
+                <CardDescription className="text-slate-400">
+                  Counties with the most parcels loaded
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Bar data={parcelCountChartData} options={chartOptions} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Land Value Chart */}
+            <Card className="terra-card bg-[rgba(10,14,26,0.6)] border-primary/20">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Home className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-[#00FFFF]">Average Land Value Comparison</CardTitle>
+                </div>
+                <CardDescription className="text-slate-400">
+                  Average land value across top 10 counties
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Bar data={landValueChartData} options={{
+                    ...chartOptions,
+                    plugins: {
+                      ...chartOptions.plugins,
+                      tooltip: {
+                        ...chartOptions.plugins.tooltip,
+                        callbacks: {
+                          label: (context: any) => {
+                            return `$${context.parsed.y.toLocaleString()}`;
+                          },
+                        },
+                      },
+                    },
+                  }} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Building Value Chart */}
+            <Card className="terra-card bg-[rgba(10,14,26,0.6)] border-primary/20">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-[#00FFFF]">Average Building Value Comparison</CardTitle>
+                </div>
+                <CardDescription className="text-slate-400">
+                  Average building value across top 10 counties
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Bar data={buildingValueChartData} options={{
+                    ...chartOptions,
+                    plugins: {
+                      ...chartOptions.plugins,
+                      tooltip: {
+                        ...chartOptions.plugins.tooltip,
+                        callbacks: {
+                          label: (context: any) => {
+                            return `$${context.parsed.y.toLocaleString()}`;
+                          },
+                        },
+                      },
+                    },
+                  }} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Combined Assessment Value Chart */}
+            <Card className="terra-card bg-[rgba(10,14,26,0.6)] border-primary/20">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-[#00FFFF]">Total Average Assessment Value</CardTitle>
+                </div>
+                <CardDescription className="text-slate-400">
+                  Combined land + building average values
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <Bar data={{
+                    labels: top10Counties.map(c => c.countyName),
+                    datasets: [
+                      {
+                        label: 'Total Avg Value',
+                        data: top10Counties.map(c => (c.avgLandValue ?? 0) + (c.avgBuildingValue ?? 0)),
+                        backgroundColor: 'rgba(0, 255, 238, 0.2)',
+                        borderColor: 'rgba(0, 255, 238, 0.8)',
+                        borderWidth: 2,
+                      },
+                    ],
+                  }} options={{
+                    ...chartOptions,
+                    plugins: {
+                      ...chartOptions.plugins,
+                      tooltip: {
+                        ...chartOptions.plugins.tooltip,
+                        callbacks: {
+                          label: (context: any) => {
+                            return `$${context.parsed.y.toLocaleString()}`;
+                          },
+                        },
+                      },
+                    },
+                  }} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* County List */}
         <Card className="terra-card bg-[rgba(10,14,26,0.6)] border-primary/20">

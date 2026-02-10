@@ -1513,4 +1513,9 @@
 - [x] Create county coverage visualization (grid of county cards with data freshness)
 - [x] Display latest update timestamps and data freshness indicators
 - [x] Add county detail cards with key metrics (avg land/building values, parcel counts)
-- [ ] Add county comparison charts (bar charts for parcel counts, assessment values) - optional enhancement
+- [x] Add county comparison charts (bar charts for parcel counts, assessment values)
+  - [x] Create parcel count comparison bar chart (top 10 counties)
+  - [x] Create average land value comparison bar chart
+  - [x] Create average building value comparison bar chart
+  - [x] Add TerraFusion styling to charts (cyan gradients, glass morphism)
+  - [x] Add total average assessment value chart (combined land + building)
