@@ -125,7 +125,7 @@ async function loadAllWACountyParcels(
         countyName,
         parcelCount: 0,
         features: [],
-        error: `No parcels found for ${countyName} County`
+        error: `No parcels found for ${countyName}`
       };
     }
 
@@ -199,7 +199,7 @@ async function loadWACountyParcelsSingle(countyName: string, limit: number): Pro
         countyName,
         parcelCount: 0,
         features: [],
-        error: `No parcels found for ${countyName} County`
+        error: `No parcels found for ${countyName}`
       };
     }
 

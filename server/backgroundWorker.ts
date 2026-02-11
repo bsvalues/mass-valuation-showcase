@@ -126,8 +126,8 @@ async function processParcelLoadJob(job: any) {
     
     // Send email notification
     await notifyOwner({
-      title: `✅ Parcel Load Complete: ${job.countyName} County`,
-      content: `Successfully loaded ${result.parcelCount} parcels from ${job.countyName} County in ${duration} seconds.\n\n` +
+      title: `✅ Parcel Load Complete: ${job.countyName}`,
+      content: `Successfully loaded ${result.parcelCount} parcels from ${job.countyName} in ${duration} seconds.\n\n` +
         `View the data in Map Explorer or County Dashboard.`,
     });
     
@@ -148,8 +148,8 @@ async function processParcelLoadJob(job: any) {
     
     // Send error notification
     await notifyOwner({
-      title: `❌ Parcel Load Failed: ${job.countyName} County`,
-      content: `Failed to load parcels from ${job.countyName} County.\n\nError: ${error.message}`,
+      title: `❌ Parcel Load Failed: ${job.countyName}`,
+      content: `Failed to load parcels from ${job.countyName}.\n\nError: ${error.message}`,
     });
   }
 }

@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Button } from './ui/button';
-import { Home, Maximize2 } from 'lucide-react';
+import { Home, Maximize2, Layers, DollarSign, Building2 } from 'lucide-react';
+import { Card } from './ui/card';
 
 interface ParcelMapProps {
   parcels: Array<{
@@ -23,11 +24,14 @@ interface ParcelMapProps {
   className?: string;
 }
 
+type LayerMode = 'boundaries' | 'value-heatmap' | 'property-type';
+
 export function ParcelMap({ parcels, selectedParcelId, onParcelClick, className = '' }: ParcelMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const popup = useRef<maplibregl.Popup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [layerMode, setLayerMode] = useState<LayerMode>('boundaries');
 
   // Initialize map
   useEffect(() => {
@@ -125,15 +129,38 @@ export function ParcelMap({ parcels, selectedParcelId, onParcelClick, className 
       data: geojson,
     });
 
-    // Add fill layer (transparent by default)
+    // Add fill layer with dynamic coloring based on layer mode
+    const getFillPaint = () => {
+      if (layerMode === 'value-heatmap') {
+        // Color by total assessed value (heatmap)
+        return {
+          'fill-color': [
+            'interpolate',
+            ['linear'],
+            ['get', 'totalValue'],
+            0, '#0d47a1',        // Dark blue for low values
+            100000, '#1976d2',   // Medium blue
+            250000, '#4caf50',   // Green
+            500000, '#ffeb3b',   // Yellow
+            750000, '#ff9800',   // Orange
+            1000000, '#f44336',  // Red for high values
+          ] as any,
+          'fill-opacity': 0.6,
+        };
+      } else {
+        // Standard transparent fill
+        return {
+          'fill-color': '#00D9D9',
+          'fill-opacity': 0.1,
+        };
+      }
+    };
+
     map.current.addLayer({
       id: 'parcels-fill',
       type: 'fill',
       source: 'parcels',
-      paint: {
-        'fill-color': '#00D9D9',
-        'fill-opacity': 0.1,
-      },
+      paint: getFillPaint(),
     });
 
     // Add outline layer
@@ -219,6 +246,29 @@ export function ParcelMap({ parcels, selectedParcelId, onParcelClick, className 
 
   }, [mapLoaded, parcels, onParcelClick]);
 
+  // Update layer paint when layer mode changes
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !map.current.getLayer('parcels-fill')) return;
+
+    if (layerMode === 'value-heatmap') {
+      map.current.setPaintProperty('parcels-fill', 'fill-color', [
+        'interpolate',
+        ['linear'],
+        ['get', 'totalValue'],
+        0, '#0d47a1',
+        100000, '#1976d2',
+        250000, '#4caf50',
+        500000, '#ffeb3b',
+        750000, '#ff9800',
+        1000000, '#f44336',
+      ] as any);
+      map.current.setPaintProperty('parcels-fill', 'fill-opacity', 0.6);
+    } else {
+      map.current.setPaintProperty('parcels-fill', 'fill-color', '#00D9D9');
+      map.current.setPaintProperty('parcels-fill', 'fill-opacity', 0.1);
+    }
+  }, [layerMode, mapLoaded]);
+
   // Update highlight when selected parcel changes
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
@@ -283,7 +333,7 @@ export function ParcelMap({ parcels, selectedParcelId, onParcelClick, className 
     <div className={`relative ${className}`}>
       <div ref={mapContainer} className="w-full h-full rounded-lg overflow-hidden" />
       
-      {/* Reset view button */}
+      {/* Map controls */}
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
         <Button
           size="sm"
@@ -294,6 +344,36 @@ export function ParcelMap({ parcels, selectedParcelId, onParcelClick, className 
           <Maximize2 className="w-4 h-4 mr-2" />
           Reset View
         </Button>
+        
+        {/* Layer mode controls */}
+        <Card className="bg-background/90 backdrop-blur-sm border-primary/30 shadow-lg p-2">
+          <div className="flex flex-col gap-1">
+            <div className="text-xs font-medium text-muted-foreground px-2 mb-1 flex items-center gap-1">
+              <Layers className="w-3 h-3" />
+              Visualization
+            </div>
+            
+            <Button
+              size="sm"
+              variant={layerMode === 'boundaries' ? 'default' : 'ghost'}
+              onClick={() => setLayerMode('boundaries')}
+              className="justify-start h-8 text-xs"
+            >
+              <Home className="w-3 h-3 mr-2" />
+              Boundaries
+            </Button>
+            
+            <Button
+              size="sm"
+              variant={layerMode === 'value-heatmap' ? 'default' : 'ghost'}
+              onClick={() => setLayerMode('value-heatmap')}
+              className="justify-start h-8 text-xs"
+            >
+              <DollarSign className="w-3 h-3 mr-2" />
+              Value Heatmap
+            </Button>
+          </div>
+        </Card>
       </div>
 
       {/* Parcel count badge */}

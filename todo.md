@@ -1692,3 +1692,30 @@
 - [x] Add "Download Errors" button to JobCard component for failed jobs
 - [x] Generate CSV with columns: row_number, parcel_id, error_message
 - [ ] Test error CSV download with a failed job
+
+
+## 🔧 Workflow Testing & Map Enhancements (Current Sprint)
+
+### Background Worker Fixes
+- [x] Fix county name duplication bug in background worker ("Benton County County")
+- [ ] Test background job creation and execution
+- [ ] Verify job status updates in real-time
+- [ ] Test error handling and error CSV download
+
+### Map Layer Controls
+- [x] Add layer control panel to ParcelMap component
+- [x] Implement value heatmap layer (color by total assessed value)
+- [ ] Implement property type coloring layer
+- [ ] Add cluster view toggle
+- [x] Add layer visibility toggles with icons
+- [ ] Persist layer preferences in localStorage
+
+### End-to-End Workflow Testing
+- [x] Load WA county data from WA Data Ingestion page (2,000 Benton County parcels loaded)
+- [ ] Save loaded data to waCountyParcels table (in progress)
+- [ ] Navigate to County Detail page
+- [ ] Verify parcels appear on map with boundaries
+- [ ] Test parcel search functionality
+- [ ] Test click-to-highlight on map
+- [ ] Test table/map selection synchronization
+- [ ] Verify hover popups show correct data
