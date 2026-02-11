@@ -1749,3 +1749,34 @@
 - [ ] Test layer control toggles (Boundaries ↔ Value Heatmap)
 - [ ] Verify hover popups show correct parcel data
 - [ ] Test Reset View button functionality
+
+
+## 🔄 Clustering & Legend Implementation (Current Sprint)
+
+### MapLibre Parcel Clustering
+- [x] Add cluster configuration to parcels GeoJSON source
+- [x] Implement cluster circle layer with size based on point_count
+- [x] Add cluster count label layer
+- [x] Implement unclustered point layer for individual parcels
+- [x] Add cluster click handler to zoom into cluster bounds
+- [ ] Calculate and display aggregate statistics in cluster popups (avg value, parcel count)
+- [ ] Test clustering performance with 1000+ parcels
+- [x] Add cluster toggle button to layer controls
+
+### Property Type Legend Panel
+- [x] Create floating legend component with color swatches
+- [x] Add legend entries for all property types (residential, commercial, industrial, agricultural, unknown)
+- [x] Position legend in bottom-right corner of map
+- [ ] Add show/hide toggle for legend
+- [x] Style legend with backdrop blur and border matching map controls
+- [x] Only show legend when property-type layer mode is active
+
+### Interactive Features Testing
+- [ ] Test click-to-highlight functionality on map parcels
+- [ ] Verify table row selection syncs with map highlight
+- [ ] Test map parcel click syncs with table row selection
+- [ ] Verify hover popups display correct parcel details (ID, address, values)
+- [x] Test search functionality filters both map and table
+- [x] Verify layer mode switching updates map visualization correctly
+- [ ] Test Reset View button centers map on all parcels
+- [x] Verify parcel count badge updates correctly
