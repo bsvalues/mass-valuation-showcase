@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE waCountyParcels SET propertyType = CASE \n  WHEN parcelId = '12345-001' THEN 'residential'\n  WHEN parcelId = '12345-002' THEN 'commercial'\n  WHEN parcelId = '12345-003' THEN 'residential'\n  WHEN parcelId = '12345-004' THEN 'industrial'\n  WHEN parcelId = '12345-005' THEN 'agricultural'\nEND\nWHERE parcelId IN ('12345-001', '12345-002', '12345-003', '12345-004', '12345-005');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute UPDATE waCountyParcels SET propertyType = CASE \n  WHEN parcelId = '12345-001' THEN 'residential'\n  WHEN parcelId = '12345-002' THEN 'commercial'\n  WHEN parcelId = '12345-003' THEN 'residential'\n  WHEN parcelId = '12345-004' THEN 'industrial'\n  WHEN parcelId = '12345-005' THEN 'agricultural'\nEND\nWHERE parcelId IN ('12345-001', '12345-002', '12345-003', '12345-004', '12345-005');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 369
+}

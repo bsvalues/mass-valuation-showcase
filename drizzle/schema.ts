@@ -257,6 +257,7 @@ export const waCountyParcels = mysqlTable("waCountyParcels", {
   situsZip: varchar("situsZip", { length: 10 }),
   valueLand: int("valueLand"),
   valueBuilding: int("valueBuilding"),
+  propertyType: varchar("propertyType", { length: 64 }), // residential, commercial, industrial, agricultural
   geometry: text("geometry"), // GeoJSON geometry
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

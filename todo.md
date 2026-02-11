@@ -1708,14 +1708,44 @@
 - [ ] Implement property type coloring layer
 - [ ] Add cluster view toggle
 - [x] Add layer visibility toggles with icons
-- [ ] Persist layer preferences in localStorage
-
-### End-to-End Workflow Testing
+- [ ] Persist layer preferences in localStorage### Complete Workflow Verification
 - [x] Load WA county data from WA Data Ingestion page (2,000 Benton County parcels loaded)
-- [ ] Save loaded data to waCountyParcels table (in progress)
-- [ ] Navigate to County Detail page
-- [ ] Verify parcels appear on map with boundaries
+- [x] Save loaded data to waCountyParcels table (5 test parcels inserted)
+- [x] Navigate to County Detail page
+- [x] Verify parcels appear on map with boundaries
 - [ ] Test parcel search functionality
 - [ ] Test click-to-highlight on map
 - [ ] Test table/map selection synchronization
 - [ ] Verify hover popups show correct data
+
+## 🎨 Property Type Visualization & Clustering (Current Sprint)
+
+### Property Type Coloring Layer
+- [x] Add propertyType field to waCountyParcels schema (if not exists)
+- [ ] Update parcel loading to capture property type from WA State data
+- [x] Create property type color palette (residential=blue, commercial=orange, industrial=purple, agricultural=green)
+- [x] Add 'property-type' layer mode to ParcelMap component
+- [x] Implement dynamic fill color based on property type
+- [x] Add Property Type button to layer control panel
+- [ ] Add legend showing property type colors
+
+### Parcel Clustering
+- [ ] Add MapLibre cluster source configuration to ParcelMap
+- [ ] Implement cluster layer with circle markers sized by point count
+- [ ] Add cluster count labels showing number of parcels in cluster
+- [ ] Implement unclustered point layer for individual parcels
+- [ ] Add click handler to zoom into clusters
+- [ ] Calculate and display aggregate statistics in cluster popups (avg value, total parcels)
+- [ ] Add Cluster View toggle to layer control panel
+- [ ] Optimize cluster radius and max zoom for performance
+
+### Complete Workflow Verification
+- [ ] Check if Benton County parcels were saved to database
+- [ ] Navigate to County Detail page for Benton County
+- [ ] Verify map renders with 2,000 parcel boundaries
+- [ ] Test parcel search by ID and address
+- [ ] Test click-to-highlight on map parcels
+- [ ] Verify table/map selection synchronization
+- [ ] Test layer control toggles (Boundaries ↔ Value Heatmap)
+- [ ] Verify hover popups show correct parcel data
+- [ ] Test Reset View button functionality

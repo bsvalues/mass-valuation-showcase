@@ -18,6 +18,7 @@ interface ParcelMapProps {
     geometry: string | null;
     valueLand: number | null;
     valueBuilding: number | null;
+    propertyType: string | null;
   }>;
   selectedParcelId?: string;
   onParcelClick?: (parcelId: string) => void;
@@ -111,6 +112,7 @@ export function ParcelMap({ parcels, selectedParcelId, onParcelClick, className 
             valueLand: parcel.valueLand || 0,
             valueBuilding: parcel.valueBuilding || 0,
             totalValue: (parcel.valueLand || 0) + (parcel.valueBuilding || 0),
+            propertyType: parcel.propertyType || 'unknown',
           },
           geometry,
         };
@@ -144,6 +146,20 @@ export function ParcelMap({ parcels, selectedParcelId, onParcelClick, className 
             500000, '#ffeb3b',   // Yellow
             750000, '#ff9800',   // Orange
             1000000, '#f44336',  // Red for high values
+          ] as any,
+          'fill-opacity': 0.6,
+        };
+      } else if (layerMode === 'property-type') {
+        // Color by property type
+        return {
+          'fill-color': [
+            'match',
+            ['get', 'propertyType'],
+            'residential', '#2196F3',  // Blue
+            'commercial', '#FF9800',   // Orange
+            'industrial', '#9C27B0',   // Purple
+            'agricultural', '#4CAF50', // Green
+            '#757575',  // Gray for unknown
           ] as any,
           'fill-opacity': 0.6,
         };
@@ -371,6 +387,16 @@ export function ParcelMap({ parcels, selectedParcelId, onParcelClick, className 
             >
               <DollarSign className="w-3 h-3 mr-2" />
               Value Heatmap
+            </Button>
+            
+            <Button
+              size="sm"
+              variant={layerMode === 'property-type' ? 'default' : 'ghost'}
+              onClick={() => setLayerMode('property-type')}
+              className="justify-start h-8 text-xs"
+            >
+              <Building2 className="w-3 h-3 mr-2" />
+              Property Type
             </Button>
           </div>
         </Card>
