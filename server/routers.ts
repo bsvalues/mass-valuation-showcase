@@ -566,6 +566,7 @@ export const appRouter = router({
         parcelId: z.string(),
         saleDate: z.date(),
         salePrice: z.number(),
+        assessedValue: z.number(),
         squareFeet: z.number().optional(),
         yearBuilt: z.number().optional(),
         propertyType: z.string().optional(),

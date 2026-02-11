@@ -1873,3 +1873,87 @@
 - [x] Remove duplicate `/avm-studio` entries (no duplicates found)
 - [x] Verify each route appears only once in navigation
 - [x] Test navigation without console errors
+
+
+## 📊 QA Module Real Data Integration
+
+### Sales Data Schema
+- [x] Create sales table in schema (saleId, parcelId, saleDate, salePrice, propertyType, etc.)
+- [x] Add appeals table for property tax appeals tracking
+- [x] Add database indexes for fast sales queries
+- [ ] Run pnpm db:push to apply schema changes (requires manual confirmation)
+- [ ] Add sales data import functionality
+- [ ] Create sample sales data for testing
+
+### QA Module Backend
+- [ ] Create tRPC procedure to fetch parcels with assessed values
+- [ ] Create tRPC procedure to fetch sales data
+- [ ] Implement COD calculation with real data
+- [ ] Implement PRD calculation with real data
+- [ ] Implement PRB calculation with real data
+- [ ] Add ratio distribution data endpoint
+- [ ] Test ratio calculations with sample data
+
+### PDF Export
+- [ ] Install PDF generation library (jsPDF or similar)
+- [ ] Create PDF report template with IAAO branding
+- [ ] Add ratio study summary section to PDF
+- [ ] Add statistical metrics table to PDF
+- [ ] Add ratio distribution chart to PDF
+- [ ] Add IAAO compliance status indicators to PDF
+- [ ] Implement PDF download functionality
+- [ ] Test PDF export with real data
+
+## 🔄 Batch Valuation Backend
+
+### Database Schema
+- [ ] Create batchValuationJobs table (jobId, status, progress, totalParcels, etc.)
+- [ ] Create batchValuationResults table (resultId, jobId, parcelId, predictedValue, confidence, etc.)
+- [ ] Add indexes for fast job queries
+
+### Backend Implementation
+- [ ] Create tRPC procedure to create batch valuation job
+- [ ] Create tRPC procedure to get job status and progress
+- [ ] Create tRPC procedure to get job results
+- [ ] Implement background worker for batch processing
+- [ ] Add AVM model prediction logic
+- [ ] Implement progress tracking (parcels processed / total)
+- [ ] Add error handling and retry logic
+- [ ] Test batch processing with 100+ parcels
+
+### Frontend Integration
+- [ ] Wire Start Batch Processing button to createBatchJob mutation
+- [ ] Add real-time progress updates using polling
+- [ ] Display job results in table when complete
+- [ ] Add export results to CSV functionality
+- [ ] Test complete batch valuation workflow
+
+## 🛡️ Defense Studio Implementation
+
+### Database Schema
+- [ ] Create appeals table (appealId, parcelId, appealDate, appealedValue, status, etc.)
+- [ ] Create comparableSales table (link sales to parcels for comp analysis)
+- [ ] Add indexes for fast comparable sales queries
+
+### Comparable Sales Analysis
+- [ ] Create tRPC procedure to find comparable sales
+- [ ] Implement distance-based comp search (within X miles)
+- [ ] Add property characteristic filtering (beds, baths, sqft, age)
+- [ ] Calculate adjustment factors for comp differences
+- [ ] Create comparable sales grid component
+
+### Ratio Study Evidence Generator
+- [ ] Create tRPC procedure to generate ratio study evidence for specific parcel
+- [ ] Calculate neighborhood-level ratio statistics
+- [ ] Generate comparison charts (subject vs neighborhood)
+- [ ] Add IAAO compliance evidence
+
+### Defense Report Builder
+- [ ] Create defense report template
+- [ ] Add subject property summary section
+- [ ] Add comparable sales analysis section
+- [ ] Add ratio study evidence section
+- [ ] Add market trend analysis section
+- [ ] Implement PDF export for defense reports
+- [ ] Test complete defense workflow
+

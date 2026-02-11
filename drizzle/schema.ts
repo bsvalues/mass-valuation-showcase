@@ -1,4 +1,4 @@
-import { index, int, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { date, index, int, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -67,20 +67,36 @@ export type PropertyHistory = typeof propertyHistory.$inferSelect;
 export type InsertPropertyHistory = typeof propertyHistory.$inferInsert;
 
 /**
- * Sales table - stores comparable sales data
+ * Sales table - stores property sales transactions for ratio studies and comparable sales analysis
  */
 export const sales = mysqlTable("sales", {
   id: int("id").autoincrement().primaryKey(),
   parcelId: varchar("parcelId", { length: 64 }).notNull(),
-  saleDate: timestamp("saleDate").notNull(),
+  saleDate: date("saleDate").notNull(),
   salePrice: int("salePrice").notNull(),
+  assessedValue: int("assessedValue").notNull(), // Assessed value at time of sale
+  propertyType: varchar("propertyType", { length: 64 }),
+  situsAddress: text("situsAddress"),
+  countyName: varchar("countyName", { length: 100 }),
+  neighborhood: varchar("neighborhood", { length: 128 }),
   squareFeet: int("squareFeet"),
   yearBuilt: int("yearBuilt"),
-  propertyType: varchar("propertyType", { length: 64 }),
-  neighborhood: varchar("neighborhood", { length: 128 }),
+  bedrooms: int("bedrooms"),
+  bathrooms: int("bathrooms"),
+  // Ratio study fields
+  assessedToSaleRatio: varchar("assessedToSaleRatio", { length: 20 }), // Calculated ratio (assessed/sale)
+  // Flags for data quality
+  isArmLength: int("isArmLength").default(1), // 1 = arm's length, 0 = non-arm's length
+  isQualified: int("isQualified").default(1), // 1 = qualified for ratio study, 0 = excluded
+  exclusionReason: text("exclusionReason"),
   uploadedBy: int("uploadedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  parcelIdIdx: index("sale_parcelid_idx").on(table.parcelId),
+  saleDateIdx: index("sale_date_idx").on(table.saleDate),
+  countyNameIdx: index("sale_county_idx").on(table.countyName),
+}));
 
 export type Sale = typeof sales.$inferSelect;
 export type InsertSale = typeof sales.$inferInsert;
@@ -351,3 +367,34 @@ export const countyStatistics = mysqlTable("countyStatistics", {
 
 export type CountyStatistic = typeof countyStatistics.$inferSelect;
 export type InsertCountyStatistic = typeof countyStatistics.$inferInsert;
+
+
+
+/**
+ * Appeals table - tracks property tax appeals
+ */
+export const appeals = mysqlTable("appeals", {
+  id: int("id").autoincrement().primaryKey(),
+  parcelId: varchar("parcelId", { length: 64 }).notNull(),
+  appealDate: date("appealDate").notNull(),
+  currentAssessedValue: int("currentAssessedValue").notNull(),
+  appealedValue: int("appealedValue").notNull(), // Value requested by taxpayer
+  finalValue: int("finalValue"), // Final determined value (if resolved)
+  status: mysqlEnum("status", ["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"]).default("pending").notNull(),
+  appealReason: text("appealReason"),
+  resolution: text("resolution"),
+  countyName: varchar("countyName", { length: 100 }),
+  filedBy: int("filedBy"), // User ID who filed the appeal
+  assignedTo: int("assignedTo"), // User ID assigned to review
+  hearingDate: date("hearingDate"),
+  resolutionDate: date("resolutionDate"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  parcelIdIdx: index("appeal_parcelid_idx").on(table.parcelId),
+  statusIdx: index("appeal_status_idx").on(table.status),
+  appealDateIdx: index("appeal_date_idx").on(table.appealDate),
+}));
+
+export type Appeal = typeof appeals.$inferSelect;
+export type InsertAppeal = typeof appeals.$inferInsert;
