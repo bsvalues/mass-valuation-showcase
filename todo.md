@@ -1814,3 +1814,50 @@
 - [x] Create QA / Ratio Studies page placeholder
 - [x] Update routing to match new structure
 - [x] Test navigation flow and user experience
+
+
+## 🧭 Breadcrumb Navigation Implementation
+
+### Breadcrumb Component
+- [ ] Create Breadcrumb component with Suite > Page hierarchy
+- [ ] Add breadcrumb rendering in DashboardLayout header
+- [ ] Implement dynamic breadcrumb generation based on current route
+- [ ] Add click navigation to parent Suite pages
+- [ ] Style breadcrumbs to match TerraForge design language
+
+## 📊 Overview Dashboard Implementation
+
+### System-Wide KPIs
+- [ ] Create Overview dashboard page component
+- [ ] Add system vitality metrics (precision, velocity, harmony)
+- [ ] Display total assessed value and jurisdiction count
+- [ ] Show active jobs and recent activity feed
+- [ ] Add performance trend charts
+
+### Suite Quick-Access Cards
+- [ ] Create Suite card component with icon, title, description
+- [ ] Add cards for all 5 Suites (Data, Valuation, Analysis, Governance, Platform)
+- [ ] Implement click navigation to Suite landing pages
+- [ ] Add hover effects and visual hierarchy
+
+## 📈 QA / Ratio Studies Module Implementation
+
+### Statistical Calculations
+- [ ] Implement COD (Coefficient of Dispersion) calculation
+- [ ] Implement PRD (Price-Related Differential) calculation
+- [ ] Implement PRB (Price-Related Bias) calculation
+- [ ] Add median ratio and mean ratio calculations
+- [ ] Implement IAAO compliance thresholds and color-coding
+
+### Interactive Tools
+- [ ] Create ratio study form with county/property type filters
+- [ ] Add holdout validation tool with train/test split
+- [ ] Implement sales chasing detection algorithm
+- [ ] Add neighborhood stratification analysis
+- [ ] Create exportable PDF reports with IAAO standards
+
+### Data Visualization
+- [ ] Add ratio distribution histogram
+- [ ] Create scatter plot of assessed vs sale values
+- [ ] Implement time-series drift detection chart
+- [ ] Add neighborhood comparison heatmap

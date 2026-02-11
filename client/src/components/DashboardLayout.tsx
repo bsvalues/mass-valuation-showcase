@@ -44,6 +44,7 @@ import { QuantumJobDrawer } from "./QuantumJobDrawer";
 import { Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { Breadcrumb } from "./Breadcrumb";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -131,6 +132,44 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         ? prev.filter(t => t !== suiteTitle)
         : [...prev, suiteTitle]
     );
+  };
+
+  // Generate breadcrumb items based on current route
+  const getBreadcrumbItems = (path: string) => {
+    const routeMap: Record<string, { suite: string; page: string }> = {
+      '/wa-data-ingestion': { suite: 'Data Suite', page: 'WA Data Ingestion' },
+      '/county-data-dashboard': { suite: 'Data Suite', page: 'County Dashboard' },
+      '/map-explorer': { suite: 'Data Suite', page: 'Map Explorer' },
+      '/mass-valuation': { suite: 'Valuation Suite', page: 'Mass Valuation Studio' },
+      '/avm-studio': { suite: 'Valuation Suite', page: 'AVM Studio' },
+      '/batch-valuation': { suite: 'Valuation Suite', page: 'Batch Valuation' },
+      '/cost-matrix': { suite: 'Valuation Suite', page: 'Cost Matrix' },
+      '/analysis': { suite: 'Analysis Suite', page: 'Market Analysis' },
+      '/calibration': { suite: 'Analysis Suite', page: 'Calibration Studio' },
+      '/regression': { suite: 'Analysis Suite', page: 'Regression Studio' },
+      '/qa-ratio-studies': { suite: 'Analysis Suite', page: 'QA / Ratio Studies' },
+      '/defense': { suite: 'Governance Suite', page: 'Defense Studio' },
+      '/governance': { suite: 'Governance Suite', page: 'Governance & Audit' },
+      '/model-management': { suite: 'Platform', page: 'Model Management' },
+      '/admin/users': { suite: 'Platform', page: 'User Management' },
+    };
+
+    // Handle county detail dynamic routes
+    if (path.startsWith('/county-detail/')) {
+      const countyName = decodeURIComponent(path.split('/')[2]);
+      return [
+        { label: 'Data Suite', href: '/county-data-dashboard' },
+        { label: countyName, href: path },
+      ];
+    }
+
+    const route = routeMap[path];
+    if (!route) return [];
+
+    return [
+      { label: route.suite, href: path },
+      { label: route.page, href: path },
+    ];
   };
 
   return (
@@ -246,7 +285,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header */}
         <header className="h-16 bg-background border-b border-border flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40">
-          <div className="flex items-center">
+          <div className="flex items-center gap-6">
             <Button
               variant="ghost"
               size="icon"
@@ -255,6 +294,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             >
               <Menu className="w-5 h-5" />
             </Button>
+            <Breadcrumb items={getBreadcrumbItems(location)} className="hidden lg:flex" />
             <div className="relative hidden md:block max-w-md w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input

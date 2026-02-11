@@ -1,258 +1,250 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { TranscendenceCanvas } from "@/components/TranscendenceCanvas";
-import { ValuationChart3D } from "@/components/ValuationChart3D";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowUpRight, BarChart, CheckCircle2, Clock, FileText, TrendingUp, Users, Zap } from "lucide-react";
+import { 
+  ArrowUpRight, 
+  BarChart3, 
+  Brain, 
+  Calculator, 
+  CheckCircle2, 
+  Clock, 
+  Database, 
+  Factory, 
+  Layers, 
+  MapIcon, 
+  Shield, 
+  ShieldCheck, 
+  Sliders, 
+  TrendingUp, 
+  Upload, 
+  Users, 
+  Zap 
+} from "lucide-react";
+import { Link } from "wouter";
+import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
 
 export default function Home() {
-  // The userAuth hooks provides authentication state
-  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
-  let { user, loading, error, isAuthenticated, logout } = useAuth();
+  const { user, loading, error, isAuthenticated } = useAuth();
+  const { systemResonance, isRevalRunning } = useGlobalSimulation();
+
+  const suiteCards = [
+    {
+      title: "DATA SUITE",
+      description: "Ingest, manage, and visualize property data from multiple sources",
+      icon: Database,
+      color: "from-blue-500 to-cyan-500",
+      items: [
+        { label: "WA Data Ingestion", href: "/wa-data-ingestion", icon: Upload },
+        { label: "County Dashboard", href: "/county-data-dashboard", icon: BarChart3 },
+        { label: "Map Explorer", href: "/map-explorer", icon: MapIcon },
+      ]
+    },
+    {
+      title: "VALUATION SUITE",
+      description: "Core valuation engines for mass appraisal and automated valuation models",
+      icon: Factory,
+      color: "from-purple-500 to-pink-500",
+      items: [
+        { label: "Mass Valuation Studio", href: "/mass-valuation", icon: Factory },
+        { label: "AVM Studio", href: "/avm-studio", icon: Brain },
+        { label: "Batch Valuation", href: "/batch-valuation", icon: Zap },
+        { label: "Cost Matrix", href: "/cost-matrix", icon: Calculator },
+      ]
+    },
+    {
+      title: "ANALYSIS SUITE",
+      description: "Statistical analysis, calibration, and quality assurance tools",
+      icon: TrendingUp,
+      color: "from-green-500 to-emerald-500",
+      items: [
+        { label: "Market Analysis", href: "/analysis", icon: BarChart3 },
+        { label: "Calibration Studio", href: "/calibration", icon: Sliders },
+        { label: "Regression Studio", href: "/regression", icon: TrendingUp },
+        { label: "QA / Ratio Studies", href: "/qa-ratio-studies", icon: ShieldCheck },
+      ]
+    },
+    {
+      title: "GOVERNANCE SUITE",
+      description: "Defense preparation, compliance tracking, and audit trails",
+      icon: Shield,
+      color: "from-amber-500 to-orange-500",
+      items: [
+        { label: "Defense Studio", href: "/defense", icon: Shield },
+        { label: "Governance & Audit", href: "/governance", icon: ShieldCheck },
+      ]
+    },
+  ];
+
+  if (user?.role === 'admin') {
+    suiteCards.push({
+      title: "PLATFORM",
+      description: "System administration and model management",
+      icon: Layers,
+      color: "from-slate-500 to-gray-500",
+      items: [
+        { label: "Model Management", href: "/model-management", icon: Layers },
+        { label: "User Management", href: "/admin/users", icon: Users },
+      ]
+    });
+  }
 
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        {/* Hero Section */}
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-2xl min-h-[500px] flex items-center">
-          <div className="absolute inset-0 z-0">
-             <TranscendenceCanvas />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-transparent z-0 pointer-events-none"></div>
-          
-          <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
-            <div className="space-y-6 max-w-2xl">
-              <Badge variant="outline" className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20 backdrop-blur-sm px-4 py-1">
-                Native to TerraFusion OS
-              </Badge>
-              <h1 className="text-4xl md:text-6xl font-thin tracking-tight leading-tight">
-                TerraForge <br />
-                <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-sidebar-primary">Quantum Valuation Engine</span>
-              </h1>
-              <p className="text-primary-foreground/90 text-xl font-light max-w-xl leading-relaxed">
-                The forge where property values are crafted, calibrated, and crystallized. Process mass appraisals with <span className="font-bold text-sidebar-primary">quantum precision</span> using market-calibrated AI and the sacred 3-6-9 framework.
-              </p>
-              <div className="flex flex-wrap gap-4 pt-4">
-                <Button size="lg" className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 border-0 rounded-full px-8 shadow-[0_0_30px_rgba(0,255,238,0.3)] transition-all hover:scale-105">
-                  Begin Transcendence
-                </Button>
-                <Button size="lg" variant="outline" className="bg-transparent text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 rounded-full px-8">
-                  Watch It Flow
-                </Button>
-              </div>
-            </div>
-            
-            {/* Live Status Card */}
-            <div className="bg-background/10 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full md:w-80 shadow-2xl animate-in fade-in slide-in-from-right-8 duration-1000">
-              <h3 className="text-xs font-bold text-sidebar-primary uppercase tracking-[0.2em] mb-6 flex items-center">
-                <Zap className="w-3 h-3 mr-2" /> System Vitality
-              </h3>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-end">
-                    <span className="text-sm font-light text-primary-foreground/80">Precision</span>
-                    <span className="text-lg font-bold text-sidebar-primary">98.4%</span>
-                  </div>
-                  <Progress value={98} className="h-1 bg-white/10" />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between items-end">
-                    <span className="text-sm font-light text-primary-foreground/80">Velocity</span>
-                    <span className="text-lg font-bold text-sidebar-primary">379M×</span>
-                  </div>
-                  <Progress value={100} className="h-1 bg-white/10" />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between items-end">
-                    <span className="text-sm font-light text-primary-foreground/80">Harmony</span>
-                    <span className="text-lg font-bold text-sidebar-primary">12.000</span>
-                  </div>
-                  <Progress value={100} className="h-1 bg-white/10" />
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-thin tracking-tight text-foreground">
+            System Overview
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Monitor system health and access all Suite modules
+          </p>
         </div>
 
-        {/* 3-6-9 Framework Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-t-4 border-t-chart-1 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="w-12 h-12 rounded-lg bg-chart-1/10 flex items-center justify-center mb-4">
-                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663028539184/KksIhXyfcDIzAVuD.png" alt="Foundation" className="w-8 h-8 object-contain" />
-              </div>
-              <CardTitle className="text-xl">Level 3: Foundation</CardTitle>
-              <CardDescription>Stability & Security</CardDescription>
+        {/* System-Wide KPIs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">System Vitality</CardTitle>
+              <Zap className="h-4 w-4 text-[#00FFFF]" />
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                PhD-level authentication and rigorous statistical baselines ensure a rock-solid platform for valuation.
+              <div className="text-2xl font-bold">{systemResonance.toFixed(3)}</div>
+              <p className="text-xs text-muted-foreground flex items-center mt-1">
+                <CheckCircle2 className="w-3 h-3 text-green-500 mr-1" />
+                Quantum Core Active
               </p>
-              <div className="flex items-center text-sm font-medium text-chart-1">
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Perfect Balance Score: 12.0
-              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-t-chart-2 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="w-12 h-12 rounded-lg bg-chart-2/10 flex items-center justify-center mb-4">
-                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663028539184/WxrisZCUUtRCVHWh.png" alt="Amplification" className="w-8 h-8 object-contain" />
-              </div>
-              <CardTitle className="text-xl">Level 6: Amplification</CardTitle>
-              <CardDescription>Synergy & Insight</CardDescription>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Assessed Value</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Combining multiple data streams to discover hidden market drivers and amplify valuation accuracy.
+              <div className="text-2xl font-bold">$42.8B</div>
+              <p className="text-xs text-muted-foreground flex items-center mt-1">
+                <ArrowUpRight className="w-3 h-3 text-green-500 mr-1" />
+                <span className="text-green-500 font-medium">+4.2%</span> from last year
               </p>
-              <div className="flex items-center text-sm font-medium text-chart-2">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Synergy Factor: 666
-              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-t-chart-3 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="w-12 h-12 rounded-lg bg-chart-3/10 flex items-center justify-center mb-4">
-                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663028539184/JUmpbZnzWtIOLQdM.png" alt="Ultimate Power" className="w-8 h-8 object-contain" />
-              </div>
-              <CardTitle className="text-xl">Level 9: Ultimate Power</CardTitle>
-              <CardDescription>Global Normalization</CardDescription>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Jurisdictions</CardTitle>
+              <MapIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Achieving total market equilibrium and fairness through advanced quantum AI processing.
+              <div className="text-2xl font-bold">12</div>
+              <p className="text-xs text-muted-foreground flex items-center mt-1">
+                <CheckCircle2 className="w-3 h-3 text-green-500 mr-1" />
+                All systems operational
               </p>
-              <div className="flex items-center text-sm font-medium text-chart-3">
-                <Zap className="w-4 h-4 mr-2" />
-                Power Level: Maximum
-              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Processing Status</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isRevalRunning ? "Running" : "Idle"}</div>
+              <p className="text-xs text-muted-foreground flex items-center mt-1">
+                {isRevalRunning ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping mr-2" />
+                    Processing valuations
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-green-500 mr-1" />
+                    Ready for next job
+                  </>
+                )}
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Dashboard Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <TabsList className="bg-muted/50 p-1">
-              <TabsTrigger value="overview">Market Overview</TabsTrigger>
-              <TabsTrigger value="equity">Equity Analysis</TabsTrigger>
-              <TabsTrigger value="appeals">Appeals Tracking</TabsTrigger>
-            </TabsList>
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Clock className="w-4 h-4 mr-2" />
-              Last updated: Just now
-            </div>
-          </div>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Assessed Value</CardTitle>
-                  <span className="text-muted-foreground font-mono text-xs">USD</span>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">$42.8B</div>
-                  <p className="text-xs text-muted-foreground flex items-center mt-1">
-                    <ArrowUpRight className="w-3 h-3 text-green-500 mr-1" />
-                    <span className="text-green-500 font-medium">+4.2%</span> from last year
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Median Ratio (A/S)</CardTitle>
-                  <BarChart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0.96</div>
-                  <p className="text-xs text-muted-foreground flex items-center mt-1">
-                    <CheckCircle2 className="w-3 h-3 text-green-500 mr-1" />
-                    Within target range (0.90 - 1.10)
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">COD (Uniformity)</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">8.4%</div>
-                  <p className="text-xs text-muted-foreground flex items-center mt-1">
-                    <CheckCircle2 className="w-3 h-3 text-green-500 mr-1" />
-                    Excellent uniformity (&lt;10%)
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Appeals</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">142</div>
-                  <p className="text-xs text-muted-foreground flex items-center mt-1">
-                    <span className="text-amber-500 font-medium">-12%</span> vs same time last year
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Main Chart Area */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-	              <Card className="lg:col-span-2 terra-card bg-[rgba(10,14,26,0.6)]">
-	                <CardHeader>
-	                  <CardTitle className="text-[#00FFFF]">Valuation Trends by Neighborhood</CardTitle>
-	                  <CardDescription className="text-slate-400">Comparative analysis of median value changes over the last 5 years.</CardDescription>
-	                </CardHeader>
-	                <CardContent>
-	                  <ValuationChart3D />
-	                </CardContent>
-	              </Card>
-
-              <Card>
+        {/* Suite Quick-Access Cards */}
+        <div>
+          <h2 className="text-xl font-medium tracking-tight text-foreground mb-4">
+            Suite Modules
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {suiteCards.map((suite) => (
+              <Card key={suite.title} className="group hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden">
+                <div className={`absolute inset-0 bg-gradient-to-br ${suite.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
                 <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>Latest system actions and alerts.</CardDescription>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <suite.icon className="w-5 h-5 text-[#00FFFF]" />
+                        <CardTitle className="text-sm font-bold tracking-wide uppercase text-[#00FFFF]/80">
+                          {suite.title}
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-sm">
+                        {suite.description}
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { title: "Model Calibration Complete", time: "2 hours ago", type: "success" },
-                      { title: "New Sales Data Ingested", time: "5 hours ago", type: "info" },
-                      { title: "PRD Alert: Sector 7G", time: "1 day ago", type: "warning" },
-                      { title: "Weekly Backup Verified", time: "1 day ago", type: "success" },
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-start pb-4 border-b border-border last:border-0 last:pb-0">
-                        <div className={`w-2 h-2 mt-1.5 rounded-full mr-3 ${
-                          item.type === 'success' ? 'bg-green-500' : 
-                          item.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
-                        }`} />
-                        <div>
-                          <p className="text-sm font-medium">{item.title}</p>
-                          <p className="text-xs text-muted-foreground">{item.time}</p>
+                  <div className="space-y-2">
+                    {suite.items.map((item) => (
+                      <Link key={item.href} href={item.href}>
+                        <div className="flex items-center justify-between p-2 rounded-md hover:bg-accent transition-colors group/item">
+                          <div className="flex items-center gap-2">
+                            <item.icon className="w-4 h-4 text-muted-foreground group-hover/item:text-[#00FFFF] transition-colors" />
+                            <span className="text-sm text-foreground/80 group-hover/item:text-foreground transition-colors">
+                              {item.label}
+                            </span>
+                          </div>
+                          <ArrowUpRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </CardContent>
               </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>Latest system actions and updates</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { title: "Model Calibration Complete", time: "2 hours ago", type: "success" },
+                { title: "New Sales Data Ingested", time: "5 hours ago", type: "info" },
+                { title: "PRD Alert: Sector 7G", time: "1 day ago", type: "warning" },
+                { title: "Weekly Backup Verified", time: "1 day ago", type: "success" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start pb-4 border-b border-border last:border-0 last:pb-0">
+                  <div className={`w-2 h-2 mt-1.5 rounded-full mr-3 ${
+                    item.type === 'success' ? 'bg-green-500' : 
+                    item.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
+                  }`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.time}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
