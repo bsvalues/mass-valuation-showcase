@@ -218,7 +218,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                       {suite.items.map((item) => {
                         const isActive = location === item.href;
                         return (
-                          <Link key={item.href} href={item.href}>
+                          <Link key={`${suite.title}-${item.href}`} href={item.href}>
                             <div
                               className={cn(
                                 "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer group",

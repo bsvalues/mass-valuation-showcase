@@ -1861,3 +1861,15 @@
 - [ ] Create scatter plot of assessed vs sale values
 - [ ] Implement time-series drift detection chart
 - [ ] Add neighborhood comparison heatmap
+
+
+## 🐛 Duplicate Navigation Key Errors (Urgent)
+
+- [x] Find duplicate route entries in DashboardLayout navigation structure
+- [x] Remove duplicate `/wa-data-ingestion` entries (no duplicates found)
+- [x] Remove duplicate `/county-data-dashboard` entries (no duplicates found)
+- [x] Remove duplicate `/map-explorer` entries (no duplicates found)
+- [x] Remove duplicate `/mass-valuation` entries (no duplicates found)
+- [x] Remove duplicate `/avm-studio` entries (no duplicates found)
+- [x] Verify each route appears only once in navigation
+- [x] Test navigation without console errors
