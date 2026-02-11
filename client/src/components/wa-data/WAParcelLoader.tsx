@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Download, MapPin, Loader2, CheckCircle2, AlertCircle, Map, Database, RefreshCw } from 'lucide-react';
+import { Download, MapPin, Loader2, CheckCircle2, AlertCircle, Map, Database, RefreshCw, Briefcase } from 'lucide-react';
+import { useJobDrawer } from '@/contexts/JobContext';
 import { toast } from 'sonner';
 import type { ParcelLoadResult } from '../../../../server/waParcelFabric';
 
@@ -26,6 +27,16 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
   const [updateExisting, setUpdateExisting] = useState(false);
   const [, setLocation] = useLocation();
   const { setLoadedParcels } = useWAParcels();
+  const { openDrawer } = useJobDrawer();
+  const createJobMutation = trpc.backgroundJobs.createParcelLoadJob.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.message);
+      openDrawer(parseInt(result.jobId)); // Auto-open drawer with new job
+    },
+    onError: (error) => {
+      toast.error(`Failed to queue job: ${error.message}`);
+    },
+  });
 
   const { data: counties, isLoading: countiesLoading } = trpc.parcels.getWACounties.useQuery();
   const saveToDbMutation = trpc.parcels.saveWAParcelsToDatabase.useMutation({
@@ -137,24 +148,56 @@ export function WAParcelLoader({ onParcelsLoaded }: WAParcelLoaderProps) {
           </Select>
         </div>
 
-        {/* Load Button */}
-        <Button
-          onClick={handleLoadParcels}
-          disabled={!selectedCounty || loadParcelsMutation.isPending}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_rgba(0,255,238,0.3)]"
-        >
-          {loadParcelsMutation.isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Loading Parcels...
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4 mr-2" />
-              Load Parcels
-            </>
+        {/* Load Buttons */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            onClick={handleLoadParcels}
+            disabled={!selectedCounty || loadParcelsMutation.isPending || createJobMutation.isPending}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_rgba(0,255,238,0.3)]"
+          >
+            {loadParcelsMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Load Now
+              </>
+            )}
+          </Button>
+
+          {/* Queue Background Job Button (show for 10K+) */}
+          {parcelLimit >= 10000 && (
+            <Button
+              onClick={() => {
+                if (!selectedCounty) return;
+                if (confirm(`Queue background job to load ${parcelLimit === 0 ? 'all' : parcelLimit.toLocaleString()} parcels from ${selectedCounty} County?\n\nThis may take 5-30 minutes depending on county size. You'll receive a notification when complete.`)) {
+                  createJobMutation.mutate({
+                    countyName: selectedCounty,
+                    parcelLimit: parcelLimit,
+                  });
+                }
+              }}
+              disabled={!selectedCounty || loadParcelsMutation.isPending || createJobMutation.isPending}
+              variant="outline"
+              className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300"
+            >
+              {createJobMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Queuing...
+                </>
+              ) : (
+                <>
+                  <Briefcase className="w-4 h-4 mr-2" />
+                  Queue Job
+                </>
+              )}
+            </Button>
           )}
-        </Button>
+        </div>
 
         {/* Load Result */}
         {loadResult && (

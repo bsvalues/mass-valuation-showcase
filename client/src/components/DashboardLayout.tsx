@@ -39,6 +39,10 @@ import { PresenceIndicator } from "./PresenceIndicator";
 import { useState as useReactState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { JobProvider, useJobDrawer } from "@/contexts/JobContext";
+import { QuantumJobDrawer } from "./QuantumJobDrawer";
+import { Briefcase } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -209,6 +213,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <CommandCenterMode />
             <VoiceCommandInterface />
             
+            {/* Jobs Drawer Icon */}
+            <JobsIconButton />
+            
             {/* Theme Toggle */}
             <Button 
               variant="ghost" 
@@ -236,6 +243,39 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </main>
       </div>
+      
+      {/* Global Job Drawer */}
+      <QuantumJobDrawer />
     </div>
+  );
+}
+
+// Jobs Icon Button Component (must be inside JobProvider)
+function JobsIconButton() {
+  const { openDrawer } = useJobDrawer();
+  const { data: jobs } = trpc.backgroundJobs.listMyJobs.useQuery(undefined, {
+    refetchInterval: 5000, // Poll every 5s for active job count
+  });
+
+  const activeJobCount = jobs?.filter((j: any) => j.status === 'QUEUED' || j.status === 'RUNNING').length || 0;
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => openDrawer()}
+      className="relative text-muted-foreground hover:text-primary"
+      title="Background Jobs"
+    >
+      <Briefcase className="w-5 h-5" />
+      {activeJobCount > 0 && (
+        <Badge
+          variant="destructive"
+          className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground"
+        >
+          {activeJobCount}
+        </Badge>
+      )}
+    </Button>
   );
 }

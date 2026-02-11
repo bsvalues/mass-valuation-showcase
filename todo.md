@@ -1561,14 +1561,20 @@
   - [x] Error summary and Download Error CSV button
   - [x] Job details display (ID, created, started, completed times)
   - [x] Polling every 1.5s for RUNNING jobs, 8s otherwise
-- [ ] Implement job events API endpoint (GET /api/background-jobs/:id/events)
-- [ ] Implement error CSV download endpoint (GET /api/background-jobs/:id/errors.csv)
+- [ ] Create global JobContext for drawer state management
+- [ ] Integrate QuantumJobDrawer into DashboardLayout header:
+  - [ ] Add Jobs icon (Briefcase) with active job count badge
+  - [ ] Wire drawer open/close state to context
+  - [ ] Add auto-open on job creation
+- [ ] Implement error CSV download endpoint:
+  - [ ] Create tRPC procedure to fetch job errors
+  - [ ] Stream CSV with proper headers (parcelId, errorMessage, timestamp)
+  - [ ] Add download button in QuantumJobDrawer
 - [ ] Integrate "Queue Background Job" button in WA Parcel Loader:
-  - [ ] Add estimate endpoint for record count
-  - [ ] Show Queue button for 10K+ threshold
-  - [ ] Add confirmation dialog with record count
+  - [ ] Show Queue button when limit ≥10K
+  - [ ] Add confirmation dialog with estimated time
   - [ ] Auto-open Job Drawer on queue success
-- [ ] Test job survival across UI reloads and worker failures
+- [ ] Test complete workflow (queue job → watch progress → download errors)
 
 ### 2) County Detail: Parcel Search + Filtering
 - [ ] Add address_search normalized field to waCountyParcels table

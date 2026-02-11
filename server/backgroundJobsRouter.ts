@@ -92,6 +92,43 @@ export const backgroundJobsRouter = router({
     }),
   
   /**
+   * Get job errors for CSV download
+   */
+  getJobErrors: protectedProcedure
+    .input(z.object({
+      jobId: z.string(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // First verify user owns this job
+      const [job] = await db
+        .select()
+        .from(backgroundJobs)
+        .where(eq(backgroundJobs.id, input.jobId))
+        .limit(1);
+      
+      if (!job) {
+        throw new Error('Job not found');
+      }
+      
+      if (job.userId !== ctx.user.id) {
+        throw new Error('Unauthorized');
+      }
+      
+      // Get errors from jobErrors table
+      const { jobErrors } = await import('../drizzle/schema');
+      const errors = await db
+        .select()
+        .from(jobErrors)
+        .where(eq(jobErrors.jobId, input.jobId))
+        .orderBy(desc(jobErrors.createdAt));
+      
+      return errors;
+    }),
+  
+  /**
    * Get all jobs (admin only)
    */
   listAllJobs: protectedProcedure

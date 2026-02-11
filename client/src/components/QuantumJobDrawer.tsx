@@ -10,14 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { QuantumProgressBar } from "./QuantumProgressBar";
+import { useJobDrawer } from "@/contexts/JobContext";
 
-interface QuantumJobDrawerProps {
-  jobId: string | null;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function QuantumJobDrawer({ jobId, isOpen, onClose }: QuantumJobDrawerProps) {
+export function QuantumJobDrawer() {
+  const { isDrawerOpen: isOpen, activeJobId, closeDrawer } = useJobDrawer();
+  const jobId = activeJobId?.toString() || null;
   const [progressSamples, setProgressSamples] = useState<Array<{ processed: number; timestamp: number }>>([]);
   
   // Poll job status
@@ -106,7 +103,7 @@ export function QuantumJobDrawer({ jobId, isOpen, onClose }: QuantumJobDrawerPro
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-        onClick={onClose}
+        onClick={closeDrawer}
       />
       
       {/* Drawer */}
@@ -117,10 +114,10 @@ export function QuantumJobDrawer({ jobId, isOpen, onClose }: QuantumJobDrawerPro
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
               Background Job
             </h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={closeDrawer}
               className="text-gray-400 hover:text-cyan-400 hover:bg-cyan-500/10"
             >
               <X className="w-5 h-5" />
@@ -203,9 +200,28 @@ export function QuantumJobDrawer({ jobId, isOpen, onClose }: QuantumJobDrawerPro
             <Button
               variant="outline"
               className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-              onClick={() => {
-                // TODO: Implement CSV download
-                window.open(`/api/background-jobs/${job.id}/errors.csv`, '_blank');
+              onClick={async () => {
+                try {
+                  const utils = trpc.useUtils();
+                  const errors = await utils.backgroundJobs.getJobErrors.fetch({ jobId: job.id });
+                  
+                  // Convert errors to CSV
+                  const csvHeader = 'Parcel ID,Error Message,Timestamp\n';
+                  const csvRows = errors.map((e: any) => 
+                    `"${e.parcelId || 'N/A'}","${(e.errorMessage || '').replace(/"/g, '""')}","${new Date(e.createdAt || '').toISOString()}"`
+                  ).join('\n');
+                  const csvContent = csvHeader + csvRows;
+                  
+                  // Download CSV
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `job-${job.id}-errors.csv`;
+                  link.click();
+                } catch (error) {
+                  console.error('Failed to download errors:', error);
+                  alert('Failed to download error CSV');
+                }
               }}
             >
               <Download className="w-4 h-4 mr-2" />

@@ -11,6 +11,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AdaptiveThemeProvider } from "./contexts/AdaptiveThemeContext";
 import { WAParcelProvider } from "./contexts/WAParcelContext";
+import { JobProvider } from "./contexts/JobContext";
 import Home from "./pages/Home";
 import Governance from "./pages/Governance";
 import CostMatrix from "./pages/CostMatrix";
@@ -85,13 +86,15 @@ function App() {
         <AdaptiveThemeProvider>
       <GlobalSimulationProvider>
         <WAParcelProvider>
-          <GodModeProvider>
-              <TooltipProvider>
-              <GodModeTerminal />
-              <Toaster />
-              <Router />
-              </TooltipProvider>
-            </GodModeProvider>
+          <JobProvider>
+            <GodModeProvider>
+                <TooltipProvider>
+                <GodModeTerminal />
+                <Toaster />
+                <Router />
+                </TooltipProvider>
+              </GodModeProvider>
+            </JobProvider>
           </WAParcelProvider>
         </GlobalSimulationProvider>
         </AdaptiveThemeProvider>
