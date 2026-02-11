@@ -43,6 +43,7 @@ import { JobProvider, useJobDrawer } from "@/contexts/JobContext";
 import { QuantumJobDrawer } from "./QuantumJobDrawer";
 import { Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -55,6 +56,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { theme, toggleTheme } = useTheme();
   const [connectedUsers, setConnectedUsers] = useReactState(1);
   const { isConnected, subscribe } = useWebSocket({ autoConnect: true });
+  const { user } = useAuth();
   
   // Subscribe to real-time presence updates
   useEffect(() => {
@@ -76,25 +78,60 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     };
   }, [subscribe]);
 
-  const navItems = [
-    { icon: Home, label: "Overview", href: "/" },
-    { icon: Sliders, label: "Calibration Studio", href: "/calibration" },
-    { icon: Calculator, label: "Cost Matrix", href: "/cost-matrix" },
-    { icon: Factory, label: "Mass Valuation Studio", href: "/mass-valuation" },
-    { icon: BarChart3, label: "Market Analysis", href: "/analysis" },
-    { icon: MapIcon, label: "Map Explorer", href: "/map-explorer" },
-    { icon: Box, label: "Models & Algorithms", href: "/models" },
-    { icon: TrendingUp, label: "Regression Studio", href: "/regression" },
-    { icon: Brain, label: "AVM Studio", href: "/avm-studio" },
-    { icon: Layers, label: "Model Management", href: "/model-management" },
-    { icon: Upload, label: "WA Data Ingestion", href: "/wa-data-ingestion" },
-    { icon: MapIcon, label: "County Data Dashboard", href: "/county-data-dashboard" },
-    { icon: Zap, label: "Batch Valuation", href: "/batch-valuation" },
-    { icon: Shield, label: "Defense Studio", href: "/defense" },
-    { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
-    { icon: BrainCircuit, label: "The Neural Core", href: "/neural-core" },
-    { icon: Users, label: "User Management", href: "/admin/users" },
+  // Suite-based navigation structure
+  const navSuites = [
+    {
+      title: "DATA SUITE",
+      items: [
+        { icon: Upload, label: "WA Data Ingestion", href: "/wa-data-ingestion" },
+        { icon: LayoutDashboard, label: "County Dashboard", href: "/county-data-dashboard" },
+        { icon: MapIcon, label: "Map Explorer", href: "/map-explorer" },
+      ]
+    },
+    {
+      title: "VALUATION SUITE",
+      items: [
+        { icon: Factory, label: "Mass Valuation Studio", href: "/mass-valuation" },
+        { icon: Brain, label: "AVM Studio", href: "/avm-studio" },
+        { icon: Zap, label: "Batch Valuation", href: "/batch-valuation" },
+        { icon: Calculator, label: "Cost Matrix", href: "/cost-matrix" },
+      ]
+    },
+    {
+      title: "ANALYSIS SUITE",
+      items: [
+        { icon: BarChart3, label: "Market Analysis", href: "/analysis" },
+        { icon: Sliders, label: "Calibration Studio", href: "/calibration" },
+        { icon: TrendingUp, label: "Regression Studio", href: "/regression" },
+        { icon: ShieldCheck, label: "QA / Ratio Studies", href: "/qa-ratio-studies" },
+      ]
+    },
+    {
+      title: "GOVERNANCE SUITE",
+      items: [
+        { icon: Shield, label: "Defense Studio", href: "/defense" },
+        { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
+      ]
+    },
+    {
+      title: "PLATFORM",
+      adminOnly: true,
+      items: [
+        { icon: Layers, label: "Model Management", href: "/model-management" },
+        { icon: Users, label: "User Management", href: "/admin/users" },
+      ]
+    },
   ];
+
+  const [expandedSuites, setExpandedSuites] = useState<string[]>(["DATA SUITE", "VALUATION SUITE", "ANALYSIS SUITE", "GOVERNANCE SUITE"]);
+
+  const toggleSuite = (suiteTitle: string) => {
+    setExpandedSuites(prev =>
+      prev.includes(suiteTitle)
+        ? prev.filter(t => t !== suiteTitle)
+        : [...prev, suiteTitle]
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background flex overflow-hidden">
@@ -117,33 +154,58 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Navigation */}
           <ScrollArea className="flex-1 py-6 px-4">
-            <nav className="space-y-1">
-              {navItems.map((item) => {
-                const isActive = location === item.href;
-                return (
-                  <Link key={item.href} href={item.href}>
-                    <div
+            <nav className="space-y-6">
+              {navSuites
+                .filter(suite => !suite.adminOnly || user?.role === 'admin')
+                .map((suite) => (
+                <div key={suite.title} className="space-y-2">
+                  {/* Suite Header */}
+                  <button
+                    onClick={() => toggleSuite(suite.title)}
+                    className="flex items-center w-full px-2 py-1.5 text-[10px] font-bold tracking-[0.15em] text-cyan-400/80 hover:text-cyan-400 transition-colors uppercase"
+                  >
+                    <ChevronRight
                       className={cn(
-                        "flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-300 ease-golden cursor-pointer group hover:translate-x-1",
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                        "w-3 h-3 mr-1.5 transition-transform duration-200",
+                        expandedSuites.includes(suite.title) && "rotate-90"
                       )}
-                    >
-                      <item.icon
-                        className={cn(
-                          "w-5 h-5 mr-3 transition-all duration-300 ease-golden",
-                          isActive ? "text-[#00FFFF] scale-110" : "text-slate-400 group-hover:text-[#00FFFF] group-hover:scale-110"
-                        )}
-                      />
-                      <span className={cn("tracking-wide", isActive ? "text-white" : "text-slate-300")}>
-                        {item.label}
-                      </span>
-                      {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00FFFF] shadow-[0_0_10px_#00FFFF]" />}
+                    />
+                    {suite.title}
+                  </button>
+
+                  {/* Suite Items */}
+                  {expandedSuites.includes(suite.title) && (
+                    <div className="space-y-0.5 pl-1">
+                      {suite.items.map((item) => {
+                        const isActive = location === item.href;
+                        return (
+                          <Link key={item.href} href={item.href}>
+                            <div
+                              className={cn(
+                                "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer group",
+                                isActive
+                                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                              )}
+                            >
+                              <item.icon
+                                className={cn(
+                                  "w-4 h-4 mr-3 transition-all duration-200",
+                                  isActive ? "text-[#00FFFF]" : "text-slate-400 group-hover:text-[#00FFFF]"
+                                )}
+                              />
+                              <span className={cn("text-[13px]", isActive ? "text-white font-medium" : "text-slate-300")}>
+                                {item.label}
+                              </span>
+                              {isActive && <div className="ml-auto w-1 h-1 rounded-full bg-[#00FFFF] shadow-[0_0_8px_#00FFFF]" />}
+                            </div>
+                          </Link>
+                        );
+                      })}
                     </div>
-                  </Link>
-                );
-              })}
+                  )}
+                </div>
+              ))}
             </nav>
 
             <div className="mt-12 px-3 flex flex-col items-center">

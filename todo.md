@@ -1794,3 +1794,23 @@
 - [x] Add GeoJSON validation before adding to map sources
 - [x] Fix data formatting issues in map data sources
 - [x] Test Map Explorer page without console errors
+
+
+## 🏗️ Navigation & Information Architecture Redesign
+
+### Suite Structure Design
+- [x] Analyze current navigation items and group into logical modules
+- [x] Design new Suite-based hierarchy (Data, Valuation, Analysis, Governance, Platform)
+- [x] Create clear user journey for assessor workflows (load → value → test → govern/defend)
+- [x] Define which features belong in each module
+- [x] Add QA / Ratio Studies as explicit destination in Analysis Suite
+- [x] Make Platform admin-only with role-based visibility
+
+### Navigation Implementation
+- [x] Update DashboardLayout with new grouped navigation structure
+- [x] Add collapsible sections for each Suite module (Data, Valuation, Analysis, Governance, Platform)
+- [x] Implement visual hierarchy (suite headers, icons, spacing, grouping)
+- [x] Add role-based visibility for Platform section (admin only)
+- [x] Create QA / Ratio Studies page placeholder
+- [x] Update routing to match new structure
+- [x] Test navigation flow and user experience

@@ -32,6 +32,7 @@ import WADataIngestion from "./pages/WADataIngestion";
 import CountyProgressDashboard from "./pages/CountyProgressDashboard";
 import CountyDataDashboard from "./pages/CountyDataDashboard";
 import CountyDetail from "./pages/CountyDetail";
+import QARatioStudies from "./pages/QARatioStudies";
 
 
 function Router() {
@@ -54,6 +55,7 @@ function Router() {
       <Route path={"/admin/users"} component={AdminUsers} />      <Route path={"/county-progress"} component={CountyProgressDashboard} />
       <Route path={"/county-data-dashboard"} component={CountyDataDashboard} />
       <Route path={"/county-detail/:countyName"} component={CountyDetail} />
+      <Route path={"/qa-ratio-studies"} component={QARatioStudies} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />
