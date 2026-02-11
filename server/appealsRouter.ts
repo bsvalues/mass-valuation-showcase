@@ -101,6 +101,7 @@ export const appealsRouter = router({
       id: z.number(),
       status: z.enum(["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"]).optional(),
       finalValue: z.number().optional(),
+      appealReason: z.string().optional(),
       resolution: z.string().optional(),
       assignedTo: z.number().optional(),
       hearingDate: z.string().optional(), // ISO date string
@@ -115,6 +116,7 @@ export const appealsRouter = router({
       const updateData: any = {};
       if (updates.status) updateData.status = updates.status;
       if (updates.finalValue !== undefined) updateData.finalValue = updates.finalValue;
+      if (updates.appealReason) updateData.appealReason = updates.appealReason;
       if (updates.resolution) updateData.resolution = updates.resolution;
       if (updates.assignedTo) updateData.assignedTo = updates.assignedTo;
       if (updates.hearingDate) updateData.hearingDate = new Date(updates.hearingDate);

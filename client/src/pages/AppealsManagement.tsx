@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { FileText, Calendar, DollarSign, MapPin, Plus } from "lucide-react";
 import { AppealCreateDialog } from "@/components/AppealCreateDialog";
+import { AppealDetailsDialog } from "@/components/AppealDetailsDialog";
 
 type AppealStatus = "pending" | "in_review" | "hearing_scheduled" | "resolved" | "withdrawn";
 
@@ -34,7 +35,7 @@ const statusConfig: Record<AppealStatus, { label: string; color: string; bgColor
   withdrawn: { label: "Withdrawn", color: "text-gray-600", bgColor: "bg-gray-50 border-gray-200" },
 };
 
-function DraggableAppealCard({ appeal }: { appeal: Appeal }) {
+function DraggableAppealCard({ appeal, onClick }: { appeal: Appeal; onClick?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: appeal.id.toString(),
   });
@@ -46,18 +47,21 @@ function DraggableAppealCard({ appeal }: { appeal: Appeal }) {
   
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <AppealCard appeal={appeal} />
+      <AppealCard appeal={appeal} onClick={onClick} />
     </div>
   );
 }
 
-function AppealCard({ appeal }: { appeal: Appeal }) {
+function AppealCard({ appeal, onClick }: { appeal: Appeal; onClick?: () => void }) {
   const config = statusConfig[appeal.status];
   const valueDifference = appeal.currentAssessedValue - appeal.appealedValue;
   const percentageChange = (valueDifference / appeal.currentAssessedValue) * 100;
   
   return (
-    <Card className={`${config.bgColor} border-2 cursor-move hover:shadow-md transition-shadow`}>
+    <Card 
+      className={`${config.bgColor} border-2 cursor-pointer hover:shadow-md transition-shadow`}
+      onClick={onClick}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
@@ -111,7 +115,7 @@ function AppealCard({ appeal }: { appeal: Appeal }) {
   );
 }
 
-function DroppableColumn({ status, appeals }: { status: AppealStatus; appeals: Appeal[] }) {
+function DroppableColumn({ status, appeals, onAppealClick }: { status: AppealStatus; appeals: Appeal[]; onAppealClick?: (appealId: number) => void }) {
   const { setNodeRef } = useDroppable({
     id: status,
   });
@@ -133,8 +137,12 @@ function DroppableColumn({ status, appeals }: { status: AppealStatus; appeals: A
       </div>
       
       <div ref={setNodeRef} className="space-y-3 min-h-[400px] p-3 rounded-lg bg-muted/30">
-        {appeals.map((appeal) => (
-          <DraggableAppealCard key={appeal.id} appeal={appeal} />
+          {appeals.map((appeal) => (
+            <DraggableAppealCard 
+              key={appeal.id} 
+              appeal={appeal} 
+              onClick={() => onAppealClick?.(appeal.id)}
+            />
         ))}
         {appeals.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -150,6 +158,13 @@ function DroppableColumn({ status, appeals }: { status: AppealStatus; appeals: A
 export default function AppealsManagement() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedAppealId, setSelectedAppealId] = useState<number | null>(null);
+  
+  const handleAppealClick = (appealId: number) => {
+    setSelectedAppealId(appealId);
+    setDetailsDialogOpen(true);
+  };
   
   // Query all appeals
   const { data: appeals = [], refetch } = trpc.appeals.list.useQuery();
@@ -258,7 +273,11 @@ export default function AppealsManagement() {
           <div className="flex gap-4 overflow-x-auto pb-4">
             {(Object.keys(statusConfig) as AppealStatus[]).map((status) => (
               <div key={status} id={status} className="flex-1 min-w-[280px]">
-                <DroppableColumn status={status} appeals={appealsByStatus[status]} />
+                <DroppableColumn 
+                  status={status} 
+                  appeals={appealsByStatus[status]} 
+                  onAppealClick={handleAppealClick}
+                />
               </div>
             ))}
           </div>
@@ -272,6 +291,13 @@ export default function AppealsManagement() {
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
           onSuccess={refetch}
+        />
+        
+        <AppealDetailsDialog
+          appealId={selectedAppealId}
+          open={detailsDialogOpen}
+          onOpenChange={setDetailsDialogOpen}
+          onUpdate={refetch}
         />
       </div>
     </DashboardLayout>
