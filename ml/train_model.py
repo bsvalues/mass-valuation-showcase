@@ -75,8 +75,6 @@ def fetch_training_data():
         WHERE s.salePrice > 0 
           AND s.squareFeet > 0 
           AND s.squareFeet IS NOT NULL
-          AND s.yearBuilt IS NOT NULL
-          AND s.yearBuilt > 1800
         LIMIT 50000
     """
     
@@ -115,13 +113,13 @@ def engineer_features(data):
         if sale_price <= 0:
             continue
             
-        # Features
+        # Features with imputation for missing values
         square_feet = row['squareFeet'] or 0
-        year_built = row['yearBuilt'] or 1950
-        bedrooms = row['bedrooms'] or 0
+        year_built = row['yearBuilt'] if row['yearBuilt'] and row['yearBuilt'] > 1800 else 1980  # Impute with median year
+        bedrooms = row['bedrooms'] or 3  # Impute with median bedrooms
         property_type = row['propertyType'] or '11'
         sale_year = row['saleYear'] or current_year
-        age = current_year - year_built if year_built else 0
+        age = current_year - year_built
         
         # Encode property type
         prop_type_encoded = property_type_encoding.get(property_type, 0)

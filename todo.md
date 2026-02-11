@@ -2336,3 +2336,29 @@
 - [ ] Verify database connection works
 - [ ] Test ML training with small dataset first
 - [ ] Verify model training completes successfully
+
+
+### Phase 32: Fix Parcel ID Mismatch (Completed)
+- [x] Query sample parcelId values from sales table
+- [x] Query sample parcelNumber values from parcels table
+- [x] Analyze format differences (dashes, leading zeros, etc.)
+- [x] Discovered parcels.parcelId (short format) vs parcels.parcelNumber (long format)
+- [x] Test JOIN with parcels.parcelId instead of parcelNumber
+- [x] Update sales enrichment query to use parcels.parcelId
+- [x] Verified enrichment populates 43,729 sales records with property characteristics
+- [x] Document ID format mapping: use parcels.parcelId for JOIN, not parcelNumber
+
+### Phase 33: Debug Appeals Page Loading (Completed)
+- [x] Check browser console for JavaScript errors (no errors)
+- [x] Verified page loads successfully after waiting
+- [x] Appeals table is empty (shows "No appeals" correctly)
+- [x] DashboardLayout authentication flow working
+- [x] Page displays correctly with Bulk Import and New Appeal buttons
+
+### Phase 34: Add Bulk CSV Export (Completed)
+- [x] Add "Export to CSV" button to Appeals Management header
+- [x] Create inline CSV export function with proper formatting
+- [x] Fetch all appeals data from existing query
+- [x] Convert to CSV format with headers (Parcel ID, Appeal Date, Current Value, Appealed Value, Status, Reason)
+- [x] Trigger browser download with timestamped filename
+- [x] Add validation to show error toast when no appeals to export

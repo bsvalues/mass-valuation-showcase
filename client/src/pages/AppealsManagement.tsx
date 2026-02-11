@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from "@dnd-kit/core";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Calendar, DollarSign, MapPin, Plus } from "lucide-react";
+import { FileText, Calendar, DollarSign, MapPin, Plus, Download } from "lucide-react";
 import { AppealCreateDialog } from "@/components/AppealCreateDialog";
 import { AppealDetailsDialog } from "@/components/AppealDetailsDialog";
 import { BulkAppealImport } from "@/components/BulkAppealImport";
@@ -244,6 +244,36 @@ export default function AppealsManagement() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                if (appeals.length === 0) {
+                  toast.error("No appeals to export");
+                  return;
+                }
+                
+                // Generate CSV content
+                const headers = "Parcel ID,Appeal Date,Current Value,Appealed Value,Status,Reason";
+                const rows = appeals.map(appeal => 
+                  `"${appeal.parcelId}","${new Date(appeal.appealDate).toLocaleDateString()}",${appeal.currentAssessedValue},${appeal.appealedValue},"${appeal.status}","${appeal.appealReason || ''}"`
+                );
+                const csv = [headers, ...rows].join('\n');
+                
+                // Trigger download
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `appeals_export_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                toast.success(`Exported ${appeals.length} appeals to CSV`);
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export to CSV
+            </Button>
             <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
               <FileText className="w-4 h-4 mr-2" />
               Bulk Import
