@@ -35,6 +35,7 @@ import CountyDetail from "./pages/CountyDetail";
 import QARatioStudies from "./pages/QARatioStudies";
 import WASalesIngestion from "./pages/WASalesIngestion";
 import MLTraining from "./pages/MLTraining";
+import AppealsManagement from "./pages/AppealsManagement";
 
 
 function Router() {
@@ -60,6 +61,7 @@ function Router() {
       <Route path={"/qa-ratio-studies"} component={QARatioStudies} />
       <Route path={"/wa-sales-ingestion"} component={WASalesIngestion} />
       <Route path={"/ml-training"} component={MLTraining} />
+      <Route path={"/appeals"} component={AppealsManagement} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />

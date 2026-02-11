@@ -2149,15 +2149,20 @@
 - [ ] Test ML model training with real Benton County data
 - [ ] Validate predictions against actual assessed values
 
-### Phase 14: Appeals Management Module (Next)
-- [ ] Create appeals database table with schema
-- [ ] Add status enum (pending, under_review, approved, denied, withdrawn)
-- [ ] Create tRPC procedures (createAppeal, updateAppeal, getAppeals, deleteAppeal)
-- [ ] Build kanban-style UI with drag-and-drop status columns
-- [ ] Add hearing scheduler with date picker
-- [ ] Implement appeal details modal with notes and documents
-- [ ] Add automated notification system for status changes
-- [ ] Create appeals dashboard page with filters
+### Phase 14: Appeals Management Module (In Progress)
+- [x] Appeals database table already exists in schema
+- [x] Status enum defined (pending, in_review, hearing_scheduled, resolved, withdrawn)
+- [x] Created tRPC procedures (list, getById, create, update, delete, updateStatus)
+- [x] Installed @dnd-kit packages for drag-and-drop
+- [x] Build AppealsManagement page with kanban layout
+- [x] Implement drag-and-drop columns using @dnd-kit/core (useDraggable, useDroppable)
+- [x] Display appeal cards with parcel ID, assessed/appealed values, percentage change, status badges
+- [x] Implement onDragEnd handler to call trpc.appeals.updateStatus mutation
+- [x] Added Appeals Management to GOVERNANCE SUITE navigation
+- [x] Added stats cards showing count per status
+- [x] Added DragOverlay for visual feedback during drag
+- [ ] Add appeal creation modal with form
+- [ ] Add appeal details modal with edit capability
 
 ### Phase 15: Map-Based Property Explorer (Next)
 - [ ] Add MapLibre GL JS dependency

@@ -31,7 +31,8 @@ import {
   Moon,
   Upload,
   Users,
-  DollarSign
+  DollarSign,
+  FileText
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -115,6 +116,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       items: [
         { icon: Shield, label: "Defense Studio", href: "/defense" },
         { icon: ShieldCheck, label: "Governance & Audit", href: "/governance" },
+        { icon: FileText, label: "Appeals Management", href: "/appeals" },
       ]
     },
     {
