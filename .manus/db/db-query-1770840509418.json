@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  COUNT(*) as total,\n  SUM(CASE WHEN squareFeet IS NOT NULL AND squareFeet > 0 THEN 1 ELSE 0 END) as with_sqft,\n  SUM(CASE WHEN yearBuilt IS NOT NULL THEN 1 ELSE 0 END) as with_year,\n  SUM(CASE WHEN bedrooms IS NOT NULL THEN 1 ELSE 0 END) as with_beds,\n  SUM(CASE WHEN propertyType IS NOT NULL THEN 1 ELSE 0 END) as with_type\nFROM sales;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT \n  COUNT(*) as total,\n  SUM(CASE WHEN squareFeet IS NOT NULL AND squareFeet > 0 THEN 1 ELSE 0 END) as with_sqft,\n  SUM(CASE WHEN yearBuilt IS NOT NULL THEN 1 ELSE 0 END) as with_year,\n  SUM(CASE WHEN bedrooms IS NOT NULL THEN 1 ELSE 0 END) as with_beds,\n  SUM(CASE WHEN propertyType IS NOT NULL THEN 1 ELSE 0 END) as with_type\nFROM sales;",
+  "rows": [
+    {
+      "total": "43729",
+      "with_sqft": "3886",
+      "with_year": "1115",
+      "with_beds": "0",
+      "with_type": "43729"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\twith_sqft\twith_year\twith_beds\twith_type\n43729\t3886\t1115\t0\t43729\n",
+  "stderr": "",
+  "execution_time_ms": 94
+}

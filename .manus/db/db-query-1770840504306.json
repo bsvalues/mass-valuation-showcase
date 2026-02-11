@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE sales s\nINNER JOIN parcels p ON s.parcelId = p.parcelNumber\nSET \n  s.squareFeet = p.squareFeet,\n  s.yearBuilt = p.yearBuilt,\n  s.bedrooms = p.bedrooms,\n  s.propertyType = p.propertyType\nWHERE s.parcelId IS NOT NULL AND p.parcelNumber IS NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute UPDATE sales s\nINNER JOIN parcels p ON s.parcelId = p.parcelNumber\nSET \n  s.squareFeet = p.squareFeet,\n  s.yearBuilt = p.yearBuilt,\n  s.bedrooms = p.bedrooms,\n  s.propertyType = p.propertyType\nWHERE s.parcelId IS NOT NULL AND p.parcelNumber IS NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 417
+}

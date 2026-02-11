@@ -1,0 +1,25 @@
+{
+  "query": "SELECT parcelNumber FROM parcels WHERE parcelNumber IS NOT NULL LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT parcelNumber FROM parcels WHERE parcelNumber IS NOT NULL LIMIT 5;",
+  "rows": [
+    {
+      "parcelNumber": "101594000000000"
+    },
+    {
+      "parcelNumber": "101600000000000"
+    },
+    {
+      "parcelNumber": "101690000000000"
+    },
+    {
+      "parcelNumber": "101770000000000"
+    },
+    {
+      "parcelNumber": "101841000001000"
+    }
+  ],
+  "messages": [],
+  "stdout": "parcelNumber\n101594000000000\n101600000000000\n101690000000000\n101770000000000\n101841000001000\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

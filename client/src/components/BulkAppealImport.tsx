@@ -164,8 +164,30 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="csv-file">CSV File</Label>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center justify-between mb-2">
+              <Label htmlFor="csv-file">CSV File</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const template = "parcelId,currentValue,appealedValue,reason\n" +
+                    "123-456-789,500000,450000,Property overvalued based on recent sales\n" +
+                    "987-654-321,350000,320000,Comparable properties assessed lower\n" +
+                    "555-123-456,275000,250000,Assessment exceeds market value";
+                  const blob = new Blob([template], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'appeal_import_template.csv';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success("Template downloaded");
+                }}
+              >
+                Download Template
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
               <Input
                 id="csv-file"
                 type="file"

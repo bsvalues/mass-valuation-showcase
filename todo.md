@@ -2317,3 +2317,22 @@
 - [ ] Add progress tracking during import
 - [ ] Show success/error summary after import
 - [ ] Add to Appeals Management page
+
+
+### Phase 30: CSV Template Download & Testing (Completed)
+- [x] Add CSV template download button to BulkAppealImport dialog
+- [ ] Generate sample CSV template with headers and example data
+- [ ] Create test CSV file with 10+ sample appeals
+- [ ] Test CSV upload in browser
+- [ ] Verify validation errors display correctly for invalid rows
+- [ ] Test successful batch import with valid data
+- [ ] Verify kanban board updates after import
+
+### Phase 31: Fix ML Training Error (Next)
+- [ ] Investigate Python SRE module mismatch error
+- [ ] Check Python environment and json module compatibility
+- [ ] Fix DATABASE_URL parsing in train_model.py
+- [ ] Test Python script execution independently
+- [ ] Verify database connection works
+- [ ] Test ML training with small dataset first
+- [ ] Verify model training completes successfully
