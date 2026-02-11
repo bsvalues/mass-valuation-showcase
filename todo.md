@@ -1602,3 +1602,64 @@
 - [x] Check actual database column names in backgroundJobs table
 - [x] Update Drizzle schema to map camelCase fields to lowercase database columns
 - [x] Restart server and verify County Data Dashboard loads without errors
+
+
+### Test Complete Background Job Workflow
+- [ ] Navigate to WA Data Ingestion page
+- [ ] Select county and set parcel limit to 10K+
+- [ ] Click "Queue Job" button and confirm dialog
+- [ ] Verify Jobs icon badge appears in header
+- [ ] Open Job Drawer and watch real-time progress updates
+- [ ] Wait for job completion (SUCCEEDED/FAILED status)
+- [ ] Download error CSV if errors exist
+- [ ] Verify CSV format and content
+
+### 2) Parcel Search & Filtering (IAAO-Compliant)
+- [ ] Add database indexes on waCountyParcels (parcelId, situsAddress, countyName)
+- [ ] Create searchParcels tRPC procedure with debouncing
+- [ ] Implement search by parcel ID (exact + partial match)
+- [ ] Implement search by address (fuzzy matching)
+- [ ] Add pagination support (50 results per page)
+- [ ] Create search bar UI component on County Detail page
+- [ ] Add real-time search results with loading states
+- [ ] Add "Clear Search" button
+- [ ] Test search performance with large datasets
+
+### 3) Interactive Parcel Map Visualization
+- [ ] Integrate MapLibre GL JS into County Detail page
+- [ ] Fetch parcel geometries from waCountyParcels table
+- [ ] Render parcel boundaries as vector polygons
+- [ ] Add click handler for parcel selection
+- [ ] Highlight selected parcel with cyan glow
+- [ ] Show parcel popup with ID, address, and values
+- [ ] Add map controls (zoom, pan, reset view)
+- [ ] Optimize rendering for 1000+ parcels
+- [ ] Test map performance and responsiveness
+
+
+## 🔍 Parcel Search & Map Visualization (In Progress)
+
+### Database Optimization
+- [x] Add database indexes for parcelId and countyName on waCountyParcels table
+- [x] Create searchParcels tRPC procedure with LIKE queries for parcel ID and address
+
+### Search UI Implementation
+- [x] Add search bar to County Detail page with debouncing (300ms delay)
+- [x] Implement real-time search with automatic pagination reset
+- [x] Add clear button (X icon) to reset search
+- [x] Show search result count in card description
+- [x] Fix saveWAParcelsToDatabase to use waCountyParcels table instead of parcels
+
+### Map Visualization (Pending)
+- [ ] Add MapLibre GL JS integration to County Detail page
+- [ ] Implement parcel boundary rendering from geometry column
+- [ ] Add click-to-highlight functionality for parcels on map
+- [ ] Sync map selection with table selection
+- [ ] Add map controls (zoom, pan, reset view)
+- [ ] Implement parcel popup on click with property details
+
+### Background Job Workflow (Issues Identified)
+- [ ] Fix job status enum mismatch (lowercase vs uppercase)
+- [ ] Debug Jobs button badge not showing active jobs
+- [ ] Test complete background job workflow with drawer
+- [ ] Implement error CSV download functionality

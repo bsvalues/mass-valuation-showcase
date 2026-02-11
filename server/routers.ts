@@ -474,37 +474,37 @@ export const appRouter = router({
         updateExisting: z.boolean().default(false),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { parcels } = await import('../drizzle/schema');
+        const { waCountyParcels } = await import('../drizzle/schema');
         const { getDb } = await import('./db');
-        const { inArray } = await import('drizzle-orm');
+        const { inArray, eq } = await import('drizzle-orm');
         const db = await getDb();
         if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
 
-        // Transform features to parcel records
+        // Transform features to parcel records for waCountyParcels table
         const parcelsToInsert = input.features.map((feature: any) => {
           const props = feature.properties;
           const coords = feature.geometry.coordinates[0][0]; // First coordinate of polygon
           
           return {
             parcelId: props.PARCEL_ID_NR || `WA-${props.OBJECTID}`,
-            address: props.SITUS_ADDRESS || null,
-            latitude: coords[1]?.toString() || null,
-            longitude: coords[0]?.toString() || null,
-            landValue: props.VALUE_LAND || null,
-            buildingValue: props.VALUE_BLDG || null,
-            totalValue: (props.VALUE_LAND || 0) + (props.VALUE_BLDG || 0),
-            neighborhood: input.countyName,
-            propertyType: 'Unknown',
-            uploadedBy: ctx.user.id,
+            countyName: input.countyName,
+            situsAddress: props.SITUS_ADDRESS || null,
+            valueLand: props.VALUE_LAND || null,
+            valueBuilding: props.VALUE_BLDG || null,
+            geometry: JSON.stringify(feature.geometry),
           };
         });
 
-        // Check for existing parcel IDs
+        // Check for existing parcel IDs in the same county
         const parcelIds = parcelsToInsert.map(p => p.parcelId);
+        const { and } = await import('drizzle-orm');
         const existingParcels = await db
-          .select({ parcelId: parcels.parcelId, id: parcels.id })
-          .from(parcels)
-          .where(inArray(parcels.parcelId, parcelIds));
+          .select({ parcelId: waCountyParcels.parcelId, id: waCountyParcels.id })
+          .from(waCountyParcels)
+          .where(and(
+            inArray(waCountyParcels.parcelId, parcelIds),
+            eq(waCountyParcels.countyName, input.countyName)
+          ));
         
         const existingParcelMap = new Map(existingParcels.map(p => [p.parcelId, p.id]));
         
@@ -521,22 +521,18 @@ export const appRouter = router({
             
             if (existingId) {
               // Update existing parcel
-              await db.update(parcels)
+              await db.update(waCountyParcels)
                 .set({
-                  address: parcel.address,
-                  latitude: parcel.latitude,
-                  longitude: parcel.longitude,
-                  landValue: parcel.landValue,
-                  buildingValue: parcel.buildingValue,
-                  totalValue: parcel.totalValue,
-                  neighborhood: parcel.neighborhood,
-                  propertyType: parcel.propertyType,
+                  situsAddress: parcel.situsAddress,
+                  valueLand: parcel.valueLand,
+                  valueBuilding: parcel.valueBuilding,
+                  geometry: parcel.geometry,
                 })
-                .where(eq(parcels.id, existingId));
+                .where(eq(waCountyParcels.id, existingId));
               updatedCount++;
             } else {
               // Insert new parcel
-              await db.insert(parcels).values(parcel);
+              await db.insert(waCountyParcels).values(parcel);
               insertedCount++;
             }
           }
@@ -546,7 +542,7 @@ export const appRouter = router({
           skippedCount = parcelsToInsert.length - newParcels.length;
           
           if (newParcels.length > 0) {
-            await db.insert(parcels).values(newParcels);
+            await db.insert(waCountyParcels).values(newParcels);
             insertedCount = newParcels.length;
           }
         }

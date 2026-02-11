@@ -6,7 +6,7 @@ import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
 import { waCountyParcels } from "../drizzle/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, like, or } from "drizzle-orm";
 
 export const countyParcelsRouter = router({
   /**
@@ -145,5 +145,58 @@ export const countyParcelsRouter = router({
       }));
 
       return { buckets, minValue, maxValue };
+    }),
+
+  /**
+   * Search parcels by parcel ID or address
+   * Supports debounced client-side search with pagination
+   */
+  searchParcels: publicProcedure
+    .input(
+      z.object({
+        countyName: z.string(),
+        searchTerm: z.string().min(1),
+        limit: z.number().optional().default(50),
+        offset: z.number().optional().default(0),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database connection failed");
+      const { countyName, searchTerm, limit, offset } = input;
+
+      // Search by parcel ID (exact and partial match) or address (fuzzy)
+      const searchPattern = `%${searchTerm}%`;
+      
+      const parcels = await db
+        .select()
+        .from(waCountyParcels)
+        .where(
+          sql`${waCountyParcels.countyName} = ${countyName} AND (
+            ${waCountyParcels.parcelId} LIKE ${searchPattern} OR
+            ${waCountyParcels.situsAddress} LIKE ${searchPattern}
+          )`
+        )
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count for pagination
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(waCountyParcels)
+        .where(
+          sql`${waCountyParcels.countyName} = ${countyName} AND (
+            ${waCountyParcels.parcelId} LIKE ${searchPattern} OR
+            ${waCountyParcels.situsAddress} LIKE ${searchPattern}
+          )`
+        );
+
+      return {
+        parcels,
+        total: countResult?.count || 0,
+        limit,
+        offset,
+        searchTerm,
+      };
     }),
 });

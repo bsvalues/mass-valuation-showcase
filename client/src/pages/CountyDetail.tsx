@@ -15,11 +15,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, MapPin, DollarSign, Home, TrendingUp, Loader2, BarChart3 } from "lucide-react";
+import { ArrowLeft, MapPin, DollarSign, Home, TrendingUp, Loader2, BarChart3, Search, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRoute, useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Bar } from "react-chartjs-2";
+import { Input } from "@/components/ui/input";
 
 export default function CountyDetail() {
   const [, params] = useRoute("/county-detail/:countyName");
@@ -27,13 +28,47 @@ export default function CountyDetail() {
   const countyName = params?.countyName || "";
 
   const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const limit = 50;
 
-  const { data: parcelData, isLoading: parcelsLoading } = trpc.countyParcels.getParcelsByCounty.useQuery({
-    countyName,
-    limit,
-    offset: page * limit,
-  });
+  // Debounce search input (300ms delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPage(0); // Reset to first page on new search
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Use search query if search term exists, otherwise use regular query
+  const { data: searchResults, isLoading: searchLoading } = trpc.countyParcels.searchParcels.useQuery(
+    {
+      countyName,
+      searchTerm: debouncedSearchTerm,
+      limit,
+      offset: page * limit,
+    },
+    {
+      enabled: debouncedSearchTerm.length > 0,
+    }
+  );
+
+  const { data: allParcels, isLoading: allParcelsLoading } = trpc.countyParcels.getParcelsByCounty.useQuery(
+    {
+      countyName,
+      limit,
+      offset: page * limit,
+    },
+    {
+      enabled: debouncedSearchTerm.length === 0,
+    }
+  );
+
+  // Use search results if searching, otherwise use all parcels
+  const parcelData = debouncedSearchTerm.length > 0 ? searchResults : allParcels;
+  const parcelsLoading = debouncedSearchTerm.length > 0 ? searchLoading : allParcelsLoading;
 
   const { data: stats, isLoading: statsLoading } = trpc.countyParcels.getCountyValueDistribution.useQuery({
     countyName,
@@ -270,11 +305,41 @@ export default function CountyDetail() {
         {/* Parcel Data Table */}
         <Card className="terra-card bg-[rgba(10,14,26,0.6)] border-primary/20">
           <CardHeader>
-            <CardTitle className="text-[#00FFFF]">Parcel Data</CardTitle>
-            <CardDescription className="text-slate-400">
-              Showing {page * limit + 1} - {Math.min((page + 1) * limit, parcelData?.total || 0)} of{" "}
-              {parcelData?.total || 0} parcels
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-[#00FFFF]">Parcel Data</CardTitle>
+                <CardDescription className="text-slate-400">
+                  {debouncedSearchTerm ? (
+                    <>
+                      Found {parcelData?.total || 0} results for "{debouncedSearchTerm}"
+                    </>
+                  ) : (
+                    <>
+                      Showing {page * limit + 1} - {Math.min((page + 1) * limit, parcelData?.total || 0)} of{" "}
+                      {parcelData?.total || 0} parcels
+                    </>
+                  )}
+                </CardDescription>
+              </div>
+              <div className="relative w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by Parcel ID or Address..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-10 bg-background/50 border-primary/30 text-foreground placeholder:text-muted-foreground focus:border-primary"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border border-primary/20 overflow-hidden">

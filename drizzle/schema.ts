@@ -1,4 +1,4 @@
-import { int, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { index, int, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -260,7 +260,12 @@ export const waCountyParcels = mysqlTable("waCountyParcels", {
   geometry: text("geometry"), // GeoJSON geometry
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  parcelIdIdx: index("parcelid_idx").on(table.parcelId),
+  countyNameIdx: index("countyname_idx").on(table.countyName),
+  // Note: situsAddress is TEXT type, cannot be fully indexed in MySQL
+  // For address search, we'll use LIKE queries which can use prefix indexes
+}));
 
 export type WACountyParcel = typeof waCountyParcels.$inferSelect;
 export type InsertWACountyParcel = typeof waCountyParcels.$inferInsert;

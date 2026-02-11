@@ -257,7 +257,7 @@ function JobsIconButton() {
     refetchInterval: 5000, // Poll every 5s for active job count
   });
 
-  const activeJobCount = jobs?.filter((j: any) => j.status === 'QUEUED' || j.status === 'RUNNING').length || 0;
+  const activeJobCount = jobs?.filter((j: any) => j.status === 'pending' || j.status === 'running').length || 0;
 
   return (
     <Button
