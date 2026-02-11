@@ -2201,15 +2201,44 @@
 - [x] Add loading state during submission
 - [x] Reset form after successful creation
 
-### Phase 18: Map-Based Property Explorer (Next)
-- [ ] Install maplibre-gl and maplibre-gl-js-amplify packages
-- [ ] Create MapExplorer page component
-- [ ] Fetch Benton County parcels with coordinates from database
-- [ ] Convert parcels to GeoJSON format
-- [ ] Initialize MapLibre GL map centered on Benton County
-- [ ] Add parcels layer color-coded by COD zones (green/yellow/red)
-- [ ] Implement parcel click popup with property details
-- [ ] Add comparable sales overlay with markers
-- [ ] Add radius search tool for spatial analysis
-- [ ] Add map legend explaining COD zone colors
-- [ ] Add to navigation menu
+### Phase 18: Map-Based Property Explorer (Already Exists)
+- [x] maplibre-gl already installed
+- [x] MapExplorer page component already exists with comprehensive functionality
+- [x] Fetches parcels with coordinates from database
+- [x] Converts parcels to GeoJSON format with clustering
+- [x] MapLibre GL map initialized and centered on Benton County
+- [x] Parcels layer with value-based color coding (green/yellow/red)
+- [x] Cluster tooltips showing aggregate statistics
+- [x] Individual parcel click popups with property details
+- [x] Heatmap visualization layer
+- [x] GIS tools (buffer zones, spatial queries)
+- [x] Measurement tools (distance, area)
+- [x] Property comparison mode
+- [x] Search autocomplete with recent searches
+- [x] Layer manager for toggling visualizations
+- [x] Already in navigation menu (DATA SUITE)
+
+
+### Phase 19: Fix ML Model Training (In Progress)
+- [x] Debugged "SRE module mismatch" error (was missing dependencies)
+- [x] Installed mysql-connector-python for database access
+- [x] Installed scikit-learn, joblib, scipy, threadpoolctl
+- [x] DATABASE_URL parsing logic implemented in train_model.py
+- [ ] Test database connection from Python script (requires runtime DATABASE_URL)
+- [ ] Run training with sample of Benton County sales data
+- [ ] Verify model metrics display in ML Training UI
+- [ ] Test batch valuation predictions with trained model
+- [ ] Document training results and model performance
+
+### Phase 20: Appeal Details Modal (Next)
+- [ ] Create AppealDetailsDialog component
+- [ ] Add click handler to appeal cards to open details modal
+- [ ] Display full appeal information (all fields)
+- [ ] Add timeline showing status changes
+- [ ] Add notes section with add/edit capability
+- [ ] Add document attachments section
+- [ ] Implement inline editing for appeal reason
+- [ ] Add status update dropdown
+- [ ] Add resolution notes textarea
+- [ ] Wire update mutation to save changes
+- [ ] Add delete appeal confirmation dialog
