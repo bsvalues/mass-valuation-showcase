@@ -1,4 +1,4 @@
-import { date, index, int, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { date, float, index, int, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -31,16 +31,30 @@ export type InsertUser = typeof users.$inferInsert;
 export const parcels = mysqlTable("parcels", {
   id: int("id").autoincrement().primaryKey(),
   parcelId: varchar("parcelId", { length: 64 }).notNull().unique(),
+  parcelNumber: varchar("parcelNumber", { length: 128 }),
   address: text("address"),
+  situsAddress: text("situsAddress"),
   latitude: varchar("latitude", { length: 32 }),
   longitude: varchar("longitude", { length: 32 }),
+  xCoord: float("xCoord"), // State Plane X coordinate
+  yCoord: float("yCoord"), // State Plane Y coordinate
   landValue: int("landValue"),
   buildingValue: int("buildingValue"),
   totalValue: int("totalValue"),
+  assessedLandValue: int("assessedLandValue"),
+  assessedImprovementValue: int("assessedImprovementValue"),
+  totalAssessedValue: int("totalAssessedValue"),
   squareFeet: int("squareFeet"),
+  basementSqFt: int("basementSqFt"),
   yearBuilt: int("yearBuilt"),
+  age: int("age"),
+  bedrooms: int("bedrooms"),
+  style: varchar("style", { length: 128 }),
   propertyType: varchar("propertyType", { length: 64 }),
+  propertyTypeDesc: varchar("propertyTypeDesc", { length: 256 }),
   neighborhood: varchar("neighborhood", { length: 128 }),
+  county: varchar("county", { length: 64 }),
+  acres: float("acres"),
   cluster: int("cluster"),
   uploadedBy: int("uploadedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
