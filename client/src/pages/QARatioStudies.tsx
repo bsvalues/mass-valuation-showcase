@@ -8,11 +8,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, CheckCircle2, Download, FileText, TrendingUp, XCircle } from "lucide-react";
 import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export default function QARatioStudies() {
   const [selectedCounty, setSelectedCounty] = useState<string>("");
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>("");
   const [studyResults, setStudyResults] = useState<any>(null);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [minPrice, setMinPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
+
+  // Query ratio study statistics
+  const { data: ratioStats, isLoading, refetch } = trpc.ratioStudies.calculate.useQuery(
+    {
+      propertyType: selectedPropertyType || undefined,
+      countyName: selectedCounty || undefined,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      minPrice: minPrice ? parseInt(minPrice) : undefined,
+      maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
+    },
+    {
+      enabled: false, // Only run when user clicks "Run Study"
+    }
+  );
 
   // Mock IAAO compliance thresholds
   const iaaoThresholds = {
@@ -63,9 +84,45 @@ export default function QARatioStudies() {
     }
   };
 
-  const runRatioStudy = () => {
-    // In production, this would call a tRPC procedure
-    setStudyResults(mockResults);
+  // Export PDF mutation
+  const exportPDFMutation = trpc.ratioStudies.exportPDF.useMutation({
+    onSuccess: (data) => {
+      // Download PDF
+      const blob = new Blob([Uint8Array.from(atob(data.pdf), c => c.charCodeAt(0))], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = data.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF report downloaded");
+    },
+    onError: (error) => {
+      toast.error(`Failed to export PDF: ${error.message}`);
+    },
+  });
+
+  const runRatioStudy = async () => {
+    try {
+      const result = await refetch();
+      if (result.data) {
+        setStudyResults(result.data);
+        toast.success(`Ratio study complete: ${result.data.count} sales analyzed`);
+      }
+    } catch (error) {
+      toast.error("Failed to run ratio study");
+    }
+  };
+
+  const handleExportPDF = async () => {
+    await exportPDFMutation.mutateAsync({
+      propertyType: selectedPropertyType || undefined,
+      countyName: selectedCounty || undefined,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      minPrice: minPrice ? parseInt(minPrice) : undefined,
+      maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
+    });
   };
 
   return (
@@ -90,7 +147,7 @@ export default function QARatioStudies() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="space-y-2">
                 <Label htmlFor="county">County / Jurisdiction</Label>
                 <Select value={selectedCounty} onValueChange={setSelectedCounty}>
@@ -137,12 +194,57 @@ export default function QARatioStudies() {
               </div>
             </div>
 
+            {/* Date and Price Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Start Date</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="endDate">End Date</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="minPrice">Min Sale Price</Label>
+                <Input
+                  id="minPrice"
+                  type="number"
+                  placeholder="e.g., 100000"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maxPrice">Max Sale Price</Label>
+                <Input
+                  id="maxPrice"
+                  type="number"
+                  placeholder="e.g., 1000000"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div className="flex gap-2 mt-6">
-              <Button onClick={runRatioStudy} disabled={!selectedCounty || !selectedPropertyType}>
+              <Button onClick={runRatioStudy} disabled={!selectedCounty || !selectedPropertyType || isLoading}>
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Run Ratio Study
               </Button>
-              <Button variant="outline" disabled={!studyResults}>
+              <Button variant="outline" disabled={!studyResults} onClick={handleExportPDF}>
                 <Download className="w-4 h-4 mr-2" />
                 Export PDF Report
               </Button>
@@ -167,9 +269,9 @@ export default function QARatioStudies() {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Sample Size</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{studyResults.sampleSize.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">{studyResults.count?.toLocaleString() || 0}</div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {studyResults.withinRange} within range, {studyResults.outliers} outliers
+                      Sales transactions analyzed
                     </p>
                   </CardContent>
                 </Card>
@@ -186,7 +288,7 @@ export default function QARatioStudies() {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Assessment Level: {studyResults.assessmentLevel}%
+                      Target: 0.90 - 1.10
                     </p>
                   </CardContent>
                 </Card>

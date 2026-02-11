@@ -29,8 +29,9 @@ import {
   Zap,
   Sun,
   Moon,
+  Upload,
   Users,
-  Upload
+  DollarSign
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -84,7 +85,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     {
       title: "DATA SUITE",
       items: [
-        { icon: Upload, label: "WA Data Ingestion", href: "/wa-data-ingestion" },
+        { icon: Upload, label: "WA Parcel Ingestion", href: "/wa-data-ingestion" },
+        { icon: DollarSign, label: "WA Sales Ingestion", href: "/wa-sales-ingestion" },
         { icon: LayoutDashboard, label: "County Dashboard", href: "/county-data-dashboard" },
         { icon: MapIcon, label: "Map Explorer", href: "/map-explorer" },
       ]

@@ -1957,3 +1957,105 @@
 - [ ] Implement PDF export for defense reports
 - [ ] Test complete defense workflow
 
+
+
+## 🗄️ Schema Migration & Sales Import
+
+- [ ] Run `pnpm db:push` to apply schema changes
+- [ ] Confirm column creation (not rename) for all new fields
+- [ ] Verify sales and appeals tables created successfully
+- [ ] Test sales table with sample data insert
+
+## 📥 WA Sales Data Ingestion UI
+
+- [ ] Create WASalesIngestion page component
+- [ ] Add sales data import form (CSV upload or manual entry)
+- [ ] Implement automated ratio calculation (assessed/sale)
+- [ ] Add data validation and quality checks
+- [ ] Create sales data preview table
+- [ ] Add bulk import functionality
+- [ ] Test sales import workflow
+
+## 🔌 QA Module Database Integration
+
+- [ ] Create tRPC procedure to fetch sales data by county
+- [ ] Create tRPC procedure to calculate COD/PRD/PRB statistics
+- [ ] Wire QA / Ratio Studies page to real database queries
+- [ ] Add sample sales data for testing
+- [ ] Implement ratio distribution chart with real data
+- [ ] Add export to PDF functionality for ratio study reports
+- [ ] Test QA module with real sales data
+
+## 📊 IAAO-Compliant Mass Appraisal Suite (In Progress)
+
+### Phase 1: Database Schema & Navigation (Completed)
+- [x] Enhanced sales table schema with ratio study fields (assessedValue, assessedToSaleRatio, isArmLength, isQualified)
+- [x] Added appeals table for property tax appeal tracking
+- [x] Applied schema changes to database (ALTER TABLE commands executed)
+- [x] Redesigned navigation from flat 17-item list to Suite-based structure
+- [x] Implemented collapsible Suite sections (Data, Valuation, Analysis, Governance, Platform)
+- [x] Added breadcrumb navigation in header
+- [x] Created unified Overview dashboard with system-wide KPIs
+- [x] Built QA / Ratio Studies page skeleton with IAAO-compliant calculations (COD, PRD, PRB)
+- [x] Fixed duplicate React key warnings in navigation
+
+### Phase 2: WA Sales Data Ingestion (Completed)
+- [x] Created WA Sales Ingestion page component with CSV upload
+- [x] Implemented county selector dropdown
+- [x] Added CSV template download button
+- [x] Built sales preview table with automated ratio calculation (A/S)
+- [x] Implemented bulk import functionality with progress tracking
+- [x] Added WA Sales Ingestion to Data Suite navigation menu
+- [x] Verified page loads correctly with all UI components
+- [x] Connected to existing sales tRPC router (create, list procedures)
+
+### Phase 3: QA Module Database Integration (Next)
+- [ ] Create calculateRatioStudy tRPC procedure
+- [ ] Implement COD calculation query (median absolute deviation)
+- [ ] Implement PRD calculation query (median ratio / mean ratio)
+- [ ] Implement PRB calculation query (price-related bias regression)
+- [ ] Add filters for property type, date range, price range
+- [ ] Wire QA page to real sales data queries
+- [ ] Add ratio study results table with IAAO compliance indicators
+
+### Phase 4: PDF Export & Reporting (Next)
+- [ ] Install jsPDF library for PDF generation
+- [ ] Create exportRatioStudyPDF tRPC procedure
+- [ ] Design PDF template with IAAO standards
+- [ ] Add charts and statistical tables to PDF
+- [ ] Implement download button on QA page
+- [ ] Test PDF export with sample data
+
+### Phase 5: Batch Valuation & Defense Studio (Future)
+- [ ] Create batch valuation tRPC procedures
+- [ ] Implement background job processing for large datasets
+- [ ] Build Defense Studio page for appeal defense
+- [ ] Add comparable sales analysis tools
+- [ ] Implement automated report generation
+
+### Phase 3: QA Module Database Integration (Completed)
+- [x] Created ratioStudiesRouter with IAAO-compliant calculations
+- [x] Implemented calculateCOD function (Coefficient of Dispersion)
+- [x] Implemented calculatePRD function (Price-Related Differential)
+- [x] Implemented calculatePRB function (Price-Related Bias regression)
+- [x] Added calculate tRPC procedure with filters (property type, date range, price range, county)
+- [x] Added getSalesData tRPC procedure for detailed sales analysis
+- [x] Wired QA / Ratio Studies page to real database queries
+- [x] Added date and price filter inputs to QA page UI
+- [x] Updated QA page to display real statistics from database
+- [x] Created comprehensive unit tests (12 tests, all passing)
+- [x] Verified COD, PRD, PRB calculations with test data
+- [x] Tested filter functionality (date range, price range, property type)
+
+### Phase 4: PDF Export & Reporting (Completed)
+- [x] Installed jsPDF and jspdf-autotable libraries
+- [x] Created generateRatioStudyPDF utility function
+- [x] Implemented IAAO-compliant PDF report template with TerraFusion branding
+- [x] Added PDF header with study parameters (county, property type, date range, price range)
+- [x] Created IAAO compliance summary table with pass/fail status indicators
+- [x] Added additional statistics table (mean, min, max ratios, total values)
+- [x] Included IAAO standards explanation section
+- [x] Added exportPDF tRPC procedure to ratioStudiesRouter
+- [x] Wired Export PDF Report button in QA page to tRPC mutation
+- [x] Implemented automatic PDF download with proper filename
+- [x] Added toast notifications for success/error states

@@ -12,6 +12,7 @@ import { layerDataRouter } from "./layerDataRouter";
 import { backgroundJobsRouter } from "./backgroundJobsRouter";
 import { countyStatisticsRouter } from "./countyStatisticsRouter";
 import { countyParcelsRouter } from "./countyParcelsRouter";
+import { ratioStudiesRouter } from "./ratioStudiesRouter";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -29,6 +30,7 @@ export const appRouter = router({
   backgroundJobs: backgroundJobsRouter,
   countyStats: countyStatisticsRouter,
   countyParcels: countyParcelsRouter,
+  ratioStudies: ratioStudiesRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

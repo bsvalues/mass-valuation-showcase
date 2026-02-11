@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE appeals (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  parcelId VARCHAR(64) NOT NULL,\n  countyName VARCHAR(100),\n  appealDate DATE NOT NULL,\n  appealType VARCHAR(50),\n  currentAssessedValue INT,\n  requestedAssessedValue INT,\n  finalAssessedValue INT,\n  status VARCHAR(50) DEFAULT 'pending',\n  outcome VARCHAR(50),\n  notes TEXT,\n  createdBy INT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX appeal_parcelid_idx (parcelId),\n  INDEX appeal_county_idx (countyName),\n  INDEX appeal_status_idx (status)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute CREATE TABLE appeals (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  parcelId VARCHAR(64) NOT NULL,\n  countyName VARCHAR(100),\n  appealDate DATE NOT NULL,\n  appealType VARCHAR(50),\n  currentAssessedValue INT,\n  requestedAssessedValue INT,\n  finalAssessedValue INT,\n  status VARCHAR(50) DEFAULT 'pending',\n  outcome VARCHAR(50),\n  notes TEXT,\n  createdBy INT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX appeal_parcelid_idx (parcelId),\n  INDEX appeal_county_idx (countyName),\n  INDEX appeal_status_idx (status)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 493
+}
