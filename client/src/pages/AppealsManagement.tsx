@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { FileText, Calendar, DollarSign, MapPin, Plus } from "lucide-react";
 import { AppealCreateDialog } from "@/components/AppealCreateDialog";
 import { AppealDetailsDialog } from "@/components/AppealDetailsDialog";
+import { BulkAppealImport } from "@/components/BulkAppealImport";
 
 type AppealStatus = "pending" | "in_review" | "hearing_scheduled" | "resolved" | "withdrawn";
 
@@ -158,6 +159,7 @@ function DroppableColumn({ status, appeals, onAppealClick }: { status: AppealSta
 export default function AppealsManagement() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAppealId, setSelectedAppealId] = useState<number | null>(null);
   
@@ -241,10 +243,16 @@ export default function AppealsManagement() {
               Track and manage property tax appeals with drag-and-drop workflow
             </p>
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Appeal
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
+              <FileText className="w-4 h-4 mr-2" />
+              Bulk Import
+            </Button>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Appeal
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -298,6 +306,12 @@ export default function AppealsManagement() {
           open={detailsDialogOpen}
           onOpenChange={setDetailsDialogOpen}
           onUpdate={refetch}
+        />
+        
+        <BulkAppealImport
+          open={bulkImportOpen}
+          onOpenChange={setBulkImportOpen}
+          onSuccess={refetch}
         />
       </div>
     </DashboardLayout>
