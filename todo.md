@@ -2278,3 +2278,42 @@
 - [ ] Implement photo gallery in defense report PDF
 - [ ] Test PDF export with property images
 - [ ] Add export options (with/without images)
+
+
+## 🔧 Final Features & Testing
+
+### Phase 24: Fix ML Model Training (Blocked - Data Issue)
+- [x] Debug Python import error ("SRE module mismatch") - was DATABASE_URL parsing issue
+- [x] Fixed DATABASE_URL parsing to handle SSL parameters
+- [x] Test Python script execution manually with DATABASE_URL - works
+- [x] Verify database connection from Python script - connected successfully
+- [x] Simplified feature engineering to use only sales table columns
+- [ ] **BLOCKED**: Sales table has 72,729 records but feature columns (squareFeet, yearBuilt, bedrooms, propertyType) are all NULL
+- [ ] Need to enrich sales data with property characteristics from parcels table or re-import with JOIN
+- [ ] Alternative: Use assessed value as sole predictor (simple ratio model)
+- [ ] Run training once data is enriched
+- [ ] Check model metrics display in ML Training UI
+- [ ] Verify trained model file is saved correctly
+
+### Phase 25: Test Defense Studio PDF Export (Next)
+- [ ] Navigate to Defense Studio page
+- [ ] Enter subject parcel ID for search
+- [ ] Adjust radius and search for comparable sales
+- [ ] Verify comparable sales results display
+- [ ] Click "Export Defense Report" button
+- [ ] Verify PDF generates and downloads
+- [ ] Check PDF content (subject property, comparables table, statistics)
+- [ ] Test with different radius values and property types
+
+### Phase 26: Bulk Appeal Import (Next)
+- [ ] Create BulkAppealImport component with CSV upload
+- [ ] Add file input with drag-and-drop support
+- [ ] Implement CSV parsing with validation
+- [ ] Display preview table with parsed data
+- [ ] Add validation rules (required fields, value ranges)
+- [ ] Show validation errors with row numbers
+- [ ] Create bulkCreate tRPC procedure
+- [ ] Implement batch insert with transaction
+- [ ] Add progress tracking during import
+- [ ] Show success/error summary after import
+- [ ] Add to Appeals Management page

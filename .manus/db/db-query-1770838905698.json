@@ -1,0 +1,80 @@
+{
+  "query": "SELECT salePrice, squareFeet, yearBuilt, bedrooms, propertyType FROM sales WHERE salePrice IS NOT NULL LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT salePrice, squareFeet, yearBuilt, bedrooms, propertyType FROM sales WHERE salePrice IS NOT NULL LIMIT 10;",
+  "rows": [
+    {
+      "salePrice": "190000",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "459"
+    },
+    {
+      "salePrice": "125000",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "467"
+    },
+    {
+      "salePrice": "240000",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "459"
+    },
+    {
+      "salePrice": "283000",
+      "squareFeet": "1399",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "523"
+    },
+    {
+      "salePrice": "70000",
+      "squareFeet": "833",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "520"
+    },
+    {
+      "salePrice": "11000",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "520"
+    },
+    {
+      "salePrice": "60000",
+      "squareFeet": "792",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "520"
+    },
+    {
+      "salePrice": "148050",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "458"
+    },
+    {
+      "salePrice": "174370",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "453"
+    },
+    {
+      "salePrice": "250000",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "458"
+    }
+  ],
+  "messages": [],
+  "stdout": "salePrice\tsquareFeet\tyearBuilt\tbedrooms\tpropertyType\n190000\t0\tNULL\tNULL\t459\n125000\t0\tNULL\tNULL\t467\n240000\t0\tNULL\tNULL\t459\n283000\t1399\tNULL\tNULL\t523\n70000\t833\tNULL\tNULL\t520\n11000\t0\tNULL\tNULL\t520\n60000\t792\tNULL\tNULL\t520\n148050\t0\tNULL\tNULL\t458\n174370\t0\tNULL\tNULL\t453\n250000\t0\tNULL\tNULL\t458\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

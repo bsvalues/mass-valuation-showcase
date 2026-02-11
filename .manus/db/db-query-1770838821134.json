@@ -1,0 +1,65 @@
+{
+  "query": "SELECT id, parcelId, salePrice, saleDate, assessedValue, squareFeet, yearBuilt, bedrooms, propertyType FROM sales LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT id, parcelId, salePrice, saleDate, assessedValue, squareFeet, yearBuilt, bedrooms, propertyType FROM sales LIMIT 5;",
+  "rows": [
+    {
+      "id": "21",
+      "parcelId": "12762",
+      "salePrice": "190000",
+      "saleDate": "2018-01-08 00:00:00",
+      "assessedValue": "17350",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "459"
+    },
+    {
+      "id": "22",
+      "parcelId": "12767",
+      "salePrice": "125000",
+      "saleDate": "1981-01-16 00:00:00",
+      "assessedValue": "102090",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "467"
+    },
+    {
+      "id": "23",
+      "parcelId": "12768",
+      "salePrice": "240000",
+      "saleDate": "2007-07-19 00:00:00",
+      "assessedValue": "0",
+      "squareFeet": "0",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "459"
+    },
+    {
+      "id": "24",
+      "parcelId": "12827",
+      "salePrice": "283000",
+      "saleDate": "2019-10-09 00:00:00",
+      "assessedValue": "367130",
+      "squareFeet": "1399",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "523"
+    },
+    {
+      "id": "25",
+      "parcelId": "12861",
+      "salePrice": "70000",
+      "saleDate": "1997-09-25 00:00:00",
+      "assessedValue": "109200",
+      "squareFeet": "833",
+      "yearBuilt": "NULL",
+      "bedrooms": "NULL",
+      "propertyType": "520"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparcelId\tsalePrice\tsaleDate\tassessedValue\tsquareFeet\tyearBuilt\tbedrooms\tpropertyType\n21\t12762\t190000\t2018-01-08 00:00:00\t17350\t0\tNULL\tNULL\t459\n22\t12767\t125000\t1981-01-16 00:00:00\t102090\t0\tNULL\tNULL\t467\n23\t12768\t240000\t2007-07-19 00:00:00\t0\t0\tNULL\tNULL\t459\n24\t12827\t283000\t2019-10-09 00:00:00\t367130\t1399\tNULL\tNULL\t523\n25\t12861\t70000\t1997-09-25 00:00:00\t109200\t833\tNULL\tNULL\t520\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}

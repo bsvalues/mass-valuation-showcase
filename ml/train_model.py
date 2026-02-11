@@ -21,21 +21,41 @@ def get_database_connection():
     if not db_url:
         raise ValueError('DATABASE_URL environment variable not set')
     
-    # Parse DATABASE_URL (format: mysql://user:pass@host:port/database)
+    # Parse DATABASE_URL (format: mysql://user:pass@host:port/database?ssl=...)
     import re
-    match = re.match(r'mysql://([^:]+):([^@]+)@([^:]+):([^/]+)/(.+)', db_url)
-    if not match:
-        raise ValueError(f'Invalid DATABASE_URL format: {db_url}')
+    from urllib.parse import urlparse, parse_qs
     
-    user, password, host, port, database = match.groups()
+    parsed = urlparse(db_url)
     
-    return mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password,
-        database=database,
-        port=int(port)
-    )
+    # Extract connection parameters
+    user = parsed.username
+    password = parsed.password
+    host = parsed.hostname
+    port = parsed.port or 3306
+    database = parsed.path.lstrip('/')
+    
+    # Parse SSL parameters from query string
+    query_params = parse_qs(parsed.query)
+    ssl_config = None
+    if 'ssl' in query_params:
+        # SSL is enabled
+        ssl_config = {
+            'ssl_verify_cert': True,
+            'ssl_verify_identity': True
+        }
+    
+    conn_params = {
+        'host': host,
+        'user': user,
+        'password': password,
+        'database': database,
+        'port': int(port)
+    }
+    
+    if ssl_config:
+        conn_params['ssl_disabled'] = False
+    
+    return mysql.connector.connect(**conn_params)
 
 def fetch_training_data():
     """Fetch sales data from database for training"""
@@ -50,14 +70,12 @@ def fetch_training_data():
             s.yearBuilt,
             s.bedrooms,
             s.propertyType,
-            YEAR(s.saleDate) as saleYear,
-            p.basementSqFt,
-            p.acres,
-            p.age
+            YEAR(s.saleDate) as saleYear
         FROM sales s
-        LEFT JOIN parcels p ON s.parcelId = p.parcelId
         WHERE s.salePrice > 0 
-          AND s.squareFeet > 0
+          AND s.squareFeet > 0 
+          AND s.squareFeet IS NOT NULL
+          AND s.yearBuilt IS NOT NULL
           AND s.yearBuilt > 1800
         LIMIT 50000
     """
@@ -103,15 +121,12 @@ def engineer_features(data):
         bedrooms = row['bedrooms'] or 0
         property_type = row['propertyType'] or '11'
         sale_year = row['saleYear'] or current_year
-        basement_sqft = row['basementSqFt'] or 0
-        acres = row['acres'] or 0
-        age = row['age'] if row['age'] else (current_year - year_built)
+        age = current_year - year_built if year_built else 0
         
         # Encode property type
         prop_type_encoded = property_type_encoding.get(property_type, 0)
         
         # Derived features
-        total_sqft = square_feet + basement_sqft
         price_per_sqft = sale_price / square_feet if square_feet > 0 else 0
         
         feature_vector = [
@@ -120,10 +135,8 @@ def engineer_features(data):
             bedrooms,
             prop_type_encoded,
             sale_year,
-            basement_sqft,
-            acres,
             age,
-            total_sqft,
+            price_per_sqft,
         ]
         
         X.append(feature_vector)
