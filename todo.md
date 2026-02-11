@@ -1780,3 +1780,17 @@
 - [x] Verify layer mode switching updates map visualization correctly
 - [ ] Test Reset View button centers map on all parcels
 - [x] Verify parcel count badge updates correctly
+
+
+## 🐛 Bug Fixes (Map Explorer Errors)
+
+### MapLibre Marker Import Error
+- [x] Fix MeasurementTools component MapLibre Marker import
+- [x] Verify maplibregl.Marker is properly imported
+- [x] Test measurement tools functionality on Map Explorer page
+
+### Invalid GeoJSON Data Error
+- [x] Investigate source of invalid GeoJSON data
+- [x] Add GeoJSON validation before adding to map sources
+- [x] Fix data formatting issues in map data sources
+- [x] Test Map Explorer page without console errors

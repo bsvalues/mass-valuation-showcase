@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Ruler, Pentagon, X, Navigation } from "lucide-react";
 import { useState, useEffect } from "react";
-import type { Map as MapLibreMap } from "maplibre-gl";
+import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
 
 export interface Measurement {
   type: "distance" | "area";
@@ -123,7 +123,7 @@ export function MeasurementTools({ map, mode, onModeChange }: MeasurementToolsPr
       el.style.border = '2px solid white';
       el.style.cursor = 'pointer';
 
-      new (window as any).maplibregl.Marker({ element: el })
+      new maplibregl.Marker({ element: el })
         .setLngLat(coords)
         .addTo(map);
     };

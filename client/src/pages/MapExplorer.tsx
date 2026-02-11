@@ -708,9 +708,16 @@ export default function MapExplorer() {
     }
 
     // Add buffer zone source and layer
+    // Validate GeoJSON data before adding
+    const bufferData = bufferZoneQuery.data as GeoJSON.Feature;
+    if (!bufferData || !bufferData.type || !bufferData.geometry) {
+      console.error('Invalid GeoJSON data for buffer zone:', bufferData);
+      return;
+    }
+    
     mapInstance.addSource('buffer-zone-source', {
       type: 'geojson',
-      data: bufferZoneQuery.data as GeoJSON.Feature
+      data: bufferData
     });
 
     mapInstance.addLayer({
@@ -762,6 +769,12 @@ export default function MapExplorer() {
         if (layer.visible) {
           // Fetch layer data and add to map
           fetchLayerData(layer.id).then((geojson) => {
+            // Validate GeoJSON data
+            if (!geojson || !geojson.type || !geojson.features || !Array.isArray(geojson.features)) {
+              console.error(`Invalid GeoJSON data for layer ${layer.id}:`, geojson);
+              return;
+            }
+            
             // Remove existing layer/source if present
             if (mapInstance.getLayer(layerId)) {
               mapInstance.removeLayer(layerId);
