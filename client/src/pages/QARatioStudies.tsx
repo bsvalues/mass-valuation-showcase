@@ -7,9 +7,61 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, CheckCircle2, Download, FileText, TrendingUp, XCircle } from "lucide-react";
+import { BarChart, Bar, LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+
+// Helper function to generate histogram data from sales data
+function generateHistogramData(salesData: any[]) {
+  const bins = [
+    { bin: "0.0-0.5", min: 0, max: 0.5, count: 0 },
+    { bin: "0.5-0.7", min: 0.5, max: 0.7, count: 0 },
+    { bin: "0.7-0.9", min: 0.7, max: 0.9, count: 0 },
+    { bin: "0.9-1.1", min: 0.9, max: 1.1, count: 0 },
+    { bin: "1.1-1.3", min: 1.1, max: 1.3, count: 0 },
+    { bin: "1.3-1.5", min: 1.3, max: 1.5, count: 0 },
+    { bin: "1.5+", min: 1.5, max: 999, count: 0 },
+  ];
+  
+  salesData.forEach(sale => {
+    const ratio = sale.ratio;
+    const bin = bins.find(b => ratio >= b.min && ratio < b.max);
+    if (bin) bin.count++;
+  });
+  
+  return bins.map(b => ({
+    bin: b.bin,
+    count: b.count,
+    percentage: salesData.length > 0 ? Math.round((b.count / salesData.length) * 100) : 0,
+  }));
+}
+
+// Helper function to generate price trend data from sales data
+function generatePriceTrendData(salesData: any[]) {
+  const monthlyData: Record<string, { prices: number[], count: number }> = {};
+  
+  salesData.forEach(sale => {
+    const month = new Date(sale.saleDate).toISOString().slice(0, 7); // YYYY-MM
+    if (!monthlyData[month]) {
+      monthlyData[month] = { prices: [], count: 0 };
+    }
+    monthlyData[month].prices.push(sale.salePrice);
+    monthlyData[month].count++;
+  });
+  
+  return Object.entries(monthlyData)
+    .map(([month, data]) => {
+      const sortedPrices = data.prices.sort((a, b) => a - b);
+      const medianPrice = sortedPrices[Math.floor(sortedPrices.length / 2)];
+      return {
+        month,
+        medianPrice,
+        count: data.count,
+      };
+    })
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
 
 export default function QARatioStudies() {
   const [selectedCounty, setSelectedCounty] = useState<string>("");
@@ -32,6 +84,22 @@ export default function QARatioStudies() {
     },
     {
       enabled: false, // Only run when user clicks "Run Study"
+    }
+  );
+
+  // Query sales data for visualization
+  const { data: visualizationData } = trpc.ratioStudies.getSalesData.useQuery(
+    {
+      propertyType: selectedPropertyType || undefined,
+      countyName: selectedCounty || undefined,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      minPrice: minPrice ? parseInt(minPrice) : undefined,
+      maxPrice: maxPrice ? parseInt(maxPrice) : undefined,
+      limit: 200,
+    },
+    {
+      enabled: !!studyResults, // Only fetch when study has been run
     }
   );
 
@@ -258,6 +326,7 @@ export default function QARatioStudies() {
             <TabsList>
               <TabsTrigger value="summary">Summary</TabsTrigger>
               <TabsTrigger value="iaao">IAAO Compliance</TabsTrigger>
+              <TabsTrigger value="visualization">Visualization</TabsTrigger>
               <TabsTrigger value="distribution">Distribution</TabsTrigger>
               <TabsTrigger value="holdout">Holdout Validation</TabsTrigger>
             </TabsList>
@@ -481,6 +550,160 @@ export default function QARatioStudies() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="visualization" className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Scatter Plot: Sale Price vs Assessed Value */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Assessed vs. Sale Price</CardTitle>
+                    <CardDescription>Scatter plot showing relationship between assessed values and sale prices</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            type="number" 
+                            dataKey="salePrice" 
+                            name="Sale Price" 
+                            label={{ value: 'Sale Price ($)', position: 'insideBottom', offset: -10 }}
+                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                          />
+                          <YAxis 
+                            type="number" 
+                            dataKey="assessedValue" 
+                            name="Assessed Value" 
+                            label={{ value: 'Assessed Value ($)', angle: -90, position: 'insideLeft' }}
+                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                          />
+                          <Tooltip 
+                            cursor={{ strokeDasharray: '3 3' }}
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-background border rounded-lg p-3 shadow-lg">
+                                    <p className="font-medium">Parcel: {data.parcelId}</p>
+                                    <p className="text-sm">Sale Price: ${data.salePrice.toLocaleString()}</p>
+                                    <p className="text-sm">Assessed: ${data.assessedValue.toLocaleString()}</p>
+                                    <p className="text-sm">Ratio: {data.ratio.toFixed(3)}</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Scatter 
+                            name="Properties" 
+                            data={visualizationData || []} 
+                            fill="#00FFFF"
+                            fillOpacity={0.6}
+                          />
+                          <Line 
+                            type="linear" 
+                            dataKey="salePrice" 
+                            stroke="#ff6b6b" 
+                            strokeWidth={2} 
+                            dot={false}
+                            name="Perfect Assessment (1:1)"
+                          />
+                        </ScatterChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Histogram: Ratio Distribution */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Ratio Distribution</CardTitle>
+                    <CardDescription>Frequency distribution of assessment-to-sale ratios</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={generateHistogramData(visualizationData || [])} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="bin" 
+                            label={{ value: 'Assessment Ratio', position: 'insideBottom', offset: -10 }}
+                          />
+                          <YAxis 
+                            label={{ value: 'Frequency', angle: -90, position: 'insideLeft' }}
+                          />
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div className="bg-background border rounded-lg p-3 shadow-lg">
+                                    <p className="font-medium">Ratio Range: {data.bin}</p>
+                                    <p className="text-sm">Count: {data.count}</p>
+                                    <p className="text-sm">Percentage: {data.percentage}%</p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Bar dataKey="count" fill="#00FFFF" fillOpacity={0.8} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Price Trend Line Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Median Sale Price Trend</CardTitle>
+                  <CardDescription>Monthly median sale prices over the selected period</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={generatePriceTrendData(visualizationData || [])} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis 
+                          dataKey="month" 
+                          label={{ value: 'Month', position: 'insideBottom', offset: -10 }}
+                        />
+                        <YAxis 
+                          label={{ value: 'Median Sale Price ($)', angle: -90, position: 'insideLeft' }}
+                          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-background border rounded-lg p-3 shadow-lg">
+                                  <p className="font-medium">{data.month}</p>
+                                  <p className="text-sm">Median Price: ${data.medianPrice.toLocaleString()}</p>
+                                  <p className="text-sm">Sales Count: {data.count}</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="medianPrice" 
+                          stroke="#00FFFF" 
+                          strokeWidth={3} 
+                          dot={{ fill: '#00FFFF', r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>

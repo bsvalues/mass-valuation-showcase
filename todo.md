@@ -2059,3 +2059,38 @@
 - [x] Wired Export PDF Report button in QA page to tRPC mutation
 - [x] Implemented automatic PDF download with proper filename
 - [x] Added toast notifications for success/error states
+
+## 🚀 Advanced Features Implementation (In Progress)
+
+### Phase 5: Batch Valuation Backend (Completed)
+- [x] Database tables already exist (batchJobs, batchResults)
+- [x] Implemented MockAVMModel interface with predict and predictBatch methods
+- [x] Created batchValuationRouter with tRPC procedures (startJob, getJobStatus, getJobResults, listJobs, cancelJob, deleteJob)
+- [x] Implemented background job processor (processBatchJob function)
+- [x] Added progress tracking (processedParcels, progress percentage)
+- [x] Added error handling (failedParcels, errorSummary)
+- [x] Updated existing BatchValuation page to use correct tRPC procedure names
+- [ ] Create unit tests for batch valuation procedures
+
+### Phase 6: Defense Studio Page (Completed)
+- [x] Defense Studio page component already exists with comprehensive UI
+- [x] Created defenseStudioRouter with tRPC procedures (searchComparables, getSubjectProperty, generateDefenseSummary)
+- [x] Implemented comparable sales search with filters (distance, property type, sale date range, price range)
+- [x] Added similarity scoring algorithm (distance, property type, size, age)
+- [x] Implemented Haversine distance calculation for geographic proximity
+- [x] Created defense summary statistics (median/average sale price, price range, assessment variance)
+- [x] Defense Studio already in navigation menu
+- [ ] Integrate real tRPC procedures into existing Defense Studio UI
+- [ ] Add PDF export for defense reports
+
+### Phase 7: Sales Data Visualization (Completed)
+- [x] Added Recharts imports (BarChart, LineChart, ScatterChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer)
+- [x] Created visualization tab in QA / Ratio Studies page
+- [x] Implemented scatter plot showing assessed value vs sale price relationship
+- [x] Added histogram for ratio frequency distribution (7 bins from 0.0-1.5+)
+- [x] Created price trend line chart showing median sale price over time (monthly)
+- [x] Implemented interactive tooltips with property details (parcel ID, sale price, assessed value, ratio)
+- [x] Added getSalesData tRPC procedure to fetch visualization data
+- [x] Created helper functions (generateHistogramData, generatePriceTrendData)
+- [x] Integrated visualization data from backend with real-time filtering
+- [ ] Add chart export functionality (PNG download)

@@ -13,9 +13,9 @@ export default function BatchValuation() {
   const [batchName, setBatchName] = useState("");
   const [parcelIds, setParcelIds] = useState("");
 
-  const { data: batchJobs, refetch } = trpc.batchValuation.listBatchJobs.useQuery();
-  const startBatchMutation = trpc.batchValuation.startBatch.useMutation();
-  const cancelBatchMutation = trpc.batchValuation.cancelBatch.useMutation();
+  const { data: batchJobs, refetch } = trpc.batchValuation.listJobs.useQuery({ limit: 20 });
+  const startBatchMutation = trpc.batchValuation.startJob.useMutation();
+  const cancelBatchMutation = trpc.batchValuation.cancelJob.useMutation();
 
   const handleStartBatch = async () => {
     if (!batchName.trim()) {
@@ -37,7 +37,7 @@ export default function BatchValuation() {
     try {
       await startBatchMutation.mutateAsync({
         name: batchName,
-        parcelIds: ids,
+        parcelIds: ids.length > 0 ? ids : undefined,
       });
 
       toast.success(`Batch job "${batchName}" started with ${ids.length} parcels`);
@@ -51,7 +51,7 @@ export default function BatchValuation() {
 
   const handleCancelBatch = async (batchJobId: number) => {
     try {
-      await cancelBatchMutation.mutateAsync({ batchJobId });
+      await cancelBatchMutation.mutateAsync({ jobId: batchJobId });
       toast.success("Batch job cancelled");
       refetch();
     } catch (error) {
