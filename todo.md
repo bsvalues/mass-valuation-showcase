@@ -2131,3 +2131,37 @@
 - [ ] Create assessment ratio heatmap layer
 - [ ] Add legend and layer controls
 - [ ] Wire Map Explorer to navigation menu
+
+
+## 🎯 Final Features Implementation
+
+### Phase 13: ML Model Training with Real Data (In Progress)
+- [ ] Create Python training script that fetches sales data from database
+- [ ] Implement feature engineering (property age, type encoding, size normalization)
+- [ ] Train Random Forest Regressor on 72,729 Benton County sales
+- [ ] Calculate model evaluation metrics (MAE, RMSE, R², cross-validation)
+- [ ] Save trained model to file system
+- [ ] Create tRPC procedure to trigger training and check status
+- [ ] Test batch valuation predictions against actual assessed values
+- [ ] Add model training UI to dashboard
+
+### Phase 14: Appeals Management Module (Next)
+- [ ] Create appeals database table with schema
+- [ ] Add status enum (pending, under_review, approved, denied, withdrawn)
+- [ ] Create tRPC procedures (createAppeal, updateAppeal, getAppeals, deleteAppeal)
+- [ ] Build kanban-style UI with drag-and-drop status columns
+- [ ] Add hearing scheduler with date picker
+- [ ] Implement appeal details modal with notes and documents
+- [ ] Add automated notification system for status changes
+- [ ] Create appeals dashboard page with filters
+
+### Phase 15: Map-Based Property Explorer (Next)
+- [ ] Add MapLibre GL JS dependency
+- [ ] Create map component with Benton County parcels layer
+- [ ] Implement COD zone color coding (green/yellow/red by ratio)
+- [ ] Add parcel click handler to show property details popup
+- [ ] Overlay comparable sales markers on map
+- [ ] Implement radius search tool for spatial queries
+- [ ] Add polygon selection tool for neighborhood analysis
+- [ ] Create map legend and controls
+- [ ] Add map page to navigation menu
