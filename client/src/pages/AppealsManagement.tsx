@@ -7,6 +7,7 @@ import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSen
 import { useState } from "react";
 import { toast } from "sonner";
 import { FileText, Calendar, DollarSign, MapPin, Plus } from "lucide-react";
+import { AppealCreateDialog } from "@/components/AppealCreateDialog";
 
 type AppealStatus = "pending" | "in_review" | "hearing_scheduled" | "resolved" | "withdrawn";
 
@@ -148,6 +149,7 @@ function DroppableColumn({ status, appeals }: { status: AppealStatus; appeals: A
 
 export default function AppealsManagement() {
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   
   // Query all appeals
   const { data: appeals = [], refetch } = trpc.appeals.list.useQuery();
@@ -224,7 +226,7 @@ export default function AppealsManagement() {
               Track and manage property tax appeals with drag-and-drop workflow
             </p>
           </div>
-          <Button>
+          <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             New Appeal
           </Button>
@@ -265,6 +267,12 @@ export default function AppealsManagement() {
             {activeAppeal ? <AppealCard appeal={activeAppeal as Appeal} /> : null}
           </DragOverlay>
         </DndContext>
+        
+        <AppealCreateDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onSuccess={refetch}
+        />
       </div>
     </DashboardLayout>
   );

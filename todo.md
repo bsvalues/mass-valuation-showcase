@@ -2174,3 +2174,42 @@
 - [ ] Add polygon selection tool for neighborhood analysis
 - [ ] Create map legend and controls
 - [ ] Add map page to navigation menu
+
+
+## 🎯 Final Implementation Phase
+
+### Phase 16: ML Model Training Test (In Progress)
+- [ ] Navigate to /ml-training page
+- [ ] Click "Train Model" button to trigger training
+- [ ] Monitor training progress and wait for completion
+- [ ] Verify metrics display correctly (MAE, RMSE, R², CV scores)
+- [ ] Test batch valuation predictions against actual assessed values
+- [ ] Validate model accuracy with sample parcels
+- [ ] Document training results and model performance
+
+### Phase 17: Appeal Creation Modal (Completed)
+- [x] Create AppealCreateDialog component with form
+- [x] Add parcel ID text input
+- [x] Add current/appealed value number inputs with validation
+- [x] Add appeal reason textarea
+- [x] Add hearing date picker with calendar UI (Popover + Calendar)
+- [x] Wire "New Appeal" button to open dialog
+- [x] Implement form submission with trpc.appeals.create mutation
+- [x] Add success toast and refresh kanban board after creation
+- [x] Add form validation (required fields, value ranges, appealed < current)
+- [x] Show calculated reduction amount and percentage
+- [x] Add loading state during submission
+- [x] Reset form after successful creation
+
+### Phase 18: Map-Based Property Explorer (Next)
+- [ ] Install maplibre-gl and maplibre-gl-js-amplify packages
+- [ ] Create MapExplorer page component
+- [ ] Fetch Benton County parcels with coordinates from database
+- [ ] Convert parcels to GeoJSON format
+- [ ] Initialize MapLibre GL map centered on Benton County
+- [ ] Add parcels layer color-coded by COD zones (green/yellow/red)
+- [ ] Implement parcel click popup with property details
+- [ ] Add comparable sales overlay with markers
+- [ ] Add radius search tool for spatial analysis
+- [ ] Add map legend explaining COD zone colors
+- [ ] Add to navigation menu
