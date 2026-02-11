@@ -96,6 +96,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       items: [
         { icon: Factory, label: "Mass Valuation Studio", href: "/mass-valuation" },
         { icon: Brain, label: "AVM Studio", href: "/avm-studio" },
+        { icon: BrainCircuit, label: "ML Training", href: "/ml-training" },
         { icon: Zap, label: "Batch Valuation", href: "/batch-valuation" },
         { icon: Calculator, label: "Cost Matrix", href: "/cost-matrix" },
       ]

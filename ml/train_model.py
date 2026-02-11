@@ -22,13 +22,19 @@ def get_database_connection():
         raise ValueError('DATABASE_URL environment variable not set')
     
     # Parse DATABASE_URL (format: mysql://user:pass@host:port/database)
-    # For simplicity, using hardcoded connection for now
+    import re
+    match = re.match(r'mysql://([^:]+):([^@]+)@([^:]+):([^/]+)/(.+)', db_url)
+    if not match:
+        raise ValueError(f'Invalid DATABASE_URL format: {db_url}')
+    
+    user, password, host, port, database = match.groups()
+    
     return mysql.connector.connect(
-        host=os.getenv('DB_HOST', 'localhost'),
-        user=os.getenv('DB_USER', 'root'),
-        password=os.getenv('DB_PASSWORD', ''),
-        database=os.getenv('DB_NAME', 'mass_valuation'),
-        port=int(os.getenv('DB_PORT', '3306'))
+        host=host,
+        user=user,
+        password=password,
+        database=database,
+        port=int(port)
     )
 
 def fetch_training_data():
