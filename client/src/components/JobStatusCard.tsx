@@ -6,7 +6,9 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Clock, Loader2, MapPin, Eye } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Loader2, MapPin, Eye, Download } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import { QuantumProgressBar } from "./QuantumProgressBar";
 import { Link } from "wouter";
 
@@ -26,6 +28,41 @@ interface JobStatusCardProps {
 }
 
 export function JobStatusCard({ job, onViewData }: JobStatusCardProps) {
+  const { data: jobErrors } = trpc.backgroundJobs.getJobErrors.useQuery(
+    { jobId: job.id },
+    { enabled: job.status === 'failed' }
+  );
+
+  const handleDownloadErrors = () => {
+    if (!jobErrors || jobErrors.length === 0) {
+      toast.error('No error details available');
+      return;
+    }
+
+    // Generate CSV content
+    const headers = ['Row Number', 'Parcel ID', 'Error Message'];
+    const rows = jobErrors.map(err => [
+      err.rowNumber || 'N/A',
+      err.parcelId || 'N/A',
+      (err.errorMessage || 'Unknown error').replace(/"/g, '""'), // Escape quotes
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    ].join('\n');
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `job-${job.id}-errors.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success(`Downloaded ${jobErrors.length} error records`);
+  };
   const getStatusIcon = () => {
     switch (job.status) {
       case "completed":
@@ -143,9 +180,23 @@ export function JobStatusCard({ job, onViewData }: JobStatusCardProps) {
 
           {/* Failed Status */}
           {job.status === "failed" && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-              <p className="text-sm text-red-500 font-medium mb-1">Error</p>
-              <p className="text-xs text-red-400">{job.errorMessage || "Unknown error occurred"}</p>
+            <div className="space-y-3">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                <p className="text-sm text-red-500 font-medium mb-1">Error</p>
+                <p className="text-xs text-red-400">{job.errorMessage || "Unknown error occurred"}</p>
+              </div>
+              
+              {jobErrors && jobErrors.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadErrors}
+                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/30"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Error Details ({jobErrors.length} records)
+                </Button>
+              )}
             </div>
           )}
         </CardContent>

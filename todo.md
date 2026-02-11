@@ -1663,3 +1663,32 @@
 - [ ] Debug Jobs button badge not showing active jobs
 - [ ] Test complete background job workflow with drawer
 - [ ] Implement error CSV download functionality
+
+
+## 🗺️ MapLibre Parcel Visualization & Job Workflow Fixes (Current Sprint)
+
+### MapLibre Integration
+- [x] Add MapLibre GL JS to County Detail page
+- [x] Create ParcelMap component with parcel boundary rendering
+- [x] Load parcel geometries from waCountyParcels table
+- [x] Render parcel polygons with cyan stroke and transparent fill
+- [x] Implement click-to-highlight functionality (selected parcel gets highlighted fill)
+- [x] Sync map selection with table row selection
+- [x] Add map controls (zoom, pan, reset view button)
+- [x] Implement parcel popup on hover with parcel ID and address
+
+### Background Job Workflow Fixes
+- [x] Fix job status enum mismatch (use lowercase: pending, running, completed, failed)
+- [x] Update JobContext to use correct status values
+- [x] Update DashboardLayout Jobs button to check for correct statuses
+- [ ] Test job creation and status updates
+- [ ] Verify Jobs drawer opens automatically when jobs are active
+- [ ] Test real-time job progress tracking in drawer
+
+### Error CSV Download
+- [x] Add errorDetails JSON column to backgroundJobs table (already exists as errorSummary)
+- [ ] Update background worker to store error details for failed jobs
+- [x] Create downloadJobErrors tRPC procedure (getJobErrors already exists)
+- [x] Add "Download Errors" button to JobCard component for failed jobs
+- [x] Generate CSV with columns: row_number, parcel_id, error_message
+- [ ] Test error CSV download with a failed job

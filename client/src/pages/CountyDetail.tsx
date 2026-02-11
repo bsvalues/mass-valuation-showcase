@@ -21,6 +21,7 @@ import { useRoute, useLocation } from "wouter";
 import { useState, useEffect, useCallback } from "react";
 import { Bar } from "react-chartjs-2";
 import { Input } from "@/components/ui/input";
+import { ParcelMap } from "@/components/ParcelMap";
 
 export default function CountyDetail() {
   const [, params] = useRoute("/county-detail/:countyName");
@@ -30,6 +31,7 @@ export default function CountyDetail() {
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [selectedParcelId, setSelectedParcelId] = useState<string | undefined>();
   const limit = 50;
 
   // Debounce search input (300ms delay)
@@ -231,6 +233,29 @@ export default function CountyDetail() {
           </Card>
         </div>
 
+        {/* Parcel Map Visualization */}
+        {parcelData && parcelData.parcels.length > 0 && (
+          <Card className="terra-card bg-[rgba(10,14,26,0.6)] border-primary/20">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                <CardTitle className="text-[#00FFFF]">Parcel Boundaries Map</CardTitle>
+              </div>
+              <CardDescription className="text-slate-400">
+                Click parcels to highlight and view details
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ParcelMap
+                parcels={parcelData.parcels}
+                selectedParcelId={selectedParcelId}
+                onParcelClick={(id) => setSelectedParcelId(id)}
+                className="h-[500px]"
+              />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Value Distribution Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Land Value Distribution */}
@@ -357,7 +382,10 @@ export default function CountyDetail() {
                   {parcelData?.parcels.map((parcel, idx) => (
                     <TableRow
                       key={idx}
-                      className="border-primary/10 hover:bg-primary/5 transition-colors"
+                      onClick={() => setSelectedParcelId(parcel.id.toString())}
+                      className={`border-primary/10 hover:bg-primary/5 transition-colors cursor-pointer ${
+                        selectedParcelId === parcel.id.toString() ? 'bg-primary/10' : ''
+                      }`}
                     >
                       <TableCell className="font-mono text-sm">{parcel.parcelId}</TableCell>
                       <TableCell className="max-w-xs truncate">{parcel.situsAddress || "N/A"}</TableCell>

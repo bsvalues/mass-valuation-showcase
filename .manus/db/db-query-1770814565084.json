@@ -1,0 +1,37 @@
+{
+  "query": "SELECT id, jobType, status, countyName, total, processed, createdAt FROM backgroundJobs ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT id, jobType, status, countyName, total, processed, createdAt FROM backgroundJobs ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "9WCa0V-a_t0Pu5Fft7DT7",
+      "jobType": "parcel_load",
+      "status": "failed",
+      "countyName": "Benton County",
+      "total": "0",
+      "processed": "0",
+      "createdAt": "2026-02-11 02:33:39"
+    },
+    {
+      "id": "6Xu9rPQQBUYANblwYLhbc",
+      "jobType": "parcel_load",
+      "status": "failed",
+      "countyName": "Benton County",
+      "total": "0",
+      "processed": "0",
+      "createdAt": "2026-02-11 02:33:21"
+    },
+    {
+      "id": "H-jDk9jfZ1uctf755Kqov",
+      "jobType": "parcel_load",
+      "status": "completed",
+      "countyName": "Benton",
+      "total": "2000",
+      "processed": "2000",
+      "createdAt": "2026-02-11 02:31:24"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tjobType\tstatus\tcountyName\ttotal\tprocessed\tcreatedAt\n9WCa0V-a_t0Pu5Fft7DT7\tparcel_load\tfailed\tBenton County\t0\t0\t2026-02-11 02:33:39\n6Xu9rPQQBUYANblwYLhbc\tparcel_load\tfailed\tBenton County\t0\t0\t2026-02-11 02:33:21\nH-jDk9jfZ1uctf755Kqov\tparcel_load\tcompleted\tBenton\t2000\t2000\t2026-02-11 02:31:24\n",
+  "stderr": "",
+  "execution_time_ms": 643
+}
