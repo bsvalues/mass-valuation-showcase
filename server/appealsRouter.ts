@@ -331,4 +331,91 @@ export const appealsRouter = router({
       // Once migration is run, this will query the appealTimeline table
       return [];
     }),
+
+  /**
+   * Get comments for an appeal
+   */
+  getComments: publicProcedure
+    .input(z.object({
+      appealId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // For now, return empty array since appealComments table doesn't exist yet
+      // Once migration is run, this will query the appealComments table with author names
+      return [];
+    }),
+
+  /**
+   * Add comment to an appeal
+   */
+  addComment: publicProcedure
+    .input(z.object({
+      appealId: z.number(),
+      commentType: z.enum(["internal", "owner_communication"]),
+      content: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // For now, throw error since appealComments table doesn't exist yet
+      // Once migration is run, this will insert into appealComments table
+      throw new Error('Comments feature requires database migration. Run pnpm db:push first.');
+    }),
+
+  /**
+   * Get documents for an appeal
+   */
+  getDocuments: publicProcedure
+    .input(z.object({
+      appealId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // For now, return empty array since appealDocuments table doesn't exist yet
+      // Once migration is run, this will query the appealDocuments table
+      return [];
+    }),
+
+  /**
+   * Upload document for an appeal
+   */
+  uploadDocument: publicProcedure
+    .input(z.object({
+      appealId: z.number(),
+      fileName: z.string(),
+      fileSize: z.number(),
+      fileType: z.string(),
+      fileKey: z.string(),
+      fileUrl: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // For now, throw error since appealDocuments table doesn't exist yet
+      // Once migration is run, this will insert into appealDocuments table
+      throw new Error('Documents feature requires database migration. Run pnpm db:push first.');
+    }),
+
+  /**
+   * Delete document from an appeal
+   */
+  deleteDocument: publicProcedure
+    .input(z.object({
+      documentId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // For now, throw error since appealDocuments table doesn't exist yet
+      // Once migration is run, this will delete from appealDocuments table
+      throw new Error('Documents feature requires database migration. Run pnpm db:push first.');
+    }),
 });

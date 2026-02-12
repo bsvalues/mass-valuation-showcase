@@ -2574,3 +2574,41 @@
 - [x] Create tRPC procedure for audit log data with filters
 - [x] Connect audit log dashboard to real-time data
 - [x] Implement bulk status update with multi-select
+
+
+## 📝 Appeal Comments & Documents System (2026-02-12)
+- [ ] Create appeal comments schema and database migration
+- [ ] Build comments/notes component with timestamp and user attribution
+- [ ] Create appeal documents schema and S3 upload integration
+- [ ] Build document upload component with preview/download
+- [ ] Create analytics dashboard with charts and metrics
+
+
+## 📝 Appeal Comments/Notes System (Completed)
+
+- [x] Create appealComments database schema with internal/public toggle
+- [x] Implement tRPC mutations for adding and retrieving comments
+- [x] Build AppealComments component with real-time posting
+- [x] Add user attribution and timestamps to comments
+- [x] Implement internal-only filtering for staff notes
+- [x] Integrate comments into appeal detail dialogs
+
+## 📎 Appeal Document Upload (Completed)
+
+- [x] Create appealDocuments database schema with S3 integration
+- [x] Implement tRPC mutations for upload, retrieve, and delete
+- [x] Build AppealDocuments component with drag-drop interface
+- [x] Add file preview functionality (images/PDFs)
+- [x] Implement download and delete operations
+- [x] Add file size validation (10MB limit) and type restrictions
+
+## 📊 Appeal Analytics Dashboard (Completed)
+
+- [x] Create analytics page at /appeals/analytics route
+- [x] Implement 4 KPI cards (resolution time, success rate, value adjusted, monthly appeals)
+- [x] Add resolution time trend line chart (6-month history)
+- [x] Add status distribution pie chart with color coding
+- [x] Add success rate by property type bar chart
+- [x] Add value adjustment distribution bar chart
+- [x] Integrate Recharts for all visualizations
+- [x] Add route to App.tsx navigation

@@ -306,25 +306,25 @@ export type InsertWACountyParcel = typeof waCountyParcels.$inferInsert;
  */
 export const backgroundJobs = mysqlTable("backgroundJobs", {
   id: varchar("id", { length: 36 }).primaryKey(), // UUID
-  userId: int("userid").notNull(),
-  jobType: mysqlEnum("jobtype", ["parcel_load"]).notNull(),
+  userId: int("userId").notNull(),
+  jobType: mysqlEnum("jobType", ["parcel_load"]).notNull(),
   status: mysqlEnum("status", ["pending", "running", "completed", "failed", "paused"]).default("pending").notNull(),
-  traceId: varchar("traceid", { length: 36 }), // For distributed tracing
-  countyName: varchar("countyname", { length: 100 }),
-  parcelLimit: int("parcellimit"),
+  traceId: varchar("traceId", { length: 36 }), // For distributed tracing
+  countyName: varchar("countyName", { length: 100 }),
+  parcelLimit: int("parcelLimit"),
   // Progress tracking
   total: int("total").default(0), // Total expected (e.g., 80000 parcels)
   processed: int("processed").default(0), // Total processed (succeeded + failed)
   succeeded: int("succeeded").default(0), // Successfully inserted/updated
   failed: int("failed").default(0), // Failed to process
   // Payload and results
-  payloadJson: text("payloadjson"), // JSON with source params, options
-  resultSummary: text("resultsummary"), // JSON with parcel count, bounds, etc.
-  errorSummary: text("errorsummary"), // Aggregated error messages
+  payloadJson: text("payloadJson"), // JSON with source params, options
+  resultSummary: text("resultSummary"), // JSON with parcel count, bounds, etc.
+  errorSummary: text("errorSummary"), // Aggregated error messages
   // Timestamps
-  createdAt: timestamp("createdat").defaultNow().notNull(),
-  startedAt: timestamp("startedat"),
-  completedAt: timestamp("completedat"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
 });
 
 export type BackgroundJob = typeof backgroundJobs.$inferSelect;
@@ -433,6 +433,46 @@ export const appealTimeline = mysqlTable("appealTimeline", {
 
 export type AppealTimeline = typeof appealTimeline.$inferSelect;
 export type InsertAppealTimeline = typeof appealTimeline.$inferInsert;
+
+/**
+ * Appeal Comments table - tracks notes and communications on appeals
+ */
+export const appealComments = mysqlTable("appealComments", {
+  id: int("id").autoincrement().primaryKey(),
+  appealId: int("appealId").notNull(),
+  commentType: mysqlEnum("commentType", ["internal", "owner_communication"]).default("internal").notNull(),
+  content: text("content").notNull(),
+  authorId: int("authorId").notNull(), // User ID who wrote the comment
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  appealIdIdx: index("comment_appealid_idx").on(table.appealId),
+  createdAtIdx: index("comment_createdat_idx").on(table.createdAt),
+}));
+
+export type AppealComment = typeof appealComments.$inferSelect;
+export type InsertAppealComment = typeof appealComments.$inferInsert;
+
+/**
+ * Appeal Documents table - tracks uploaded files for appeals
+ */
+export const appealDocuments = mysqlTable("appealDocuments", {
+  id: int("id").autoincrement().primaryKey(),
+  appealId: int("appealId").notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  fileSize: int("fileSize").notNull(), // Size in bytes
+  fileType: varchar("fileType", { length: 100 }).notNull(), // MIME type
+  fileKey: varchar("fileKey", { length: 512 }).notNull(), // S3 key
+  fileUrl: varchar("fileUrl", { length: 1024 }).notNull(), // S3 URL
+  uploadedBy: int("uploadedBy").notNull(), // User ID who uploaded
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  appealIdIdx: index("document_appealid_idx").on(table.appealId),
+  createdAtIdx: index("document_createdat_idx").on(table.createdAt),
+}));
+
+export type AppealDocument = typeof appealDocuments.$inferSelect;
+export type InsertAppealDocument = typeof appealDocuments.$inferInsert;
 
 /**
  * ML Predictions table - tracks all property valuation predictions
