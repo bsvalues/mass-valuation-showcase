@@ -26,6 +26,7 @@ import {
 import { Link } from "wouter";
 import { useState } from "react";
 import { AppealDetailModal } from "@/components/AppealDetailModal";
+import { AppealExportButton } from "@/components/AppealExportButton";
 import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
 import { LineChart, Line, Area, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -224,6 +225,7 @@ export default function Home() {
                   90d
                 </Button>
               </div>
+              <AppealExportButton status={selectedStatus || undefined} />
             </div>
           </CardHeader>
           <CardContent>

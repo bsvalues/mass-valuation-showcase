@@ -2548,3 +2548,4 @@
 - [ ] Create AppealDetailModal component with filtered appeals list
 - [ ] Wire status count clicks to open modal with filtered data
 - [ ] Test sparkline visualization with real data across all date ranges
+- [x] Implement export appeals report functionality (PDF/CSV)
