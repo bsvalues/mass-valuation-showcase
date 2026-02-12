@@ -259,12 +259,7 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
                 </Table>
               </div>
 
-              <form onSubmit={(e) => { 
-                console.log('[BulkImport] Form onSubmit triggered');
-                e.preventDefault(); 
-                console.log('[BulkImport] Calling handleImport from form');
-                handleImport(); 
-              }} className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -277,13 +272,17 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
                   Clear
                 </Button>
                 <Button
-                  type="submit"
+                  type="button"
+                  onClick={() => {
+                    console.log('[BulkImport] Import button clicked!');
+                    handleImport();
+                  }}
                   disabled={validCount === 0 || importing}
                 >
                   {importing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Import {validCount} Appeals
                 </Button>
-              </form>
+              </div>
             </>
           )}
         </div>

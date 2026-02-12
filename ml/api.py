@@ -97,8 +97,22 @@ def predict():
         # Make prediction
         predicted_value = model.predict(features)[0]
         
+        # Calculate confidence interval using Random Forest estimators
+        # Get predictions from all trees in the forest
+        tree_predictions = np.array([tree.predict(features)[0] for tree in model.estimators_])
+        
+        # Calculate standard deviation and confidence interval (±1.96 std for 95% CI)
+        std_dev = np.std(tree_predictions)
+        confidence_lower = predicted_value - (1.96 * std_dev)
+        confidence_upper = predicted_value + (1.96 * std_dev)
+        
         return jsonify({
             'predictedValue': int(predicted_value),
+            'confidenceInterval': {
+                'lower': int(confidence_lower),
+                'upper': int(confidence_upper),
+                'stdDev': float(std_dev)
+            },
             'features': {
                 'squareFeet': square_feet,
                 'yearBuilt': year_built,

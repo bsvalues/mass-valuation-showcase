@@ -2460,3 +2460,31 @@
 - [ ] Identify where the event propagation stops
 - [ ] Fix identified issue
 - [ ] Verify bulk import works end-to-end
+
+
+### Phase 48: Test Bulk Import with Logging (In Progress)
+- [ ] Navigate to Appeals Management page
+- [ ] Open bulk import dialog
+- [ ] Upload test CSV file
+- [ ] Click Import button
+- [ ] Check browser console for client-side logs
+- [ ] Check server logs for backend mutation logs
+- [ ] Identify where the event propagation stops
+- [ ] Document root cause of failure
+
+### Phase 49: Add Prediction Confidence Intervals (Next)
+- [ ] Research Random Forest prediction intervals (not return_std - that's for GradientBoosting)
+- [ ] Implement quantile regression or bootstrap method for confidence intervals
+- [ ] Update Flask API /predict endpoint to return confidence ranges
+- [ ] Modify prediction response schema to include lower_bound and upper_bound
+- [ ] Update ML Training page UI to display confidence interval
+- [ ] Test predictions show ±10% confidence range
+
+### Phase 50: Create Appeals Dashboard Widget (Next)
+- [ ] Add appeals.getStats tRPC procedure (count by status)
+- [ ] Create RecentAppeals component with Card layout
+- [ ] Add status count badges (Pending, In Review, Hearing Scheduled, Resolved)
+- [ ] Add Recharts sparkline for 7-day trend
+- [ ] Add to Home page in prominent position
+- [ ] Style to match TerraForge aesthetic
+- [ ] Test widget displays correct counts
