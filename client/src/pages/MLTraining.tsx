@@ -4,15 +4,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
-import { Loader2, CheckCircle2, AlertCircle, Brain, TrendingUp, Target, BarChart3 } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Brain, TrendingUp, Target, BarChart3, Calculator } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useState } from "react";
 
 export default function MLTraining() {
   const [isTraining, setIsTraining] = useState(false);
+  const [isPredicting, setIsPredicting] = useState(false);
+  const [predictionResult, setPredictionResult] = useState<number | null>(null);
+  
+  // Prediction form state
+  const [squareFeet, setSquareFeet] = useState<string>('2000');
+  const [yearBuilt, setYearBuilt] = useState<string>('2010');
+  const [bedrooms, setBedrooms] = useState<string>('3');
+  const [propertyType, setPropertyType] = useState<string>('11');
+  const [basementSqFt, setBasementSqFt] = useState<string>('0');
+  const [acres, setAcres] = useState<string>('0.25');
   
   // Query model status
   const { data: modelStatus, refetch: refetchStatus } = trpc.mlModel.getModelStatus.useQuery();
+  
+  // Predict mutation
+  const predictMutation = trpc.mlModel.predict.useMutation({
+    onSuccess: (data) => {
+      setIsPredicting(false);
+      setPredictionResult(data.predictedValue);
+      toast.success(`Predicted value: $${data.predictedValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}`);
+    },
+    onError: (error) => {
+      setIsPredicting(false);
+      toast.error(`Prediction failed: ${error.message}`);
+    },
+  });
   
   // Train model mutation
   const trainModel = trpc.mlModel.trainModel.useMutation({
@@ -31,6 +57,40 @@ export default function MLTraining() {
     setIsTraining(true);
     toast.info("Starting model training... This may take several minutes.");
     trainModel.mutate();
+  };
+  
+  const handlePredict = () => {
+    // Validate inputs
+    const sqft = parseFloat(squareFeet);
+    const year = parseInt(yearBuilt);
+    const beds = parseInt(bedrooms);
+    const basement = parseFloat(basementSqFt);
+    const acresVal = parseFloat(acres);
+    
+    if (isNaN(sqft) || sqft <= 0) {
+      toast.error('Please enter valid square feet');
+      return;
+    }
+    if (isNaN(year) || year < 1800 || year > new Date().getFullYear()) {
+      toast.error('Please enter valid year built');
+      return;
+    }
+    if (isNaN(beds) || beds < 0) {
+      toast.error('Please enter valid number of bedrooms');
+      return;
+    }
+    
+    setIsPredicting(true);
+    setPredictionResult(null);
+    
+    predictMutation.mutate({
+      squareFeet: sqft,
+      yearBuilt: year,
+      bedrooms: beds,
+      propertyType,
+      basementSqFt: basement,
+      acres: acresVal,
+    });
   };
   
   const metrics = modelStatus?.metrics;
@@ -218,6 +278,144 @@ export default function MLTraining() {
           </Card>
         )}
 
+        {/* Prediction Interface */}
+        {isTrained && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calculator className="w-5 h-5 mr-2" />
+                Property Valuation Predictor
+              </CardTitle>
+              <CardDescription>
+                Enter property characteristics to get an instant valuation prediction
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="squareFeet">Square Feet *</Label>
+                  <Input
+                    id="squareFeet"
+                    type="number"
+                    value={squareFeet}
+                    onChange={(e) => setSquareFeet(e.target.value)}
+                    placeholder="2000"
+                    min="0"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="yearBuilt">Year Built *</Label>
+                  <Input
+                    id="yearBuilt"
+                    type="number"
+                    value={yearBuilt}
+                    onChange={(e) => setYearBuilt(e.target.value)}
+                    placeholder="2010"
+                    min="1800"
+                    max={new Date().getFullYear()}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bedrooms">Bedrooms *</Label>
+                  <Input
+                    id="bedrooms"
+                    type="number"
+                    value={bedrooms}
+                    onChange={(e) => setBedrooms(e.target.value)}
+                    placeholder="3"
+                    min="0"
+                    max="20"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="propertyType">Property Type *</Label>
+                  <Select value={propertyType} onValueChange={setPropertyType}>
+                    <SelectTrigger id="propertyType">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="11">Single Family</SelectItem>
+                      <SelectItem value="12">Condo</SelectItem>
+                      <SelectItem value="13">Townhouse</SelectItem>
+                      <SelectItem value="14">Mobile Home</SelectItem>
+                      <SelectItem value="18">Multi-Family</SelectItem>
+                      <SelectItem value="83">Commercial</SelectItem>
+                      <SelectItem value="39">Industrial</SelectItem>
+                      <SelectItem value="54">Vacant Land</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="basementSqFt">Basement Sq Ft</Label>
+                  <Input
+                    id="basementSqFt"
+                    type="number"
+                    value={basementSqFt}
+                    onChange={(e) => setBasementSqFt(e.target.value)}
+                    placeholder="0"
+                    min="0"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="acres">Lot Size (Acres)</Label>
+                  <Input
+                    id="acres"
+                    type="number"
+                    value={acres}
+                    onChange={(e) => setAcres(e.target.value)}
+                    placeholder="0.25"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between pt-4 border-t">
+                <p className="text-sm text-muted-foreground">* Required fields</p>
+                <Button
+                  onClick={handlePredict}
+                  disabled={isPredicting || !isTrained}
+                  size="lg"
+                >
+                  {isPredicting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Predicting...
+                    </>
+                  ) : (
+                    <>
+                      <Calculator className="w-4 h-4 mr-2" />
+                      Predict Value
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {predictionResult !== null && (
+                <div className="p-6 bg-primary/10 rounded-lg border-2 border-primary/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Predicted Market Value</p>
+                      <p className="text-4xl font-bold text-primary">
+                        ${predictionResult.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      </p>
+                    </div>
+                    <CheckCircle2 className="w-12 h-12 text-primary" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Prediction based on Random Forest model trained on {metrics?.training_samples.toLocaleString()} Benton County sales records
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+        
         {/* No Model State */}
         {!isTrained && !isTraining && (
           <Card className="border-dashed">

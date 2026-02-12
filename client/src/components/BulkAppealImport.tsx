@@ -107,7 +107,9 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
   };
 
   const handleImport = async () => {
+    console.log('[BulkImport] handleImport called', { parsedAppeals });
     const validAppeals = parsedAppeals.filter(a => a.errors.length === 0);
+    console.log('[BulkImport] validAppeals count:', validAppeals.length);
     
     if (validAppeals.length === 0) {
       toast.error("No valid appeals to import. Please fix errors first.");
@@ -269,6 +271,7 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
                   Clear
                 </Button>
                 <Button
+                  type="button"
                   onClick={handleImport}
                   disabled={validCount === 0 || importing}
                 >
