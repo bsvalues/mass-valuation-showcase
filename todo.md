@@ -2401,3 +2401,35 @@
 - [ ] Verify button is not disabled when it should be enabled
 - [ ] Test with single appeal to isolate issue
 - [ ] Fix event handler or mutation configuration
+
+
+### Phase 42: Flask REST API for ML Predictions (Completed)
+- [x] Create Flask app in ml/api.py with /predict endpoint
+- [x] Load trained model on Flask startup
+- [x] Accept JSON input with property features
+- [x] Return JSON response with predicted value
+- [x] Run Flask on port 5000 as background service (PID 11828)
+- [x] Update mlModelRouter to call Flask API instead of subprocess
+- [x] Test predictions via Flask API (returns $878,225 for 2000 sqft)
+- [x] Add error handling for Flask connection failures
+- [ ] Test browser-based predictions end-to-end (BLOCKED by Babel JSX error)
+
+### Phase 43: Debug Bulk Import Mutation (Next)
+- [ ] Add console.log to createAppeal mutation in appealsRouter.ts
+- [ ] Log received input data
+- [ ] Log database insert attempt
+- [ ] Log success/error responses
+- [ ] Test bulk import and check server logs
+- [ ] Identify where the mutation fails
+- [ ] Fix identified issue
+- [ ] Verify bulk import works end-to-end
+
+### Phase 44: Complete Prediction History (Next)
+- [ ] Run pnpm db:push and select "create column" for userid
+- [ ] Verify predictions table created in database
+- [ ] Add predictions.create procedure to mlModelRouter
+- [ ] Add predictions.list procedure with pagination
+- [ ] Update predict procedure to save to predictions table
+- [ ] Add prediction history UI component to ML Training page
+- [ ] Display recent predictions in table with timestamp, inputs, results
+- [ ] Test prediction history tracking end-to-end

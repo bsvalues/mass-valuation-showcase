@@ -68,35 +68,38 @@ export const mlModelRouter = router({
           throw new Error('Model not trained. Please train the model first.');
         }
         
-        const modelPath = path.join(process.cwd(), 'ml', 'model.pkl');
-        const scriptPath = path.join(process.cwd(), 'ml', 'predict.py');
-        
-        // Prepare input data with defaults
+        // Call Flask REST API instead of subprocess
+        const flaskUrl = 'http://127.0.0.1:5000/predict';
         const inputData = {
-          ...input,
-          saleYear: input.saleYear || new Date().getFullYear(),
+          squareFeet: input.squareFeet,
+          yearBuilt: input.yearBuilt,
+          bedrooms: input.bedrooms,
+          propertyType: input.propertyType,
           basementSqFt: input.basementSqFt || 0,
           acres: input.acres || 0,
-          age: new Date().getFullYear() - input.yearBuilt,
         };
         
-        const inputJson = JSON.stringify(inputData);
-        const command = `python3.11 "${scriptPath}" "${modelPath}" '${inputJson}'`;
+        console.log('[mlModel] Calling Flask API:', flaskUrl, inputData);
         
-        console.log('[mlModel] Running prediction:', command);
-        const { stdout, stderr } = await execAsync(command);
+        const response = await fetch(flaskUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(inputData),
+        });
         
-        if (stderr) {
-          console.error('[mlModel] Prediction stderr:', stderr);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[mlModel] Flask API error:', errorText);
+          throw new Error(`Flask API returned ${response.status}: ${errorText}`);
         }
         
-        const result = JSON.parse(stdout);
+        const result = await response.json();
         console.log('[mlModel] Prediction result:', result);
         
         return {
           success: true,
-          predictedValue: result.predictions[0],
-          features: inputData
+          predictedValue: result.predictedValue,
+          features: result.features
         };
       } catch (error) {
         console.error('[mlModel] Prediction failed:', error);
