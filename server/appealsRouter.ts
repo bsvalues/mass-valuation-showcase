@@ -73,9 +73,14 @@ export const appealsRouter = router({
       filedBy: z.number().optional(),
     }))
     .mutation(async ({ input }) => {
+      console.log('[AppealsRouter] create mutation called with input:', JSON.stringify(input));
       const db = await getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        console.error('[AppealsRouter] Database not available');
+        throw new Error('Database not available');
+      }
       
+      console.log('[AppealsRouter] Inserting appeal into database...');
       const result = await db.insert(appeals).values({
         parcelId: input.parcelId,
         appealDate: new Date(input.appealDate),

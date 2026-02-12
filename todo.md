@@ -2433,3 +2433,30 @@
 - [ ] Add prediction history UI component to ML Training page
 - [ ] Display recent predictions in table with timestamp, inputs, results
 - [ ] Test prediction history tracking end-to-end
+
+
+### Phase 45: Clear Babel/Vite Cache (Completed)
+- [x] Stop dev server
+- [x] Remove node_modules/.vite directory
+- [x] Clear Babel parser cache
+- [x] Restart dev server
+- [x] Test ML Training page loads without JSX error (FIXED!)
+- [x] Test ML prediction form end-to-end with Flask API (Returns $878,225)
+
+### Phase 46: Flask Systemd Service (Completed)
+- [x] Create /etc/systemd/system/terraforge-ml.service file
+- [x] Configure service to run Flask API on port 5000
+- [x] Set working directory to /home/ubuntu/mass-valuation-showcase
+- [x] Enable service to start on boot (systemctl enable)
+- [x] Test service start/stop/restart commands
+- [x] Verify Flask API responds after service start (PID 15660, returns $878,225)
+
+### Phase 47: Debug Bulk Import Button (Completed)
+- [x] Add console.log at form onSubmit handler entry
+- [x] Add console.log in handleImport function (already existed)
+- [x] Add console.log before createAppeal mutation call (already existed)
+- [x] Add console.log in appealsRouter.ts create mutation
+- [ ] Test bulk import and trace logs from browser to server (NEXT)
+- [ ] Identify where the event propagation stops
+- [ ] Fix identified issue
+- [ ] Verify bulk import works end-to-end
