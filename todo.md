@@ -2488,3 +2488,31 @@
 - [ ] Add to Home page in prominent position
 - [ ] Style to match TerraForge aesthetic
 - [ ] Test widget displays correct counts
+
+
+### Phase 50: Replace Radix UI Dialog with Native HTML Dialog (In Progress)
+- [ ] Remove Radix UI Dialog imports from BulkAppealImport.tsx
+- [ ] Replace Dialog component with native HTML `<dialog>` element
+- [ ] Add useRef hook to control dialog open/close
+- [ ] Update open/close logic to use dialog.showModal() and dialog.close()
+- [ ] Test bulk import button click triggers handleImport
+- [ ] Verify CSV upload and validation still works
+- [ ] Test import functionality end-to-end
+
+### Phase 51: Deploy Confidence Intervals (Next)
+- [ ] Kill orphaned Flask processes on port 5000
+- [ ] Restart terraforge-ml systemd service
+- [ ] Test Flask API returns confidenceInterval in response
+- [ ] Update ML Training page UI to display confidence range
+- [ ] Test browser-based predictions show confidence intervals
+- [ ] Verify confidence interval calculation accuracy
+
+### Phase 52: Appeals Dashboard Widget (Next)
+- [ ] Create appeals.getStatusCounts tRPC procedure
+- [ ] Query appeals table grouped by status
+- [ ] Create RecentAppeals component with Card layout
+- [ ] Display status counts (Pending, In Review, Hearing Scheduled, Resolved, Withdrawn)
+- [ ] Add Recharts sparkline showing trend over time
+- [ ] Add to Home page dashboard
+- [ ] Style with TerraForge cyan theme
+- [ ] Test with real appeals data

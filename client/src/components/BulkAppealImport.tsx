@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -16,7 +15,6 @@ interface ParsedAppeal {
   reason: string;
   hearingDate?: string;
   errors: string[];
-  rowNumber: number;
 }
 
 interface BulkAppealImportProps {
@@ -56,46 +54,47 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
         return;
       }
 
-      // Parse header
-      const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-      const parcelIdIndex = header.indexOf('parcelid');
-      const currentValueIndex = header.indexOf('currentvalue');
-      const appealedValueIndex = header.indexOf('appealedvalue');
-      const reasonIndex = header.indexOf('reason');
-      const hearingDateIndex = header.indexOf('hearingdate');
-
-      if (parcelIdIndex === -1 || currentValueIndex === -1 || appealedValueIndex === -1 || reasonIndex === -1) {
-        toast.error("CSV must have columns: parcelId, currentValue, appealedValue, reason");
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const requiredHeaders = ['parcelid', 'currentvalue', 'appealedvalue', 'reason'];
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      
+      if (missingHeaders.length > 0) {
+        toast.error(`Missing required columns: ${missingHeaders.join(', ')}`);
         return;
       }
 
-      // Parse data rows
       const appeals: ParsedAppeal[] = [];
+      
       for (let i = 1; i < lines.length; i++) {
-        const cells = lines[i].split(',').map(c => c.trim());
+        const values = lines[i].split(',').map(v => v.trim());
+        const row: Record<string, string> = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+
         const errors: string[] = [];
-
-        const parcelId = cells[parcelIdIndex] || '';
-        const currentValue = parseFloat(cells[currentValueIndex] || '0');
-        const appealedValue = parseFloat(cells[appealedValueIndex] || '0');
-        const reason = cells[reasonIndex] || '';
-        const hearingDate = hearingDateIndex >= 0 ? cells[hearingDateIndex] : undefined;
-
-        // Validation
-        if (!parcelId) errors.push("Parcel ID is required");
-        if (isNaN(currentValue) || currentValue <= 0) errors.push("Current value must be > 0");
-        if (isNaN(appealedValue) || appealedValue <= 0) errors.push("Appealed value must be > 0");
-        if (appealedValue >= currentValue) errors.push("Appealed value must be < current value");
-        if (!reason) errors.push("Reason is required");
+        
+        if (!row.parcelid) errors.push("Missing parcel ID");
+        
+        const currentValue = parseFloat(row.currentvalue?.replace(/[$,]/g, '') || '0');
+        if (isNaN(currentValue) || currentValue <= 0) {
+          errors.push("Invalid current value");
+        }
+        
+        const appealedValue = parseFloat(row.appealedvalue?.replace(/[$,]/g, '') || '0');
+        if (isNaN(appealedValue) || appealedValue <= 0) {
+          errors.push("Invalid appealed value");
+        }
+        
+        if (!row.reason) errors.push("Missing reason");
 
         appeals.push({
-          parcelId,
+          parcelId: row.parcelid || '',
           currentValue,
           appealedValue,
-          reason,
-          hearingDate,
-          errors,
-          rowNumber: i + 1,
+          reason: row.reason || '',
+          hearingDate: row.hearingdate,
+          errors
         });
       }
 
@@ -154,139 +153,141 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
   const validCount = parsedAppeals.filter(a => a.errors.length === 0).length;
   const errorCount = parsedAppeals.filter(a => a.errors.length > 0).length;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Bulk Appeal Import</DialogTitle>
-          <DialogDescription>
-            Upload a CSV file with columns: parcelId, currentValue, appealedValue, reason, hearingDate (optional)
-          </DialogDescription>
-        </DialogHeader>
+  if (!open) return null;
 
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label htmlFor="csv-file">CSV File</Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const template = "parcelId,currentValue,appealedValue,reason\n" +
-                    "123-456-789,500000,450000,Property overvalued based on recent sales\n" +
-                    "987-654-321,350000,320000,Comparable properties assessed lower\n" +
-                    "555-123-456,275000,250000,Assessment exceeds market value";
-                  const blob = new Blob([template], { type: 'text/csv' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'appeal_import_template.csv';
-                  a.click();
-                  URL.revokeObjectURL(url);
-                  toast.success("Template downloaded");
-                }}
-              >
-                Download Template
-              </Button>
+  return (
+    <>
+      {/* Wrapper to handle backdrop clicks */}
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center"
+        onClick={(e) => {
+          // Close dialog if clicking outside the dialog content
+          if (e.target === e.currentTarget) {
+            onOpenChange(false);
+          }
+        }}
+      >
+        {/* Dialog Content */}
+        <div 
+          className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-background border border-border rounded-lg shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">Bulk Appeal Import</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Upload a CSV file with columns: parcelId, currentValue, appealedValue, reason, hearingDate (optional)
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Input
-                id="csv-file"
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                disabled={importing}
-              />
-              <Upload className="w-4 h-4 text-muted-foreground" />
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="w-5 h-5" />
+            </Button>
           </div>
 
-          {parsedAppeals.length > 0 && (
-            <>
-              <div className="flex items-center gap-4 text-sm">
-                <Badge variant="outline" className="gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
-                  {validCount} valid
-                </Badge>
-                {errorCount > 0 && (
-                  <Badge variant="destructive" className="gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errorCount} errors
-                  </Badge>
-                )}
+          {/* File Input */}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="csv-file">CSV File</Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  id="csv-file"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  className="flex-1"
+                />
+                <Button variant="outline" asChild>
+                  <a href="/templates/appeals_template.csv" download>
+                    Download Template
+                  </a>
+                </Button>
               </div>
+            </div>
 
-              <div className="border rounded-md max-h-[400px] overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">Row</TableHead>
-                      <TableHead>Parcel ID</TableHead>
-                      <TableHead>Current Value</TableHead>
-                      <TableHead>Appealed Value</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {parsedAppeals.map((appeal, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-mono text-xs">{appeal.rowNumber}</TableCell>
-                        <TableCell className="font-mono">{appeal.parcelId}</TableCell>
-                        <TableCell>${appeal.currentValue.toLocaleString()}</TableCell>
-                        <TableCell>${appeal.appealedValue.toLocaleString()}</TableCell>
-                        <TableCell className="max-w-xs truncate">{appeal.reason}</TableCell>
-                        <TableCell>
-                          {appeal.errors.length === 0 ? (
-                            <Badge variant="outline" className="gap-1">
-                              <CheckCircle2 className="w-3 h-3 text-green-500" />
-                              Valid
-                            </Badge>
-                          ) : (
-                            <div className="space-y-1">
-                              {appeal.errors.map((error, i) => (
-                                <Badge key={i} variant="destructive" className="gap-1 text-xs">
-                                  <AlertCircle className="w-3 h-3" />
-                                  {error}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </TableCell>
+            {/* Preview Table */}
+            {parsedAppeals.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Badge variant="default">{validCount} valid</Badge>
+                  {errorCount > 0 && <Badge variant="destructive">{errorCount} errors</Badge>}
+                </div>
+
+                <div className="border rounded-lg max-h-96 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Row</TableHead>
+                        <TableHead>Parcel ID</TableHead>
+                        <TableHead>Current Value</TableHead>
+                        <TableHead>Appealed Value</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead>Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {parsedAppeals.map((appeal, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{index + 2}</TableCell>
+                          <TableCell>{appeal.parcelId || '-'}</TableCell>
+                          <TableCell>${appeal.currentValue.toLocaleString()}</TableCell>
+                          <TableCell>${appeal.appealedValue.toLocaleString()}</TableCell>
+                          <TableCell className="max-w-xs truncate">{appeal.reason || '-'}</TableCell>
+                          <TableCell>
+                            {appeal.errors.length === 0 ? (
+                              <Badge variant="default">Valid</Badge>
+                            ) : (
+                              <Badge variant="destructive" title={appeal.errors.join(', ')}>
+                                {appeal.errors.length} errors
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
 
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setFile(null);
-                    setParsedAppeals([]);
-                  }}
-                  disabled={importing}
-                >
-                  Clear
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    console.log('[BulkImport] Import button clicked!');
-                    handleImport();
-                  }}
-                  disabled={validCount === 0 || importing}
-                >
-                  {importing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Import {validCount} Appeals
-                </Button>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFile(null);
+                      setParsedAppeals([]);
+                    }}
+                    disabled={importing}
+                  >
+                    Clear
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      console.log('[BulkImport] Native button clicked!');
+                      handleImport();
+                    }}
+                    disabled={validCount === 0 || importing}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                  >
+                    {importing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Import {validCount} Appeals
+                  </button>
+                </div>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+      
+      {/* Backdrop - Use pointer-events-none so clicks pass through to dialog */}
+      <div 
+        className="fixed inset-0 bg-black/50 z-40 pointer-events-none"
+      />
+    </>
   );
 }

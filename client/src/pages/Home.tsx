@@ -171,6 +171,58 @@ export default function Home() {
           </Card>
         </div>
 
+        {/* Recent Appeals Widget */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-[#00FFFF]" />
+              Recent Appeals
+            </CardTitle>
+            <CardDescription>Property tax appeal status overview</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Status Counts */}
+              <div className="grid grid-cols-5 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-xs text-muted-foreground">Pending</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-xs text-muted-foreground">In Review</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-xs text-muted-foreground">Hearing</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-xs text-muted-foreground">Resolved</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-xs text-muted-foreground">Withdrawn</div>
+                </div>
+              </div>
+              
+              {/* Placeholder for Recharts Sparkline */}
+              <div className="h-16 bg-muted/20 rounded flex items-center justify-center text-xs text-muted-foreground">
+                Trend visualization (Recharts sparkline) - Coming soon
+              </div>
+              
+              <div className="flex justify-end">
+                <Link href="/appeals">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    View All Appeals
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Suite Quick-Access Cards */}
         <div>
           <h2 className="text-xl font-medium tracking-tight text-foreground mb-4">
