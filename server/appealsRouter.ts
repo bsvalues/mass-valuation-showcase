@@ -8,6 +8,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
 import { appeals } from "../drizzle/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
+import { sendAppealStatusChangeEmail } from "./emailNotifications";
 
 export const appealsRouter = router({
   /**
@@ -127,7 +128,24 @@ export const appealsRouter = router({
       if (updates.hearingDate) updateData.hearingDate = new Date(updates.hearingDate);
       if (updates.resolutionDate) updateData.resolutionDate = new Date(updates.resolutionDate);
       
+      // Get current appeal data before update
+      const currentAppeal = await db.select().from(appeals).where(eq(appeals.id, id)).limit(1);
+      const previousStatus = currentAppeal[0]?.status;
+      
       await db.update(appeals).set(updateData).where(eq(appeals.id, id));
+      
+      // Send email notification if status changed
+      if (updates.status && previousStatus && updates.status !== previousStatus) {
+        const appeal = currentAppeal[0];
+        await sendAppealStatusChangeEmail({
+          parcelId: appeal.parcelId,
+          previousStatus,
+          newStatus: updates.status,
+          appealDate: appeal.appealDate.toString(),
+          currentAssessedValue: appeal.currentAssessedValue,
+          appealedValue: appeal.appealedValue,
+        });
+      }
       
       return {
         success: true,
@@ -232,5 +250,21 @@ export const appealsRouter = router({
         date: row.date,
         count: Number(row.count)
       }));
+    }),
+
+  /**
+   * Get timeline events for an appeal
+   */
+  getTimeline: publicProcedure
+    .input(z.object({
+      appealId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // For now, return empty array since appealTimeline table doesn't exist yet
+      // Once migration is run, this will query the appealTimeline table
+      return [];
     }),
 });

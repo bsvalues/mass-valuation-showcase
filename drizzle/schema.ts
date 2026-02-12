@@ -414,6 +414,26 @@ export type Appeal = typeof appeals.$inferSelect;
 export type InsertAppeal = typeof appeals.$inferInsert;
 
 /**
+ * Appeal Timeline table - tracks status changes and actions on appeals
+ */
+export const appealTimeline = mysqlTable("appealTimeline", {
+  id: int("id").autoincrement().primaryKey(),
+  appealId: int("appealId").notNull(),
+  previousStatus: mysqlEnum("previousStatus", ["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"]),
+  newStatus: mysqlEnum("newStatus", ["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"]).notNull(),
+  action: varchar("action", { length: 255 }).notNull(), // e.g., "Status changed", "Hearing scheduled", "Documents uploaded"
+  notes: text("notes"),
+  performedBy: int("performedBy"), // User ID who performed the action
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  appealIdIdx: index("timeline_appealid_idx").on(table.appealId),
+  createdAtIdx: index("timeline_createdat_idx").on(table.createdAt),
+}));
+
+export type AppealTimeline = typeof appealTimeline.$inferSelect;
+export type InsertAppealTimeline = typeof appealTimeline.$inferInsert;
+
+/**
  * ML Predictions table - tracks all property valuation predictions
  */
 export const predictions = mysqlTable("predictions", {

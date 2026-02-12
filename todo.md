@@ -2549,3 +2549,9 @@
 - [ ] Wire status count clicks to open modal with filtered data
 - [ ] Test sparkline visualization with real data across all date ranges
 - [x] Implement export appeals report functionality (PDF/CSV)
+
+## New Features (2026-02-12 - Timeline & Notifications)
+- [ ] Populate 20-30 sample appeals with realistic data
+- [x] Create appeal timeline schema and migration
+- [x] Build timeline tracking component
+- [x] Implement email notification system for status changes
