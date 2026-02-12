@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,10 +25,15 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 export default function Home() {
   const { user, loading, error, isAuthenticated } = useAuth();
   const { systemResonance, isRevalRunning } = useGlobalSimulation();
+  
+  // Fetch appeals status counts and trend data
+  const { data: statusCounts } = trpc.appeals.getStatusCounts.useQuery();
+  const { data: trendData } = trpc.appeals.getTrendData.useQuery();
 
   const suiteCards = [
     {
@@ -185,30 +191,46 @@ export default function Home() {
               {/* Status Counts */}
               <div className="grid grid-cols-5 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-2xl font-bold text-foreground">{statusCounts?.pending ?? 0}</div>
                   <div className="text-xs text-muted-foreground">Pending</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-2xl font-bold text-foreground">{statusCounts?.in_review ?? 0}</div>
                   <div className="text-xs text-muted-foreground">In Review</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-2xl font-bold text-foreground">{statusCounts?.hearing_scheduled ?? 0}</div>
                   <div className="text-xs text-muted-foreground">Hearing</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-2xl font-bold text-foreground">{statusCounts?.resolved ?? 0}</div>
                   <div className="text-xs text-muted-foreground">Resolved</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">0</div>
+                  <div className="text-2xl font-bold text-foreground">{statusCounts?.withdrawn ?? 0}</div>
                   <div className="text-xs text-muted-foreground">Withdrawn</div>
                 </div>
               </div>
               
-              {/* Placeholder for Recharts Sparkline */}
-              <div className="h-16 bg-muted/20 rounded flex items-center justify-center text-xs text-muted-foreground">
-                Trend visualization (Recharts sparkline) - Coming soon
+              {/* Recharts Sparkline */}
+              <div className="h-16">
+                {trendData && trendData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={trendData}>
+                      <Line 
+                        type="monotone" 
+                        dataKey="count" 
+                        stroke="#00FFFF" 
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full bg-muted/20 rounded flex items-center justify-center text-xs text-muted-foreground">
+                    No trend data available
+                  </div>
+                )}
               </div>
               
               <div className="flex justify-end">

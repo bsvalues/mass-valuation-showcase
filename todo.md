@@ -2516,3 +2516,17 @@
 - [ ] Add to Home page dashboard
 - [ ] Style with TerraForge cyan theme
 - [ ] Test with real appeals data
+
+## 📊 Appeals Dashboard & Bulk Import Improvements (2026-02-12)
+
+- [x] Add tRPC procedure to fetch appeals status counts
+- [x] Add tRPC procedure to fetch appeals trend data for sparkline
+- [x] Connect home page appeals widget to live data via tRPC
+- [x] Implement Recharts sparkline visualization for appeal volume trends
+- [x] Create dedicated bulk import page at /appeals/import
+- [x] Add drag-drop CSV upload functionality to bulk import page
+- [x] Wire bulk import page to existing appeals.create tRPC mutation
+- [x] Add route for /appeals/import in App.tsx
+- [ ] Test appeals widget live data updates
+- [ ] Test Recharts sparkline rendering
+- [ ] Test bulk import page CSV upload and import

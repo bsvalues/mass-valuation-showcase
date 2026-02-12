@@ -36,6 +36,7 @@ import QARatioStudies from "./pages/QARatioStudies";
 import WASalesIngestion from "./pages/WASalesIngestion";
 import MLTraining from "./pages/MLTraining";
 import AppealsManagement from "./pages/AppealsManagement";
+import BulkAppealImportPage from "./pages/BulkAppealImportPage";
 
 
 function Router() {
@@ -62,6 +63,7 @@ function Router() {
       <Route path={"/wa-sales-ingestion"} component={WASalesIngestion} />
       <Route path={"/ml-training"} component={MLTraining} />
       <Route path={"/appeals"} component={AppealsManagement} />
+      <Route path={"/appeals/import"} component={BulkAppealImportPage} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />

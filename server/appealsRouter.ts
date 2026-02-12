@@ -7,7 +7,7 @@ import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
 import { appeals } from "../drizzle/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql, gte } from "drizzle-orm";
 
 export const appealsRouter = router({
   /**
@@ -169,5 +169,64 @@ export const appealsRouter = router({
       return {
         success: true,
       };
+    }),
+  
+  /**
+   * Get status counts for dashboard widget
+   */
+  getStatusCounts: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Count appeals by status
+      const results = await db.select({
+        status: appeals.status,
+        count: sql<number>`count(*)`
+      })
+      .from(appeals)
+      .groupBy(appeals.status);
+      
+      // Convert to object with all statuses (default to 0)
+      const counts = {
+        pending: 0,
+        in_review: 0,
+        hearing_scheduled: 0,
+        resolved: 0,
+        withdrawn: 0,
+      };
+      
+      results.forEach(row => {
+        counts[row.status as keyof typeof counts] = Number(row.count);
+      });
+      
+      return counts;
+    }),
+  
+  /**
+   * Get trend data for sparkline (last 30 days)
+   */
+  getTrendData: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Get appeals created in last 30 days, grouped by date
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const results = await db.select({
+        date: sql<string>`DATE(${appeals.createdAt})`,
+        count: sql<number>`count(*)`
+      })
+      .from(appeals)
+      .where(gte(appeals.createdAt, thirtyDaysAgo))
+      .groupBy(sql`DATE(${appeals.createdAt})`)
+      .orderBy(sql`DATE(${appeals.createdAt})`);
+      
+      return results.map(row => ({
+        date: row.date,
+        count: Number(row.count)
+      }));
     }),
 });
