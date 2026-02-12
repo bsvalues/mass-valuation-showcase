@@ -124,9 +124,7 @@ def engineer_features(data):
         # Encode property type
         prop_type_encoded = property_type_encoding.get(property_type, 0)
         
-        # Derived features
-        price_per_sqft = sale_price / square_feet if square_feet > 0 else 0
-        
+        # Feature vector (6 features)
         feature_vector = [
             square_feet,
             year_built,
@@ -134,7 +132,6 @@ def engineer_features(data):
             prop_type_encoded,
             sale_year,
             age,
-            price_per_sqft,
         ]
         
         X.append(feature_vector)

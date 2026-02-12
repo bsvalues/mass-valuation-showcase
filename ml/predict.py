@@ -17,7 +17,8 @@ def load_model(model_path):
 def prepare_features(property_data):
     """
     Prepare feature vector from property data
-    Expected fields: squareFeet, yearBuilt, bedrooms, propertyType, saleYear, basementSqFt, acres, age
+    Expected fields: squareFeet, yearBuilt, bedrooms, propertyType, saleYear
+    Model uses 6 features: squareFeet, yearBuilt, bedrooms, propertyType (encoded), saleYear, age
     """
     property_type_encoding = {
         '11': 1, '12': 2, '13': 3, '14': 4, '18': 5,
@@ -31,23 +32,18 @@ def prepare_features(property_data):
     bedrooms = property_data.get('bedrooms', 0)
     property_type = property_data.get('propertyType', '11')
     sale_year = property_data.get('saleYear', current_year)
-    basement_sqft = property_data.get('basementSqFt', 0)
-    acres = property_data.get('acres', 0)
     age = property_data.get('age', current_year - year_built)
     
     prop_type_encoded = property_type_encoding.get(property_type, 0)
-    total_sqft = square_feet + basement_sqft
     
+    # Feature vector (6 features) - matches training script
     return [
         square_feet,
         year_built,
         bedrooms,
         prop_type_encoded,
         sale_year,
-        basement_sqft,
-        acres,
         age,
-        total_sqft,
     ]
 
 def predict_single(model, property_data):
