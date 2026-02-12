@@ -2612,3 +2612,30 @@
 - [x] Add value adjustment distribution bar chart
 - [x] Integrate Recharts for all visualizations
 - [x] Add route to App.tsx navigation
+
+
+## 🔄 Appeal System Enhancements (In Progress)
+
+### Analytics Data Integration
+- [x] Create tRPC query for resolution time metrics
+- [x] Create tRPC query for success rate by property type
+- [x] Create tRPC query for value adjustment distribution
+- [x] Create tRPC query for status distribution
+- [x] Update AppealAnalytics component to use real data
+- [x] Remove mock data from analytics dashboard
+
+### S3 Document Upload
+- [x] Implement file upload endpoint in tRPC router
+- [x] Integrate storagePut() helper for S3 storage
+- [x] Update uploadDocument mutation with S3 integration
+- [x] Update AppealDocuments component to handle real uploads
+- [ ] Test file upload with various file types
+- [ ] Verify file preview and download functionality
+
+### Email Templates
+- [x] Create HTML email template for status change notifications
+- [x] Create HTML email template for new appeal submissions
+- [x] Create HTML email template for hearing scheduled
+- [x] Add TerraForge branding to email templates
+- [x] Integrate templates into notification system
+- [ ] Test email rendering across email clients

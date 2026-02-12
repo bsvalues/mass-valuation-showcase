@@ -1,72 +1,63 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { TrendingUp, Clock, CheckCircle2, DollarSign } from "lucide-react";
+import { TrendingUp, Clock, CheckCircle2, DollarSign, Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export default function AppealAnalytics() {
-  // Mock data for analytics (replace with real tRPC queries after migration)
-  const resolutionTimeData = [
-    { month: "Jan", avgDays: 45 },
-    { month: "Feb", avgDays: 42 },
-    { month: "Mar", avgDays: 38 },
-    { month: "Apr", avgDays: 41 },
-    { month: "May", avgDays: 36 },
-    { month: "Jun", avgDays: 34 },
-  ];
+  // Fetch real data from tRPC
+  const { data: resolutionTimeData, isLoading: loadingResolution } = trpc.appeals.getResolutionTimeTrend.useQuery();
+  const { data: successRateData, isLoading: loadingSuccess } = trpc.appeals.getSuccessRateByType.useQuery();
+  const { data: valueAdjustmentData, isLoading: loadingValue } = trpc.appeals.getValueAdjustmentDistribution.useQuery();
+  const { data: kpiData, isLoading: loadingKPIs } = trpc.appeals.getAnalyticsKPIs.useQuery();
+  const { data: statusCounts } = trpc.appeals.getStatusCounts.useQuery();
 
-  const successRateByType = [
-    { propertyType: "Residential", successRate: 68, total: 145 },
-    { propertyType: "Commercial", successRate: 52, total: 89 },
-    { propertyType: "Industrial", successRate: 45, total: 34 },
-    { propertyType: "Agricultural", successRate: 71, total: 28 },
-  ];
+  // Status distribution with colors
+  const statusDistribution = statusCounts ? [
+    { status: "Pending", count: statusCounts.pending, color: "#f59e0b" },
+    { status: "In Review", count: statusCounts.in_review, color: "#3b82f6" },
+    { status: "Hearing", count: statusCounts.hearing_scheduled, color: "#8b5cf6" },
+    { status: "Resolved", count: statusCounts.resolved, color: "#10b981" },
+    { status: "Withdrawn", count: statusCounts.withdrawn, color: "#6b7280" },
+  ] : [];
 
-  const valueAdjustmentData = [
-    { range: "$0-$10K", count: 45 },
-    { range: "$10K-$25K", count: 78 },
-    { range: "$25K-$50K", count: 52 },
-    { range: "$50K-$100K", count: 28 },
-    { range: "$100K+", count: 12 },
-  ];
+  const formatCurrency = (value: number) => {
+    if (value >= 1000000) {
+      return `$${(value / 1000000).toFixed(1)}M`;
+    }
+    return `$${(value / 1000).toFixed(0)}K`;
+  };
 
-  const statusDistribution = [
-    { status: "Pending", count: 42, color: "#f59e0b" },
-    { status: "In Review", count: 38, color: "#3b82f6" },
-    { status: "Hearing", count: 15, color: "#8b5cf6" },
-    { status: "Resolved", count: 89, color: "#10b981" },
-    { status: "Withdrawn", count: 12, color: "#6b7280" },
-  ];
-
-  const kpiData = [
+  const kpiCards = kpiData ? [
     {
       title: "Average Resolution Time",
-      value: "38 days",
-      change: "-12%",
+      value: `${kpiData.avgResolutionDays} days`,
+      change: "-12%", // TODO: Calculate actual change from previous period
       icon: Clock,
-      trend: "down",
+      trend: "down" as const,
     },
     {
       title: "Overall Success Rate",
-      value: "64%",
-      change: "+5%",
+      value: `${kpiData.successRate}%`,
+      change: "+5%", // TODO: Calculate actual change
       icon: CheckCircle2,
-      trend: "up",
+      trend: "up" as const,
     },
     {
       title: "Total Value Adjusted",
-      value: "$8.2M",
-      change: "+18%",
+      value: formatCurrency(kpiData.totalValueAdjusted),
+      change: "+18%", // TODO: Calculate actual change
       icon: DollarSign,
-      trend: "up",
+      trend: "up" as const,
     },
     {
       title: "Appeals This Month",
-      value: "42",
-      change: "+8%",
+      value: kpiData.appealsThisMonth.toString(),
+      change: "+8%", // TODO: Calculate actual change
       icon: TrendingUp,
-      trend: "up",
+      trend: "up" as const,
     },
-  ];
+  ] : [];
 
   return (
     <DashboardLayout>
@@ -80,25 +71,31 @@ export default function AppealAnalytics() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpiData.map((kpi) => {
-            const Icon = kpi.icon;
-            return (
-              <Card key={kpi.title}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{kpi.value}</div>
-                  <p className={`text-xs ${kpi.trend === "up" ? "text-green-500" : "text-red-500"} flex items-center mt-1`}>
-                    {kpi.change} from last month
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {loadingKPIs ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {kpiCards.map((kpi) => {
+              const Icon = kpi.icon;
+              return (
+                <Card key={kpi.title}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{kpi.value}</div>
+                    <p className={`text-xs ${kpi.trend === "up" ? "text-green-500" : "text-red-500"} flex items-center mt-1`}>
+                      {kpi.change} from last month
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         {/* Charts Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -109,25 +106,35 @@ export default function AppealAnalytics() {
               <CardDescription>Days to resolve appeals over time</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={resolutionTimeData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="avgDays" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    name="Avg Days"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {loadingResolution ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : resolutionTimeData && resolutionTimeData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={resolutionTimeData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="avgDays" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      name="Avg Days"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  No resolution data available yet
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -138,27 +145,33 @@ export default function AppealAnalytics() {
               <CardDescription>Current appeal status breakdown</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statusDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ status, count }) => `${status}: ${count}`}
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {statusDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {statusDistribution.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={statusDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ status, count }) => `${status}: ${count}`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="count"
+                    >
+                      {statusDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  No appeals data available yet
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -172,19 +185,29 @@ export default function AppealAnalytics() {
               <CardDescription>Percentage of successful appeals by property classification</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={successRateByType}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="propertyType" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
-                  />
-                  <Legend />
-                  <Bar dataKey="successRate" fill="hsl(var(--primary))" name="Success Rate %" />
-                </BarChart>
-              </ResponsiveContainer>
+              {loadingSuccess ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : successRateData && successRateData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={successRateData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="propertyType" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                    />
+                    <Legend />
+                    <Bar dataKey="successRate" fill="hsl(var(--primary))" name="Success Rate %" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  No property type data available yet
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -195,19 +218,29 @@ export default function AppealAnalytics() {
               <CardDescription>Number of appeals by value reduction amount</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={valueAdjustmentData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="range" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
-                  />
-                  <Legend />
-                  <Bar dataKey="count" fill="#10b981" name="Number of Appeals" />
-                </BarChart>
-              </ResponsiveContainer>
+              {loadingValue ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : valueAdjustmentData && valueAdjustmentData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={valueAdjustmentData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="range" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                    />
+                    <Legend />
+                    <Bar dataKey="count" fill="#10b981" name="Number of Appeals" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  No value adjustment data available yet
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

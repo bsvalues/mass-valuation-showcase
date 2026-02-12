@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Upload, Download, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { uploadFileToS3 } from "@/lib/uploadFile";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface AppealDocumentsProps {
   appealId: number;
@@ -13,6 +15,7 @@ interface AppealDocumentsProps {
 export function AppealDocuments({ appealId }: AppealDocumentsProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   
   const { data: documents, isLoading, refetch } = trpc.appeals.getDocuments.useQuery({ appealId });
   const uploadDocument = trpc.appeals.uploadDocument.useMutation({
@@ -45,17 +48,29 @@ export function AppealDocuments({ appealId }: AppealDocumentsProps) {
       return;
     }
     
+    if (!user) {
+      toast.error("You must be logged in to upload documents");
+      return;
+    }
+    
     setUploading(true);
     
     try {
-      // In a real implementation, this would:
-      // 1. Upload file to S3 using storagePut()
-      // 2. Get the S3 URL and key
-      // 3. Call uploadDocument mutation with metadata
+      // Upload file to S3
+      const { url, key } = await uploadFileToS3(file);
       
-      // For now, show error since backend isn't fully implemented
-      toast.error("Document upload requires database migration. Run pnpm db:push first.");
+      // Save document metadata to database
+      await uploadDocument.mutateAsync({
+        appealId,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        fileKey: key,
+        fileUrl: url,
+        uploadedBy: user.id,
+      });
     } catch (error: any) {
+      console.error('[AppealDocuments] Upload error:', error);
       toast.error(`Upload failed: ${error.message}`);
     } finally {
       setUploading(false);

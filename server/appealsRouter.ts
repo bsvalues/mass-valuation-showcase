@@ -377,13 +377,19 @@ export const appealsRouter = router({
       const db = await getDb();
       if (!db) throw new Error('Database not available');
       
-      // For now, return empty array since appealDocuments table doesn't exist yet
-      // Once migration is run, this will query the appealDocuments table
-      return [];
+      const { appealDocuments } = await import('../drizzle/schema');
+      
+      const results = await db.select()
+        .from(appealDocuments)
+        .where(eq(appealDocuments.appealId, input.appealId))
+        .orderBy(desc(appealDocuments.createdAt));
+      
+      return results;
     }),
 
   /**
    * Upload document for an appeal
+   * Client should first upload file to S3, then call this with metadata
    */
   uploadDocument: publicProcedure
     .input(z.object({
@@ -393,14 +399,28 @@ export const appealsRouter = router({
       fileType: z.string(),
       fileKey: z.string(),
       fileUrl: z.string(),
+      uploadedBy: z.number(),
     }))
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error('Database not available');
       
-      // For now, throw error since appealDocuments table doesn't exist yet
-      // Once migration is run, this will insert into appealDocuments table
-      throw new Error('Documents feature requires database migration. Run pnpm db:push first.');
+      const { appealDocuments } = await import('../drizzle/schema');
+      
+      const result = await db.insert(appealDocuments).values({
+        appealId: input.appealId,
+        fileName: input.fileName,
+        fileSize: input.fileSize,
+        fileType: input.fileType,
+        fileKey: input.fileKey,
+        fileUrl: input.fileUrl,
+        uploadedBy: input.uploadedBy,
+      });
+      
+      return {
+        success: true,
+        id: Number((result as any).insertId),
+      };
     }),
 
   /**
@@ -414,8 +434,158 @@ export const appealsRouter = router({
       const db = await getDb();
       if (!db) throw new Error('Database not available');
       
-      // For now, throw error since appealDocuments table doesn't exist yet
-      // Once migration is run, this will delete from appealDocuments table
-      throw new Error('Documents feature requires database migration. Run pnpm db:push first.');
+      const { appealDocuments } = await import('../drizzle/schema');
+      
+      await db.delete(appealDocuments)
+        .where(eq(appealDocuments.id, input.documentId));
+      
+      return { success: true };
+    }),
+
+  /**
+   * Get analytics: resolution time trend (monthly average)
+   */
+  getResolutionTimeTrend: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Get average resolution time per month for last 6 months
+      const results = await db.select({
+        month: sql<string>`DATE_FORMAT(${appeals.resolutionDate}, '%b')`,
+        avgDays: sql<number>`AVG(DATEDIFF(${appeals.resolutionDate}, ${appeals.appealDate}))`
+      })
+      .from(appeals)
+      .where(and(
+        sql`${appeals.resolutionDate} IS NOT NULL`,
+        gte(appeals.resolutionDate, sql`DATE_SUB(NOW(), INTERVAL 6 MONTH)`)
+      ))
+      .groupBy(sql`DATE_FORMAT(${appeals.resolutionDate}, '%Y-%m')`)
+      .orderBy(sql`DATE_FORMAT(${appeals.resolutionDate}, '%Y-%m')`);
+      
+      return results.map(row => ({
+        month: row.month,
+        avgDays: Math.round(Number(row.avgDays) || 0)
+      }));
+    }),
+
+  /**
+   * Get analytics: success rate by property type
+   */
+  getSuccessRateByType: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Join with parcels to get property type, calculate success rate
+      const { parcels } = await import('../drizzle/schema');
+      
+      const results = await db.select({
+        propertyType: parcels.propertyType,
+        total: sql<number>`COUNT(*)`,
+        successful: sql<number>`SUM(CASE WHEN ${appeals.status} = 'resolved' AND ${appeals.finalValue} < ${appeals.currentAssessedValue} THEN 1 ELSE 0 END)`
+      })
+      .from(appeals)
+      .leftJoin(parcels, eq(appeals.parcelId, parcels.parcelId))
+      .where(sql`${parcels.propertyType} IS NOT NULL`)
+      .groupBy(parcels.propertyType);
+      
+      return results.map(row => ({
+        propertyType: row.propertyType || 'Unknown',
+        total: Number(row.total),
+        successRate: row.total > 0 ? Math.round((Number(row.successful) / Number(row.total)) * 100) : 0
+      }));
+    }),
+
+  /**
+   * Get analytics: value adjustment distribution
+   */
+  getValueAdjustmentDistribution: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Calculate value reduction ranges
+      const results = await db.select({
+        range: sql<string>`CASE
+          WHEN (${appeals.currentAssessedValue} - ${appeals.finalValue}) < 10000 THEN '$0-$10K'
+          WHEN (${appeals.currentAssessedValue} - ${appeals.finalValue}) < 25000 THEN '$10K-$25K'
+          WHEN (${appeals.currentAssessedValue} - ${appeals.finalValue}) < 50000 THEN '$25K-$50K'
+          WHEN (${appeals.currentAssessedValue} - ${appeals.finalValue}) < 100000 THEN '$50K-$100K'
+          ELSE '$100K+'
+        END`,
+        count: sql<number>`COUNT(*)`
+      })
+      .from(appeals)
+      .where(and(
+        sql`${appeals.finalValue} IS NOT NULL`,
+        sql`${appeals.finalValue} < ${appeals.currentAssessedValue}`
+      ))
+      .groupBy(sql`CASE
+        WHEN (${appeals.currentAssessedValue} - ${appeals.finalValue}) < 10000 THEN '$0-$10K'
+        WHEN (${appeals.currentAssessedValue} - ${appeals.finalValue}) < 25000 THEN '$10K-$25K'
+        WHEN (${appeals.currentAssessedValue} - ${appeals.finalValue}) < 50000 THEN '$25K-$50K'
+        WHEN (${appeals.currentAssessedValue} - ${appeals.finalValue}) < 100000 THEN '$50K-$100K'
+        ELSE '$100K+'
+      END`);
+      
+      return results.map(row => ({
+        range: row.range,
+        count: Number(row.count)
+      }));
+    }),
+
+  /**
+   * Get analytics: KPI metrics
+   */
+  getAnalyticsKPIs: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Average resolution time
+      const avgResolutionResult = await db.select({
+        avgDays: sql<number>`AVG(DATEDIFF(${appeals.resolutionDate}, ${appeals.appealDate}))`
+      })
+      .from(appeals)
+      .where(sql`${appeals.resolutionDate} IS NOT NULL`);
+      
+      // Overall success rate
+      const successRateResult = await db.select({
+        total: sql<number>`COUNT(*)`,
+        successful: sql<number>`SUM(CASE WHEN ${appeals.status} = 'resolved' AND ${appeals.finalValue} < ${appeals.currentAssessedValue} THEN 1 ELSE 0 END)`
+      })
+      .from(appeals)
+      .where(eq(appeals.status, 'resolved'));
+      
+      // Total value adjusted
+      const valueAdjustedResult = await db.select({
+        totalAdjusted: sql<number>`SUM(${appeals.currentAssessedValue} - ${appeals.finalValue})`
+      })
+      .from(appeals)
+      .where(and(
+        sql`${appeals.finalValue} IS NOT NULL`,
+        sql`${appeals.finalValue} < ${appeals.currentAssessedValue}`
+      ));
+      
+      // Appeals this month
+      const thisMonthResult = await db.select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(appeals)
+      .where(gte(appeals.createdAt, sql`DATE_SUB(NOW(), INTERVAL 1 MONTH)`));
+      
+      const avgDays = Math.round(Number(avgResolutionResult[0]?.avgDays) || 0);
+      const successRate = successRateResult[0] ? 
+        Math.round((Number(successRateResult[0].successful) / Number(successRateResult[0].total)) * 100) : 0;
+      const totalAdjusted = Number(valueAdjustedResult[0]?.totalAdjusted) || 0;
+      const thisMonthCount = Number(thisMonthResult[0]?.count) || 0;
+      
+      return {
+        avgResolutionDays: avgDays,
+        successRate,
+        totalValueAdjusted: totalAdjusted,
+        appealsThisMonth: thisMonthCount
+      };
     }),
 });

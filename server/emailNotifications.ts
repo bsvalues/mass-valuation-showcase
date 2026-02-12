@@ -4,6 +4,7 @@
  */
 
 import { notifyOwner } from "./_core/notification";
+import { getStatusChangeEmailHTML, getNewAppealEmailHTML } from "./emailTemplates";
 
 interface AppealNotificationData {
   parcelId: string;
@@ -29,7 +30,8 @@ export async function sendAppealStatusChangeEmail(data: AppealNotificationData):
 
   const statusMessage = statusMessages[data.newStatus as keyof typeof statusMessages] || "Your appeal status has been updated.";
 
-  const emailContent = `
+  // Generate plain text content for project owner notification
+  const plainTextContent = `
 Property Tax Appeal Status Update
 
 Parcel ID: ${data.parcelId}
@@ -40,27 +42,31 @@ Appealed Value: $${data.appealedValue.toLocaleString()}
 Status Update: ${data.previousStatus ? `${data.previousStatus.toUpperCase()} → ` : ""}${data.newStatus.toUpperCase()}
 
 ${statusMessage}
-
-${data.newStatus === "hearing_scheduled" ? "You will receive a separate notice with the hearing date, time, and location." : ""}
-${data.newStatus === "resolved" ? "Please check your account for the final determination and any value adjustments." : ""}
-
-If you have any questions, please contact the assessor's office.
-
----
-TerraForge Mass Valuation System
   `;
+  
+  // Generate branded HTML email for property owner
+  const htmlEmailContent = getStatusChangeEmailHTML({
+    appealId: 0, // TODO: Pass actual appeal ID
+    parcelId: data.parcelId,
+    oldStatus: data.previousStatus || "new",
+    newStatus: data.newStatus,
+    ownerEmail: data.ownerEmail,
+    currentAssessedValue: data.currentAssessedValue,
+    appealedValue: data.appealedValue,
+  });
 
   // Notify project owner (assessor/admin)
   const notified = await notifyOwner({
     title: `Appeal Status Change: ${data.parcelId}`,
-    content: emailContent,
+    content: plainTextContent,
   });
 
   // Send email to property owner if email is provided
   // In production, integrate with email service like SendGrid, AWS SES, etc.
   if (data.ownerEmail) {
     console.log(`[EmailNotification] Sending email to property owner: ${data.ownerEmail}`);
-    console.log(`[EmailNotification] Email content:`, emailContent);
+    console.log(`[EmailNotification] HTML email generated (${htmlEmailContent.length} chars)`);
+    // In production, send htmlEmailContent via email service
     // TODO: Integrate actual email service
     // await sendEmail({ to: data.ownerEmail, subject: `Appeal Status Update: ${data.parcelId}`, body: emailContent });
   }
