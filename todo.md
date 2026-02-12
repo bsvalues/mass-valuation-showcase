@@ -2362,3 +2362,42 @@
 - [x] Convert to CSV format with headers (Parcel ID, Appeal Date, Current Value, Appealed Value, Status, Reason)
 - [x] Trigger browser download with timestamped filename
 - [x] Add validation to show error toast when no appeals to export
+
+
+### Phase 35: Deploy ML Model (Completed)
+- [x] Create models directory in project root
+- [x] Copy trained model from /tmp to persistent storage (models/benton_county_model.pkl)
+- [x] Copy model metrics JSON to persistent storage (models/benton_county_model_metrics.json)
+- [x] Move model to expected location (ml/model.pkl, ml/model_metrics.json)
+- [x] Verified ML Training page loads deployed model
+- [x] Model info displays correctly (MAE: $11,700, R²: 0.7383, CV: 0.9664)
+- [x] Existing prediction interface works with deployed model
+- [x] Model deployment process documented
+
+### Phase 36: Improve Data Quality (Next)
+- [ ] Analyze current data completeness statistics
+- [ ] Identify parcels with missing yearBuilt/squareFeet
+- [ ] Research Benton County data sources for complete records
+- [ ] Create data quality improvement plan
+- [ ] Document data quality findings
+
+### Phase 37: Test Bulk Appeal Workflow (Next)
+- [ ] Create sample CSV with 5-10 test appeals
+- [ ] Test bulk import via UI
+- [ ] Verify appeals appear in kanban board
+- [ ] Test drag-and-drop status changes
+- [ ] Verify status updates persist
+- [ ] Test bulk export to CSV
+- [ ] Verify exported data matches imported data
+- [ ] Document workflow test results
+
+
+### Phase 38: Fix Bulk Import Button (Bug)
+- [ ] Debug why "Import 8 Appeals" button doesn't trigger handleImport function
+- [ ] Check browser console for JavaScript errors during import
+- [ ] Verify trpc.appeals.create mutation is properly configured
+- [ ] Test if mutation handler is being called
+- [ ] Add console.log statements to handleImport for debugging
+- [ ] Verify button is not disabled when it should be enabled
+- [ ] Test with single appeal to isolate issue
+- [ ] Fix event handler or mutation configuration
