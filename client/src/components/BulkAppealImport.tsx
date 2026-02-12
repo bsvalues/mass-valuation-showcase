@@ -259,8 +259,9 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
                 </Table>
               </div>
 
-              <div className="flex justify-end gap-2">
+              <form onSubmit={(e) => { e.preventDefault(); handleImport(); }} className="flex justify-end gap-2">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={() => {
                     setFile(null);
@@ -271,14 +272,13 @@ export function BulkAppealImport({ open, onOpenChange, onSuccess }: BulkAppealIm
                   Clear
                 </Button>
                 <Button
-                  type="button"
-                  onClick={handleImport}
+                  type="submit"
                   disabled={validCount === 0 || importing}
                 >
                   {importing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Import {validCount} Appeals
                 </Button>
-              </div>
+              </form>
             </>
           )}
         </div>

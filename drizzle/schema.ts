@@ -412,3 +412,28 @@ export const appeals = mysqlTable("appeals", {
 
 export type Appeal = typeof appeals.$inferSelect;
 export type InsertAppeal = typeof appeals.$inferInsert;
+
+/**
+ * ML Predictions table - tracks all property valuation predictions
+ */
+export const predictions = mysqlTable("predictions", {
+  id: int("id").autoincrement().primaryKey(),
+  parcelId: varchar("parcelId", { length: 64 }),
+  squareFeet: int("squareFeet").notNull(),
+  yearBuilt: int("yearBuilt").notNull(),
+  bedrooms: int("bedrooms").notNull(),
+  propertyType: varchar("propertyType", { length: 50 }).notNull(),
+  basementSqFt: int("basementSqFt"),
+  acres: float("acres"),
+  predictedValue: int("predictedValue").notNull(),
+  modelVersion: varchar("modelVersion", { length: 50 }),
+  userId: int("userId"), // User who requested the prediction
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  parcelIdIdx: index("prediction_parcelid_idx").on(table.parcelId),
+  userIdIdx: index("prediction_userid_idx").on(table.userId),
+  createdAtIdx: index("prediction_createdat_idx").on(table.createdAt),
+}));
+
+export type Prediction = typeof predictions.$inferSelect;
+export type InsertPrediction = typeof predictions.$inferInsert;

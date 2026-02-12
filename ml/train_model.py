@@ -188,8 +188,8 @@ def train_model(X, y, model_path):
         'trained_at': datetime.now().isoformat()
     }
     
-    # Save model
-    joblib.dump(model, model_path)
+    # Save model with pickle protocol 4 for compatibility
+    joblib.dump(model, model_path, protocol=4)
     print(f"Model saved to {model_path}")
     
     # Save metrics
