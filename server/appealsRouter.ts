@@ -204,23 +204,27 @@ export const appealsRouter = router({
     }),
   
   /**
-   * Get trend data for sparkline (last 30 days)
+   * Get trend data for sparkline
    */
   getTrendData: publicProcedure
-    .query(async () => {
+    .input(z.object({
+      dateRange: z.enum(["7", "30", "90"]).default("30"),
+    }))
+    .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error('Database not available');
       
-      // Get appeals created in last 30 days, grouped by date
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      // Get appeals created in specified date range, grouped by date
+      const daysAgo = parseInt(input.dateRange);
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysAgo);
       
       const results = await db.select({
         date: sql<string>`DATE_FORMAT(${appeals.createdAt}, '%Y-%m-%d')`,
         count: sql<number>`count(*)`
       })
       .from(appeals)
-      .where(gte(appeals.createdAt, thirtyDaysAgo))
+      .where(gte(appeals.createdAt, startDate))
       .groupBy(sql`DATE_FORMAT(${appeals.createdAt}, '%Y-%m-%d')`)
       .orderBy(sql`DATE_FORMAT(${appeals.createdAt}, '%Y-%m-%d')` );
       

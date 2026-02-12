@@ -24,16 +24,18 @@ import {
   Zap 
 } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
 import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 
 export default function Home() {
   const { user, loading, error, isAuthenticated } = useAuth();
   const { systemResonance, isRevalRunning } = useGlobalSimulation();
   
   // Fetch appeals status counts and trend data
+  const [dateRange, setDateRange] = useState<"7" | "30" | "90">("30");
   const { data: statusCounts } = trpc.appeals.getStatusCounts.useQuery();
-  const { data: trendData } = trpc.appeals.getTrendData.useQuery();
+  const { data: trendData } = trpc.appeals.getTrendData.useQuery({ dateRange });
 
   const suiteCards = [
     {
@@ -180,11 +182,41 @@ export default function Home() {
         {/* Recent Appeals Widget */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-[#00FFFF]" />
-              Recent Appeals
-            </CardTitle>
-            <CardDescription>Property tax appeal status overview</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-[#00FFFF]" />
+                  Recent Appeals
+                </CardTitle>
+                <CardDescription>Property tax appeal status overview</CardDescription>
+              </div>
+              <div className="flex gap-1">
+                <Button 
+                  size="sm" 
+                  variant={dateRange === "7" ? "default" : "outline"}
+                  onClick={() => setDateRange("7")}
+                  className="h-7 px-2 text-xs"
+                >
+                  7d
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={dateRange === "30" ? "default" : "outline"}
+                  onClick={() => setDateRange("30")}
+                  className="h-7 px-2 text-xs"
+                >
+                  30d
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={dateRange === "90" ? "default" : "outline"}
+                  onClick={() => setDateRange("90")}
+                  className="h-7 px-2 text-xs"
+                >
+                  90d
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -217,6 +249,18 @@ export default function Home() {
                 {trendData && trendData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={trendData}>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--popover))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '6px',
+                          padding: '8px 12px'
+                        }}
+                        labelStyle={{ color: 'hsl(var(--popover-foreground))', fontSize: '12px' }}
+                        itemStyle={{ color: '#00FFFF', fontSize: '12px' }}
+                        formatter={(value: number) => [`${value} appeals`, 'Count']}
+                        labelFormatter={(label: string) => `Date: ${label}`}
+                      />
                       <Line 
                         type="monotone" 
                         dataKey="count" 

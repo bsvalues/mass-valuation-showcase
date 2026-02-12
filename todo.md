@@ -2533,3 +2533,10 @@
 
 ## Bug Fixes (2026-02-12)
 - [x] Fix SQL query error in appeals.getTrendData - DATE() function causing GROUP BY/ORDER BY failure
+
+## Enhancements (2026-02-12)
+- [ ] Create test appeals CSV with sample data across multiple dates
+- [ ] Import test appeals data via bulk import page
+- [x] Add date range selector (7/30/90-day) to appeals widget
+- [x] Update getTrendData tRPC procedure to accept dateRange parameter
+- [x] Implement Recharts Tooltip component on sparkline
