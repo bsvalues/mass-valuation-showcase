@@ -333,7 +333,7 @@ export const appealsRouter = router({
     }),
 
   /**
-   * Get comments for an appeal
+   * Get comments for an appeal with author information
    */
   getComments: publicProcedure
     .input(z.object({
@@ -343,9 +343,24 @@ export const appealsRouter = router({
       const db = await getDb();
       if (!db) throw new Error('Database not available');
       
-      // For now, return empty array since appealComments table doesn't exist yet
-      // Once migration is run, this will query the appealComments table with author names
-      return [];
+      const { appealComments, users } = await import('../drizzle/schema');
+      
+      // Query comments with author information
+      const results = await db.select({
+        id: appealComments.id,
+        appealId: appealComments.appealId,
+        commentType: appealComments.commentType,
+        content: appealComments.content,
+        createdAt: appealComments.createdAt,
+        authorId: appealComments.authorId,
+        authorName: users.name,
+      })
+      .from(appealComments)
+      .leftJoin(users, eq(appealComments.authorId, users.id))
+      .where(eq(appealComments.appealId, input.appealId))
+      .orderBy(desc(appealComments.createdAt));
+      
+      return results;
     }),
 
   /**
@@ -356,14 +371,25 @@ export const appealsRouter = router({
       appealId: z.number(),
       commentType: z.enum(["internal", "owner_communication"]),
       content: z.string(),
+      authorId: z.number(),
     }))
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error('Database not available');
       
-      // For now, throw error since appealComments table doesn't exist yet
-      // Once migration is run, this will insert into appealComments table
-      throw new Error('Comments feature requires database migration. Run pnpm db:push first.');
+      const { appealComments } = await import('../drizzle/schema');
+      
+      const result = await db.insert(appealComments).values({
+        appealId: input.appealId,
+        commentType: input.commentType,
+        content: input.content,
+        authorId: input.authorId,
+      });
+      
+      return {
+        success: true,
+        id: Number((result as any).insertId),
+      };
     }),
 
   /**
@@ -440,6 +466,27 @@ export const appealsRouter = router({
         .where(eq(appealDocuments.id, input.documentId));
       
       return { success: true };
+    }),
+
+  /**
+   * Get all documents for multiple appeals (for bulk download)
+   */
+  getBulkDocuments: publicProcedure
+    .input(z.object({
+      appealIds: z.array(z.number()),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const { appealDocuments } = await import('../drizzle/schema');
+      
+      const results = await db.select()
+        .from(appealDocuments)
+        .where(sql`${appealDocuments.appealId} IN (${input.appealIds.join(',')})`)
+        .orderBy(desc(appealDocuments.createdAt));
+      
+      return results;
     }),
 
   /**

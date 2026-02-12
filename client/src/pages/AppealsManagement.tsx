@@ -291,25 +291,58 @@ export default function AppealsManagement() {
           </div>
           <div className="flex gap-2">
             {bulkUpdateMode && selectedAppeals.size > 0 && (
-              <select
-                className="border rounded px-3 py-2"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    bulkUpdateStatus.mutate({
-                      appealIds: Array.from(selectedAppeals),
-                      status: e.target.value as any,
-                    });
-                    e.target.value = "";
-                  }
-                }}
-              >
-                <option value="">Update {selectedAppeals.size} appeals...</option>
-                <option value="pending">Set to Pending</option>
-                <option value="in_review">Set to In Review</option>
-                <option value="hearing_scheduled">Set to Hearing Scheduled</option>
-                <option value="resolved">Set to Resolved</option>
-                <option value="withdrawn">Set to Withdrawn</option>
-              </select>
+              <>
+                <select
+                  className="border rounded px-3 py-2"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      bulkUpdateStatus.mutate({
+                        appealIds: Array.from(selectedAppeals),
+                        status: e.target.value as any,
+                      });
+                      e.target.value = "";
+                    }
+                  }}
+                >
+                  <option value="">Update {selectedAppeals.size} appeals...</option>
+                  <option value="pending">Set to Pending</option>
+                  <option value="in_review">Set to In Review</option>
+                  <option value="hearing_scheduled">Set to Hearing Scheduled</option>
+                  <option value="resolved">Set to Resolved</option>
+                  <option value="withdrawn">Set to Withdrawn</option>
+                </select>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const selectedAppealsList = appeals.filter(a => selectedAppeals.has(a.id));
+                    const headers = "Parcel ID,Appeal Date,Current Value,Appealed Value,Status,Reason";
+                    const rows = selectedAppealsList.map(appeal => 
+                      `"${appeal.parcelId}","${new Date(appeal.appealDate).toLocaleDateString()}",${appeal.currentAssessedValue},${appeal.appealedValue},"${appeal.status}","${appeal.appealReason || ''}"`
+                    );
+                    const csv = [headers, ...rows].join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `selected_appeals_${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success(`Exported ${selectedAppeals.size} selected appeals`);
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Selected
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    toast.info("Bulk document download coming soon - requires ZIP library integration");
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Docs
+                </Button>
+              </>
             )}
             <Button 
               variant={bulkUpdateMode ? "default" : "outline"}

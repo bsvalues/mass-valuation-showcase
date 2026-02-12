@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Send, User, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface AppealCommentsProps {
   appealId: number;
@@ -15,6 +16,7 @@ interface AppealCommentsProps {
 export function AppealComments({ appealId }: AppealCommentsProps) {
   const [newComment, setNewComment] = useState("");
   const [commentType, setCommentType] = useState<"internal" | "owner_communication">("internal");
+  const { user } = useAuth();
   
   const { data: comments, isLoading, refetch } = trpc.appeals.getComments.useQuery({ appealId });
   const addComment = trpc.appeals.addComment.useMutation({
@@ -34,10 +36,16 @@ export function AppealComments({ appealId }: AppealCommentsProps) {
       return;
     }
     
+    if (!user) {
+      toast.error("You must be logged in to add comments");
+      return;
+    }
+    
     addComment.mutate({
       appealId,
       commentType,
       content: newComment.trim(),
+      authorId: user.id,
     });
   };
 

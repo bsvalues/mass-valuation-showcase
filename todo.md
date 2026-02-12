@@ -2639,3 +2639,30 @@
 - [x] Add TerraForge branding to email templates
 - [x] Integrate templates into notification system
 - [ ] Test email rendering across email clients
+
+
+## 🚀 Advanced Appeal Features (In Progress)
+
+### Comments Functionality
+- [x] Implement getComments mutation to query appealComments table
+- [x] Implement addComment mutation with user authentication
+- [x] Update AppealComments component to use real tRPC data
+- [x] Add comment type toggle (internal vs owner communication)
+- [x] Test comment posting and retrieval
+
+### Timeline Visualization
+- [x] Create AppealTimeline component with vertical timeline design
+- [x] Fetch status transitions from appeals table
+- [x] Fetch document uploads from appealDocuments table
+- [x] Fetch comments from appealComments table
+- [x] Merge and sort all timeline events chronologically
+- [x] Add icons and styling for different event types
+
+### Bulk Operations
+- [x] Add multi-select checkboxes to appeals list
+- [x] Create bulk action toolbar with action buttons
+- [x] Implement batch status update mutation
+- [x] Implement batch document download functionality
+- [x] Implement CSV export for selected appeals
+- [x] Add select all / deselect all functionality
+- [x] Test bulk operations with multiple appeals
