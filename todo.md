@@ -2530,3 +2530,6 @@
 - [ ] Test appeals widget live data updates
 - [ ] Test Recharts sparkline rendering
 - [ ] Test bulk import page CSV upload and import
+
+## Bug Fixes (2026-02-12)
+- [x] Fix SQL query error in appeals.getTrendData - DATE() function causing GROUP BY/ORDER BY failure
