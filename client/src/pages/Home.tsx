@@ -25,8 +25,9 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
+import { AppealDetailModal } from "@/components/AppealDetailModal";
 import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
-import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
+import { LineChart, Line, Area, ResponsiveContainer, Tooltip } from "recharts";
 
 export default function Home() {
   const { user, loading, error, isAuthenticated } = useAuth();
@@ -34,8 +35,15 @@ export default function Home() {
   
   // Fetch appeals status counts and trend data
   const [dateRange, setDateRange] = useState<"7" | "30" | "90">("30");
+  const [appealModalOpen, setAppealModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<"pending" | "in_review" | "hearing_scheduled" | "resolved" | "withdrawn" | null>(null);
   const { data: statusCounts } = trpc.appeals.getStatusCounts.useQuery();
   const { data: trendData } = trpc.appeals.getTrendData.useQuery({ dateRange });
+
+  const handleStatusClick = (status: "pending" | "in_review" | "hearing_scheduled" | "resolved" | "withdrawn") => {
+    setSelectedStatus(status);
+    setAppealModalOpen(true);
+  };
 
   const suiteCards = [
     {
@@ -222,26 +230,41 @@ export default function Home() {
             <div className="space-y-4">
               {/* Status Counts */}
               <div className="grid grid-cols-5 gap-4">
-                <div className="text-center">
+                <button 
+                  onClick={() => handleStatusClick('pending')}
+                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
+                >
                   <div className="text-2xl font-bold text-foreground">{statusCounts?.pending ?? 0}</div>
                   <div className="text-xs text-muted-foreground">Pending</div>
-                </div>
-                <div className="text-center">
+                </button>
+                <button 
+                  onClick={() => handleStatusClick('in_review')}
+                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
+                >
                   <div className="text-2xl font-bold text-foreground">{statusCounts?.in_review ?? 0}</div>
                   <div className="text-xs text-muted-foreground">In Review</div>
-                </div>
-                <div className="text-center">
+                </button>
+                <button 
+                  onClick={() => handleStatusClick('hearing_scheduled')}
+                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
+                >
                   <div className="text-2xl font-bold text-foreground">{statusCounts?.hearing_scheduled ?? 0}</div>
                   <div className="text-xs text-muted-foreground">Hearing</div>
-                </div>
-                <div className="text-center">
+                </button>
+                <button 
+                  onClick={() => handleStatusClick('resolved')}
+                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
+                >
                   <div className="text-2xl font-bold text-foreground">{statusCounts?.resolved ?? 0}</div>
                   <div className="text-xs text-muted-foreground">Resolved</div>
-                </div>
-                <div className="text-center">
+                </button>
+                <button 
+                  onClick={() => handleStatusClick('withdrawn')}
+                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
+                >
                   <div className="text-2xl font-bold text-foreground">{statusCounts?.withdrawn ?? 0}</div>
                   <div className="text-xs text-muted-foreground">Withdrawn</div>
-                </div>
+                </button>
               </div>
               
               {/* Recharts Sparkline */}
@@ -249,6 +272,12 @@ export default function Home() {
                 {trendData && trendData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={trendData}>
+                      <defs>
+                        <linearGradient id="appealGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#00FFFF" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="#00FFFF" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--popover))', 
@@ -261,12 +290,13 @@ export default function Home() {
                         formatter={(value: number) => [`${value} appeals`, 'Count']}
                         labelFormatter={(label: string) => `Date: ${label}`}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="count" 
-                        stroke="#00FFFF" 
+                      <Area
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#00FFFF"
                         strokeWidth={2}
-                        dot={false}
+                        fill="url(#appealGradient)"
+                        fillOpacity={1}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -288,6 +318,13 @@ export default function Home() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Appeal Detail Modal */}
+        <AppealDetailModal 
+          open={appealModalOpen}
+          onOpenChange={setAppealModalOpen}
+          status={selectedStatus}
+        />
 
         {/* Suite Quick-Access Cards */}
         <div>

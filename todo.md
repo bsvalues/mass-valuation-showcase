@@ -2540,3 +2540,11 @@
 - [x] Add date range selector (7/30/90-day) to appeals widget
 - [x] Update getTrendData tRPC procedure to accept dateRange parameter
 - [x] Implement Recharts Tooltip component on sparkline
+
+## Appeals Enhancement (2026-02-12 Phase 2)
+- [ ] Generate 20-30 test appeals with varied dates (last 90 days) and statuses
+- [ ] Insert test appeals into database via tRPC mutation
+- [ ] Implement cyan gradient fill on sparkline using Recharts Area component
+- [ ] Create AppealDetailModal component with filtered appeals list
+- [ ] Wire status count clicks to open modal with filtered data
+- [ ] Test sparkline visualization with real data across all date ranges
