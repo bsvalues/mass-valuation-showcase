@@ -144,6 +144,7 @@ export const appealsRouter = router({
           appealDate: appeal.appealDate.toString(),
           currentAssessedValue: appeal.currentAssessedValue,
           appealedValue: appeal.appealedValue,
+          ownerEmail: appeal.ownerEmail || undefined,
         });
       }
       

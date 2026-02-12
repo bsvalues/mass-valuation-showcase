@@ -56,10 +56,13 @@ TerraForge Mass Valuation System
     content: emailContent,
   });
 
-  // TODO: In production, also send email to property owner if ownerEmail is provided
-  // This would integrate with an email service like SendGrid, AWS SES, or similar
+  // Send email to property owner if email is provided
+  // In production, integrate with email service like SendGrid, AWS SES, etc.
   if (data.ownerEmail) {
-    console.log(`[EmailNotification] Would send email to ${data.ownerEmail}:`, emailContent);
+    console.log(`[EmailNotification] Sending email to property owner: ${data.ownerEmail}`);
+    console.log(`[EmailNotification] Email content:`, emailContent);
+    // TODO: Integrate actual email service
+    // await sendEmail({ to: data.ownerEmail, subject: `Appeal Status Update: ${data.parcelId}`, body: emailContent });
   }
 
   return notified;

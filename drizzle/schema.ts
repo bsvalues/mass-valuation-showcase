@@ -400,6 +400,7 @@ export const appeals = mysqlTable("appeals", {
   countyName: varchar("countyName", { length: 100 }),
   filedBy: int("filedBy"), // User ID who filed the appeal
   assignedTo: int("assignedTo"), // User ID assigned to review
+  ownerEmail: varchar("ownerEmail", { length: 255 }), // Property owner email for notifications
   hearingDate: date("hearingDate"),
   resolutionDate: date("resolutionDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

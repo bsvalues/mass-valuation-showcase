@@ -37,6 +37,7 @@ import WASalesIngestion from "./pages/WASalesIngestion";
 import MLTraining from "./pages/MLTraining";
 import AppealsManagement from "./pages/AppealsManagement";
 import BulkAppealImportPage from "./pages/BulkAppealImportPage";
+import AppealAuditLog from "./pages/AppealAuditLog";
 
 
 function Router() {
@@ -64,6 +65,7 @@ function Router() {
       <Route path={"/ml-training"} component={MLTraining} />
       <Route path={"/appeals"} component={AppealsManagement} />
       <Route path={"/appeals/import"} component={BulkAppealImportPage} />
+      <Route path={"/appeals/audit-log"} component={AppealAuditLog} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />

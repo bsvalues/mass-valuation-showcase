@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Calendar, Clock, FileText, Save, X, Edit2 } from "lucide-react";
 import { format } from "date-fns";
+import { AppealTimeline } from "@/components/AppealTimeline";
 
 interface AppealDetailsDialogProps {
   appealId: number | null;
@@ -271,6 +272,13 @@ export function AppealDetailsDialog({ appealId, open, onOpenChange, onUpdate }: 
                 )}
               </div>
             </div>
+            
+            {/* Appeal Timeline */}
+            {!isEditing && appeal && (
+              <div className="pt-6 border-t">
+                <AppealTimeline appealId={appeal.id} />
+              </div>
+            )}
             
             {/* Action Buttons */}
             {isEditing && (
