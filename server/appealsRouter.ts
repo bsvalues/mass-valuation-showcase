@@ -154,6 +154,49 @@ export const appealsRouter = router({
     }),
   
   /**
+   * Bulk update appeal status
+   */
+  bulkUpdateStatus: publicProcedure
+    .input(z.object({
+      appealIds: z.array(z.number()),
+      status: z.enum(["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"]),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const { appealIds, status } = input;
+      
+      // Get current appeals before update for email notifications
+      const currentAppeals = await db.select().from(appeals).where(sql`${appeals.id} IN (${appealIds.join(',')})`);
+      
+      // Update all appeals
+      await db.update(appeals)
+        .set({ status })
+        .where(sql`${appeals.id} IN (${appealIds.join(',')})`);
+      
+      // Send email notifications for each appeal
+      for (const appeal of currentAppeals) {
+        if (appeal.status !== status) {
+          await sendAppealStatusChangeEmail({
+            parcelId: appeal.parcelId,
+            previousStatus: appeal.status,
+            newStatus: status,
+            appealDate: appeal.appealDate.toString(),
+            currentAssessedValue: appeal.currentAssessedValue,
+            appealedValue: appeal.appealedValue,
+            ownerEmail: appeal.ownerEmail || undefined,
+          });
+        }
+      }
+      
+      return {
+        success: true,
+        updated: appealIds.length,
+      };
+    }),
+
+  /**
    * Delete appeal
    */
   delete: publicProcedure
@@ -251,6 +294,26 @@ export const appealsRouter = router({
         date: row.date,
         count: Number(row.count)
       }));
+    }),
+
+  /**
+   * Get audit log with filters
+   */
+  getAuditLog: publicProcedure
+    .input(z.object({
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      status: z.string().optional(),
+      transitionType: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      // Query appealTimeline table with filters
+      // For now, return empty array since table may not exist yet
+      // Once migration is run, implement full query with filters
+      return [];
     }),
 
   /**

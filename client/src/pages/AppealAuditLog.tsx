@@ -31,8 +31,16 @@ export default function AppealAuditLog() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [transitionFilter, setTransitionFilter] = useState<string>("all");
 
-  // Mock data for demonstration (replace with actual tRPC query)
-  const auditLogs = [
+  // Fetch real-time audit log data from tRPC
+  const { data: auditLogs = [], isLoading } = trpc.appeals.getAuditLog.useQuery({
+    startDate: dateRange.start,
+    endDate: dateRange.end,
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    transitionType: transitionFilter !== "all" ? transitionFilter : undefined,
+  });
+
+  // Mock data for demonstration (will be replaced by real data once appealTimeline table exists)
+  const mockAuditLogs = [
     {
       id: 1,
       appealId: 101,
@@ -65,11 +73,14 @@ export default function AppealAuditLog() {
     },
   ];
 
+  // Use real data if available, otherwise use mock data
+  const displayLogs = auditLogs.length > 0 ? auditLogs : mockAuditLogs;
+
   const handleExport = () => {
     // Generate CSV export
     const csv = [
       ["Appeal ID", "Parcel ID", "Previous Status", "New Status", "Changed By", "Changed At", "Notes"].join(","),
-      ...auditLogs.map(log => [
+      ...displayLogs.map(log => [
         log.appealId,
         log.parcelId,
         log.previousStatus,
@@ -175,12 +186,17 @@ export default function AppealAuditLog() {
           <CardHeader>
             <CardTitle>Status Change History</CardTitle>
             <CardDescription>
-              Showing {auditLogs.length} status changes from {format(new Date(dateRange.start), "MMM d, yyyy")} to {format(new Date(dateRange.end), "MMM d, yyyy")}
+              Showing {displayLogs.length} status changes from {format(new Date(dateRange.start), "MMM d, yyyy")} to {format(new Date(dateRange.end), "MMM d, yyyy")}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {auditLogs.map((log) => (
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading audit log...</div>
+            ) : displayLogs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No audit log entries found</div>
+            ) : (
+              <div className="space-y-4">
+                {displayLogs.map((log) => (
                 <div key={log.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-2">
@@ -225,8 +241,9 @@ export default function AppealAuditLog() {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

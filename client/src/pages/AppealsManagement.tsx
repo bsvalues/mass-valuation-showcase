@@ -6,7 +6,8 @@ import { trpc } from "@/lib/trpc";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from "@dnd-kit/core";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Calendar, DollarSign, MapPin, Plus, Download } from "lucide-react";
+import { FileText, Calendar, DollarSign, MapPin, Plus, Download, ClipboardList } from "lucide-react";
+import { useLocation } from "wouter";
 import { AppealCreateDialog } from "@/components/AppealCreateDialog";
 import { AppealDetailsDialog } from "@/components/AppealDetailsDialog";
 import { BulkAppealImport } from "@/components/BulkAppealImport";
@@ -36,7 +37,13 @@ const statusConfig: Record<AppealStatus, { label: string; color: string; bgColor
   withdrawn: { label: "Withdrawn", color: "text-gray-600", bgColor: "bg-gray-50 border-gray-200" },
 };
 
-function DraggableAppealCard({ appeal, onClick }: { appeal: Appeal; onClick?: () => void }) {
+function DraggableAppealCard({ appeal, onClick, selectable, selected, onSelect }: { 
+  appeal: Appeal; 
+  onClick?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: (id: number) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: appeal.id.toString(),
   });
@@ -47,8 +54,21 @@ function DraggableAppealCard({ appeal, onClick }: { appeal: Appeal; onClick?: ()
   } : undefined;
   
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
-      <AppealCard appeal={appeal} onClick={onClick} />
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="relative">
+      {selectable && (
+        <div className="absolute top-2 right-2 z-10">
+          <input 
+            type="checkbox" 
+            checked={selected} 
+            onChange={() => onSelect?.(appeal.id)}
+            className="w-4 h-4 cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+      <div className={selected ? "ring-2 ring-primary rounded-lg" : ""}>
+        <AppealCard appeal={appeal} onClick={onClick} />
+      </div>
     </div>
   );
 }
@@ -116,7 +136,14 @@ function AppealCard({ appeal, onClick }: { appeal: Appeal; onClick?: () => void 
   );
 }
 
-function DroppableColumn({ status, appeals, onAppealClick }: { status: AppealStatus; appeals: Appeal[]; onAppealClick?: (appealId: number) => void }) {
+function DroppableColumn({ status, appeals, onAppealClick, selectable, selectedAppeals, onToggleSelect }: { 
+  status: AppealStatus; 
+  appeals: Appeal[]; 
+  onAppealClick?: (appealId: number) => void;
+  selectable?: boolean;
+  selectedAppeals?: Set<number>;
+  onToggleSelect?: (id: number) => void;
+}) {
   const { setNodeRef } = useDroppable({
     id: status,
   });
@@ -142,7 +169,10 @@ function DroppableColumn({ status, appeals, onAppealClick }: { status: AppealSta
             <DraggableAppealCard 
               key={appeal.id} 
               appeal={appeal} 
-              onClick={() => onAppealClick?.(appeal.id)}
+              onClick={() => selectable ? onToggleSelect?.(appeal.id) : onAppealClick?.(appeal.id)}
+              selectable={selectable}
+              selected={selectedAppeals?.has(appeal.id)}
+              onSelect={onToggleSelect}
             />
         ))}
         {appeals.length === 0 && (
@@ -157,11 +187,14 @@ function DroppableColumn({ status, appeals, onAppealClick }: { status: AppealSta
 }
 
 export default function AppealsManagement() {
+  const [, setLocation] = useLocation();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAppealId, setSelectedAppealId] = useState<number | null>(null);
+  const [selectedAppeals, setSelectedAppeals] = useState<Set<number>>(new Set());
+  const [bulkUpdateMode, setBulkUpdateMode] = useState(false);
   
   const handleAppealClick = (appealId: number) => {
     setSelectedAppealId(appealId);
@@ -171,6 +204,19 @@ export default function AppealsManagement() {
   // Query all appeals
   const { data: appeals = [], refetch } = trpc.appeals.list.useQuery();
   
+  // Bulk update status mutation
+  const bulkUpdateStatus = trpc.appeals.bulkUpdateStatus.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Updated ${data.updated} appeals successfully`);
+      setSelectedAppeals(new Set());
+      setBulkUpdateMode(false);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to bulk update: ${error.message}`);
+    },
+  });
+
   // Update status mutation
   const updateStatus = trpc.appeals.updateStatus.useMutation({
     onSuccess: () => {
@@ -244,6 +290,43 @@ export default function AppealsManagement() {
             </p>
           </div>
           <div className="flex gap-2">
+            {bulkUpdateMode && selectedAppeals.size > 0 && (
+              <select
+                className="border rounded px-3 py-2"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    bulkUpdateStatus.mutate({
+                      appealIds: Array.from(selectedAppeals),
+                      status: e.target.value as any,
+                    });
+                    e.target.value = "";
+                  }
+                }}
+              >
+                <option value="">Update {selectedAppeals.size} appeals...</option>
+                <option value="pending">Set to Pending</option>
+                <option value="in_review">Set to In Review</option>
+                <option value="hearing_scheduled">Set to Hearing Scheduled</option>
+                <option value="resolved">Set to Resolved</option>
+                <option value="withdrawn">Set to Withdrawn</option>
+              </select>
+            )}
+            <Button 
+              variant={bulkUpdateMode ? "default" : "outline"}
+              onClick={() => {
+                setBulkUpdateMode(!bulkUpdateMode);
+                setSelectedAppeals(new Set());
+              }}
+            >
+              {bulkUpdateMode ? "Cancel Bulk Update" : "Bulk Update"}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setLocation("/appeals/audit-log")}
+            >
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Audit Log
+            </Button>
             <Button 
               variant="outline" 
               onClick={() => {
@@ -315,6 +398,17 @@ export default function AppealsManagement() {
                   status={status} 
                   appeals={appealsByStatus[status]} 
                   onAppealClick={handleAppealClick}
+                  selectable={bulkUpdateMode}
+                  selectedAppeals={selectedAppeals}
+                  onToggleSelect={(id) => {
+                    const newSelected = new Set(selectedAppeals);
+                    if (newSelected.has(id)) {
+                      newSelected.delete(id);
+                    } else {
+                      newSelected.add(id);
+                    }
+                    setSelectedAppeals(newSelected);
+                  }}
                 />
               </div>
             ))}
