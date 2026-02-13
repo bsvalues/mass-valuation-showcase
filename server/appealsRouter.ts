@@ -9,6 +9,7 @@ import { getDb } from "./db";
 import { appeals } from "../drizzle/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { sendAppealStatusChangeEmail } from "./emailNotifications";
+import { notifyOwner } from "./_core/notification";
 
 export const appealsRouter = router({
   /**
@@ -214,6 +215,64 @@ export const appealsRouter = router({
       };
     }),
   
+  /**
+   * Assign appeal to staff member
+   */
+  assignAppeal: publicProcedure
+    .input(z.object({
+      appealId: z.number(),
+      assignedTo: z.number().nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const { users } = await import('../drizzle/schema');
+      
+      // Update assignment
+      await db.update(appeals)
+        .set({ assignedTo: input.assignedTo })
+        .where(eq(appeals.id, input.appealId));
+      
+      // Get appeal and assignee details for notification
+      const appeal = await db.select().from(appeals).where(eq(appeals.id, input.appealId)).limit(1);
+      
+      if (input.assignedTo && appeal[0]) {
+        const assignee = await db.select().from(users).where(eq(users.id, input.assignedTo)).limit(1);
+        
+        if (assignee[0]?.email) {
+          // Send notification email
+          await notifyOwner({
+            title: `Appeal Assigned: ${appeal[0].parcelId}`,
+            content: `Appeal #${appeal[0].id} for parcel ${appeal[0].parcelId} has been assigned to ${assignee[0].name || 'you'}.\n\nCurrent Value: $${appeal[0].currentAssessedValue.toLocaleString()}\nAppealed Value: $${appeal[0].appealedValue.toLocaleString()}\nStatus: ${appeal[0].status}`,
+          });
+        }
+      }
+      
+      return { success: true };
+    }),
+
+  /**
+   * Get list of staff members for assignment dropdown
+   */
+  getStaffList: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const { users } = await import('../drizzle/schema');
+      
+      const staffList = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+      })
+      .from(users)
+      .orderBy(users.name);
+      
+      return staffList;
+    }),
+
   /**
    * Update appeal status (for drag-and-drop)
    */

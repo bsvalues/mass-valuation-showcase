@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from "@dnd-kit/core";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FileText, Calendar, DollarSign, MapPin, Plus, Download, ClipboardList } from "lucide-react";
+import { FileText, Calendar, DollarSign, MapPin, Plus, Download, ClipboardList, Scale } from "lucide-react";
 import { useLocation } from "wouter";
 import { AppealCreateDialog } from "@/components/AppealCreateDialog";
 import { AppealDetailsDialog } from "@/components/AppealDetailsDialog";
@@ -25,6 +25,7 @@ interface Appeal {
   appealReason: string | null;
   resolution: string | null;
   countyName: string | null;
+  assignedTo: number | null;
   hearingDate: Date | null;
   createdAt: Date;
 }
@@ -37,12 +38,14 @@ const statusConfig: Record<AppealStatus, { label: string; color: string; bgColor
   withdrawn: { label: "Withdrawn", color: "text-gray-600", bgColor: "bg-gray-50 border-gray-200" },
 };
 
-function DraggableAppealCard({ appeal, onClick, selectable, selected, onSelect }: { 
+function DraggableAppealCard({ appeal, onClick, selectable, selected, onSelect, onAssign, staffList }: { 
   appeal: Appeal; 
   onClick?: () => void;
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: number) => void;
+  onAssign?: (appealId: number, assignedTo: number | null) => void;
+  staffList?: Array<{ id: number; name: string | null; email: string | null }>;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: appeal.id.toString(),
@@ -67,13 +70,18 @@ function DraggableAppealCard({ appeal, onClick, selectable, selected, onSelect }
         </div>
       )}
       <div className={selected ? "ring-2 ring-primary rounded-lg" : ""}>
-        <AppealCard appeal={appeal} onClick={onClick} />
+        <AppealCard appeal={appeal} onClick={onClick} onAssign={onAssign} staffList={staffList} />
       </div>
     </div>
   );
 }
 
-function AppealCard({ appeal, onClick }: { appeal: Appeal; onClick?: () => void }) {
+function AppealCard({ appeal, onClick, onAssign, staffList }: { 
+  appeal: Appeal; 
+  onClick?: () => void;
+  onAssign?: (appealId: number, assignedTo: number | null) => void;
+  staffList?: Array<{ id: number; name: string | null; email: string | null }>;
+}) {
   const config = statusConfig[appeal.status];
   const valueDifference = appeal.currentAssessedValue - appeal.appealedValue;
   const percentageChange = (valueDifference / appeal.currentAssessedValue) * 100;
@@ -131,18 +139,41 @@ function AppealCard({ appeal, onClick }: { appeal: Appeal; onClick?: () => void 
             {appeal.appealReason}
           </p>
         )}
+        
+        {/* Assignment Dropdown */}
+        {staffList && onAssign && (
+          <div className="pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+            <select
+              value={appeal.assignedTo || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                onAssign(appeal.id, value ? parseInt(value) : null);
+              }}
+              className="w-full text-xs border rounded px-2 py-1 bg-background"
+            >
+              <option value="">Unassigned</option>
+              {staffList.map((staff) => (
+                <option key={staff.id} value={staff.id}>
+                  {staff.name || `User #${staff.id}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function DroppableColumn({ status, appeals, onAppealClick, selectable, selectedAppeals, onToggleSelect }: { 
+function DroppableColumn({ status, appeals, onAppealClick, selectable, selectedAppeals, onToggleSelect, onAssign, staffList }: { 
   status: AppealStatus; 
   appeals: Appeal[]; 
   onAppealClick?: (appealId: number) => void;
   selectable?: boolean;
   selectedAppeals?: Set<number>;
   onToggleSelect?: (id: number) => void;
+  onAssign?: (appealId: number, assignedTo: number | null) => void;
+  staffList?: Array<{ id: number; name: string | null; email: string | null }>;
 }) {
   const { setNodeRef } = useDroppable({
     id: status,
@@ -173,6 +204,8 @@ function DroppableColumn({ status, appeals, onAppealClick, selectable, selectedA
               selectable={selectable}
               selected={selectedAppeals?.has(appeal.id)}
               onSelect={onToggleSelect}
+              onAssign={onAssign}
+              staffList={staffList}
             />
         ))}
         {appeals.length === 0 && (
@@ -196,14 +229,35 @@ export default function AppealsManagement() {
   const [selectedAppeals, setSelectedAppeals] = useState<Set<number>>(new Set());
   const [bulkUpdateMode, setBulkUpdateMode] = useState(false);
   
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCounty, setFilterCounty] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<AppealStatus | "">("");
+  const [filterValueMin, setFilterValueMin] = useState<string>("");
+  const [filterValueMax, setFilterValueMax] = useState<string>("");
+  const [filterDateFrom, setFilterDateFrom] = useState<string>("");
+  const [filterDateTo, setFilterDateTo] = useState<string>("");
+  
   const handleAppealClick = (appealId: number) => {
     setSelectedAppealId(appealId);
     setDetailsDialogOpen(true);
   };
   
-  // Query all appeals
+  // Query all appeals and staff list
   const { data: appeals = [], refetch } = trpc.appeals.list.useQuery();
+  const { data: staffList = [] } = trpc.appeals.getStaffList.useQuery();
   
+  // Assignment mutation
+  const assignAppeal = trpc.appeals.assignAppeal.useMutation({
+    onSuccess: () => {
+      toast.success("Appeal assigned successfully");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to assign appeal: ${error.message}`);
+    },
+  });
+
   // Bulk update status mutation
   const bulkUpdateStatus = trpc.appeals.bulkUpdateStatus.useMutation({
     onSuccess: (data) => {
@@ -263,7 +317,47 @@ export default function AppealsManagement() {
     setActiveId(null);
   };
   
-  // Group appeals by status
+  // Apply client-side filters
+  const filteredAppeals = appeals.filter((appeal) => {
+    // Search query (parcel ID or county)
+    if (searchQuery && !appeal.parcelId.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !(appeal.countyName?.toLowerCase().includes(searchQuery.toLowerCase()))) {
+      return false;
+    }
+    
+    // County filter
+    if (filterCounty && appeal.countyName !== filterCounty) {
+      return false;
+    }
+    
+    // Status filter
+    if (filterStatus && appeal.status !== filterStatus) {
+      return false;
+    }
+    
+    // Value range filter
+    if (filterValueMin && appeal.currentAssessedValue < parseInt(filterValueMin)) {
+      return false;
+    }
+    if (filterValueMax && appeal.currentAssessedValue > parseInt(filterValueMax)) {
+      return false;
+    }
+    
+    // Date range filter
+    if (filterDateFrom && new Date(appeal.appealDate) < new Date(filterDateFrom)) {
+      return false;
+    }
+    if (filterDateTo && new Date(appeal.appealDate) > new Date(filterDateTo)) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  // Get unique counties for filter dropdown
+  const uniqueCounties = Array.from(new Set(appeals.map(a => a.countyName).filter(Boolean)));
+  
+  // Group filtered appeals by status
   const appealsByStatus: Record<AppealStatus, Appeal[]> = {
     pending: [],
     in_review: [],
@@ -272,7 +366,7 @@ export default function AppealsManagement() {
     withdrawn: [],
   };
   
-  appeals.forEach((appeal) => {
+  filteredAppeals.forEach((appeal) => {
     appealsByStatus[appeal.status as AppealStatus].push(appeal as Appeal);
   });
   
@@ -355,6 +449,13 @@ export default function AppealsManagement() {
             </Button>
             <Button 
               variant="outline" 
+              onClick={() => setLocation("/appeals/comparison")}
+            >
+              <Scale className="w-4 h-4 mr-2" />
+              Compare
+            </Button>
+            <Button 
+              variant="outline" 
               onClick={() => setLocation("/appeals/audit-log")}
             >
               <ClipboardList className="w-4 h-4 mr-2" />
@@ -401,6 +502,111 @@ export default function AppealsManagement() {
           </div>
         </div>
 
+        {/* Search and Filters */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search */}
+              <div className="lg:col-span-2">
+                <input
+                  type="text"
+                  placeholder="Search by Parcel ID or County..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+              
+              {/* County Filter */}
+              <select
+                value={filterCounty}
+                onChange={(e) => setFilterCounty(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm bg-background"
+              >
+                <option value="">All Counties</option>
+                {uniqueCounties.map((county) => (
+                  <option key={county} value={county || ""}>
+                    {county}
+                  </option>
+                ))}
+              </select>
+              
+              {/* Status Filter */}
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as AppealStatus | "")}
+                className="px-3 py-2 border rounded-md text-sm bg-background"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="in_review">In Review</option>
+                <option value="hearing_scheduled">Hearing Scheduled</option>
+                <option value="resolved">Resolved</option>
+                <option value="withdrawn">Withdrawn</option>
+              </select>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              {/* Value Range */}
+              <input
+                type="number"
+                placeholder="Min Value"
+                value={filterValueMin}
+                onChange={(e) => setFilterValueMin(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm"
+              />
+              <input
+                type="number"
+                placeholder="Max Value"
+                value={filterValueMax}
+                onChange={(e) => setFilterValueMax(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm"
+              />
+              
+              {/* Date Range */}
+              <input
+                type="date"
+                placeholder="From Date"
+                value={filterDateFrom}
+                onChange={(e) => setFilterDateFrom(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm"
+              />
+              <input
+                type="date"
+                placeholder="To Date"
+                value={filterDateTo}
+                onChange={(e) => setFilterDateTo(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm"
+              />
+            </div>
+            
+            {/* Reset Button */}
+            {(searchQuery || filterCounty || filterStatus || filterValueMin || filterValueMax || filterDateFrom || filterDateTo) && (
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterCounty("");
+                    setFilterStatus("");
+                    setFilterValueMin("");
+                    setFilterValueMax("");
+                    setFilterDateFrom("");
+                    setFilterDateTo("");
+                    toast.success("Filters reset");
+                  }}
+                >
+                  Reset Filters
+                </Button>
+                <span className="ml-3 text-sm text-muted-foreground">
+                  Showing {filteredAppeals.length} of {appeals.length} appeals
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {(Object.keys(statusConfig) as AppealStatus[]).map((status) => {
@@ -442,6 +648,10 @@ export default function AppealsManagement() {
                     }
                     setSelectedAppeals(newSelected);
                   }}
+                  onAssign={(appealId, assignedTo) => {
+                    assignAppeal.mutate({ appealId, assignedTo });
+                  }}
+                  staffList={staffList}
                 />
               </div>
             ))}

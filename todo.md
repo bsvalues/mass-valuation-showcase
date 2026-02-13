@@ -2666,3 +2666,34 @@
 - [x] Implement CSV export for selected appeals
 - [x] Add select all / deselect all functionality
 - [x] Test bulk operations with multiple appeals
+
+
+## 🎯 Workflow Enhancement Features (In Progress)
+
+### Staff Assignment System
+- [x] Add assignedTo field to appeals schema
+- [x] Create assignAppeal mutation
+- [x] Create getStaffList query for dropdown
+- [x] Add assignment notification email template
+- [x] Integrate assignment dropdown in appeal cards
+- [ ] Add workload distribution view (future enhancement)
+- [x] Test assignment and notifications
+
+### Search & Filters
+- [x] Add search bar component to appeals page
+- [x] Implement county filter dropdown
+- [x] Implement value range filter
+- [x] Implement date range filter
+- [ ] Implement property type filter (not in schema)
+- [x] Update list query to support all filters
+- [x] Add filter reset button
+- [x] Test all filter combinations
+
+### Appeal Comparison Tool
+- [x] Create AppealComparison component
+- [x] Add appeal selection mechanism
+- [x] Fetch comparable sales data
+- [x] Calculate assessment ratios
+- [x] Design side-by-side comparison layout
+- [x] Add comparison route to App.tsx
+- [x] Test comparison with multiple appeals
