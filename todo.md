@@ -3033,3 +3033,37 @@
 - [ ] Write tests for workflow automation
 - [ ] End-to-end testing of all workflows
 - [ ] Save final checkpoint
+
+
+## 🚀 Appeals Workflow Automation Phase 2 (In Progress)
+
+### Template Integration
+- [x] Create templates tRPC router with list/get mutations
+- [x] Add template selector dropdown to AppealCreateDialog
+- [x] Implement form pre-fill when template is selected
+- [x] Parse and display suggested documents from template
+- [x] Test template selection and pre-fill workflow
+
+### Template Management UI
+- [x] Create /appeals/appeal-templates admin page route
+- [x] Build template list view with CRUD actions
+- [x] Create template create/edit dialog
+- [x] Implement template activation/deactivation toggle
+- [x] Add template category filtering
+- [x] Test all CRUD operations
+
+### Workflow Automation
+- [ ] Create workflowRules table schema
+- [ ] Design rule structure (conditions, actions, priority)
+- [ ] Implement rules tRPC router
+- [ ] Create rule evaluation engine
+- [ ] Add auto-assignment on appeal creation
+- [ ] Add auto-hearing scheduling trigger
+- [ ] Build Workflow Rules Management UI
+- [ ] Test automation with various scenarios
+- [ ] Add audit logging for automated actions
+
+### Final Testing
+- [ ] End-to-end test of complete workflow
+- [ ] Write unit tests for all new features
+- [ ] Save final checkpoint

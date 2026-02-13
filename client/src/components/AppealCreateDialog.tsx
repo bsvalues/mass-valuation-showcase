@@ -26,11 +26,16 @@ interface AppealCreateDialogProps {
 }
 
 export function AppealCreateDialog({ open, onOpenChange, onSuccess }: AppealCreateDialogProps) {
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
   const [parcelId, setParcelId] = useState("");
   const [currentValue, setCurrentValue] = useState("");
   const [appealedValue, setAppealedValue] = useState("");
   const [reason, setReason] = useState("");
   const [hearingDate, setHearingDate] = useState<Date | undefined>(undefined);
+  const [suggestedDocs, setSuggestedDocs] = useState<string[]>([]);
+  
+  // Fetch active templates
+  const { data: templates = [] } = trpc.templates.list.useQuery();
   
   const createAppeal = trpc.appeals.create.useMutation({
     onSuccess: () => {
@@ -44,12 +49,41 @@ export function AppealCreateDialog({ open, onOpenChange, onSuccess }: AppealCrea
     },
   });
   
+  // Handle template selection and pre-fill
+  const handleTemplateSelect = (templateId: string) => {
+    if (!templateId || templateId === "none") {
+      setSelectedTemplateId(null);
+      setReason("");
+      setSuggestedDocs([]);
+      return;
+    }
+    
+    const template = templates.find(t => t.id === parseInt(templateId));
+    if (template) {
+      setSelectedTemplateId(template.id);
+      if (template.defaultAppealReason) {
+        setReason(template.defaultAppealReason);
+      }
+      if (template.suggestedDocuments) {
+        try {
+          const docs = JSON.parse(template.suggestedDocuments);
+          setSuggestedDocs(Array.isArray(docs) ? docs : []);
+        } catch (e) {
+          setSuggestedDocs([]);
+        }
+      }
+      toast.success(`Template "${template.name}" applied`);
+    }
+  };
+  
   const resetForm = () => {
+    setSelectedTemplateId(null);
     setParcelId("");
     setCurrentValue("");
     setAppealedValue("");
     setReason("");
     setHearingDate(undefined);
+    setSuggestedDocs([]);
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -100,6 +134,27 @@ export function AppealCreateDialog({ open, onOpenChange, onSuccess }: AppealCrea
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Template Selector */}
+          <div className="space-y-2">
+            <Label htmlFor="template">Appeal Template (Optional)</Label>
+            <select
+              id="template"
+              className="w-full px-3 py-2 border rounded-md text-sm bg-background"
+              value={selectedTemplateId || "none"}
+              onChange={(e) => handleTemplateSelect(e.target.value)}
+            >
+              <option value="none">No Template - Start from scratch</option>
+              {templates.map(template => (
+                <option key={template.id} value={template.id}>
+                  {template.name} ({template.category})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Select a template to pre-fill appeal reason and suggested documents
+            </p>
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="parcelId">Parcel ID *</Label>
             <Input
@@ -163,6 +218,19 @@ export function AppealCreateDialog({ open, onOpenChange, onSuccess }: AppealCrea
               onChange={(e) => setReason(e.target.value)}
               rows={4}
             />
+            {suggestedDocs.length > 0 && (
+              <div className="mt-2 p-3 bg-muted/50 rounded-md">
+                <p className="text-sm font-medium mb-2">Suggested Documentation:</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  {suggestedDocs.map((doc, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <span className="mr-2">•</span>
+                      <span>{doc}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           
           <div className="space-y-2">
