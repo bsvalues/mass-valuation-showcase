@@ -268,7 +268,7 @@ export function AppealBatchImport({ onSuccess }: { onSuccess?: () => void }) {
                       <SelectValue placeholder="Skip (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Skip</SelectItem>
+                      <SelectItem value="__skip__">Skip</SelectItem>
                       {csvHeaders.map((header) => (
                         <SelectItem key={header} value={header}>
                           {header}

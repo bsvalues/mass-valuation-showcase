@@ -38,13 +38,13 @@ export const analyticsRouter = router({
 
       const results = await db
         .select({
-          month: sql<string>`DATE_FORMAT(${appeals.resolutionDate}, '%Y-%m')`,
-          count: sql<number>`COUNT(*)`,
+          month: sql<string>`DATE_FORMAT(${appeals.resolutionDate}, '%Y-%m')`.as('month'),
+          count: sql<number>`COUNT(*)`.as('count'),
         })
         .from(appeals)
         .where(and(...conditions))
-        .groupBy(sql`DATE_FORMAT(${appeals.resolutionDate}, '%Y-%m')`)
-        .orderBy(sql`DATE_FORMAT(${appeals.resolutionDate}, '%Y-%m')`);
+        .groupBy(sql`month`)
+        .orderBy(sql`month`);
 
       return results;
     }),

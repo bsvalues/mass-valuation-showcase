@@ -352,13 +352,13 @@ export const appealsRouter = router({
       startDate.setDate(startDate.getDate() - daysAgo);
       
       const results = await db.select({
-        date: sql<string>`DATE_FORMAT(${appeals.createdAt}, '%Y-%m-%d')`,
-        count: sql<number>`count(*)`
+        date: sql<string>`DATE_FORMAT(${appeals.createdAt}, '%Y-%m-%d')`.as('date'),
+        count: sql<number>`count(*)`.as('count')
       })
       .from(appeals)
       .where(gte(appeals.createdAt, startDate))
-      .groupBy(sql`DATE_FORMAT(${appeals.createdAt}, '%Y-%m-%d')`)
-      .orderBy(sql`DATE_FORMAT(${appeals.createdAt}, '%Y-%m-%d')` );
+      .groupBy(sql`date`)
+      .orderBy(sql`date`);
       
       return results.map(row => ({
         date: row.date,

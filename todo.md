@@ -3067,3 +3067,12 @@
 - [ ] End-to-end test of complete workflow
 - [ ] Write unit tests for all new features
 - [ ] Save final checkpoint
+
+
+## 🐛 Critical Bug Fixes (In Progress)
+- [x] Fix SQL DATE_FORMAT GROUP BY error in resolution trends query
+- [x] Fix SQL DATE_FORMAT GROUP BY error in appeals creation trends query
+- [x] Fix empty Select.Item value prop error
+- [x] Fix missing DialogTitle accessibility warning
+- [x] Test all fixes on /appeals/comparison page
+- [x] Save checkpoint after bug fixes
