@@ -395,6 +395,7 @@ export const appeals = mysqlTable("appeals", {
   appealedValue: int("appealedValue").notNull(), // Value requested by taxpayer
   finalValue: int("finalValue"), // Final determined value (if resolved)
   status: mysqlEnum("status", ["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"]).default("pending").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium").notNull(),
   appealReason: text("appealReason"),
   resolution: text("resolution"),
   countyName: varchar("countyName", { length: 100 }),

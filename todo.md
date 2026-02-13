@@ -3076,3 +3076,38 @@
 - [x] Fix missing DialogTitle accessibility warning
 - [x] Test all fixes on /appeals/comparison page
 - [x] Save checkpoint after bug fixes
+
+
+## 🚀 Appeals System Enhancements (Phase 3)
+
+### Dialog Accessibility Fixes
+- [x] Install @radix-ui/react-visually-hidden package
+- [x] Find all Dialog components missing DialogTitle
+- [x] Wrap missing DialogTitle with VisuallyHidden component
+- [ ] Test accessibility with screen reader
+- [x] Verify no accessibility warnings remain
+
+### Appeal Priority Scoring
+- [x] Add priority field to appeals schema (enum: low, medium, high, critical)
+- [x] Implement priority calculation logic (value difference + days pending)
+- [x] Add automatic priority assignment on appeal creation)
+- [ ] Add priority update on appeal status changes
+- [ ] Display priority badges in Appeals Management table
+- [ ] Add priority filter to Appeals Management
+- [ ] Add priority sorting option
+
+### Email Templates System
+- [ ] Create emailTemplates table schema
+- [ ] Design template structure (subject, body, merge fields)
+- [ ] Seed 3 default templates (hearing notice, resolution, document request)
+- [ ] Create email templates tRPC router
+- [ ] Build Email Templates Management UI
+- [ ] Integrate template selector in email sending flows
+- [ ] Implement merge field replacement logic
+- [ ] Test template rendering with real data
+
+### Testing & Delivery
+- [ ] Write unit tests for priority scoring logic
+- [ ] Write unit tests for email template rendering
+- [ ] End-to-end testing of all features
+- [ ] Save final checkpoint

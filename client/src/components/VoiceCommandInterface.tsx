@@ -1,6 +1,7 @@
 import { useGodMode } from "@/contexts/GodModeContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { cn } from "@/lib/utils";
 import { Mic, MicOff } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -66,7 +67,9 @@ export function VoiceCommandInterface() {
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md bg-black/80 backdrop-blur-xl border-primary/30 text-center p-12 shadow-[0_0_50px_rgba(0,255,255,0.2)]">
-          <DialogTitle className="sr-only">Voice Command Interface</DialogTitle>
+          <VisuallyHidden.Root>
+            <DialogTitle>Voice Command Interface</DialogTitle>
+          </VisuallyHidden.Root>
           
           <div className="flex flex-col items-center justify-center space-y-8">
             {/* Visualizer */}

@@ -10,6 +10,7 @@ import { appeals, appealTimeline, appealDocuments } from "../drizzle/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { sendAppealStatusChangeEmail } from "./emailNotifications";
 import { notifyOwner } from "./_core/notification";
+import { calculateAppealPriority } from "./priorityCalculator";
 
 export const appealsRouter = router({
   /**
@@ -83,15 +84,26 @@ export const appealsRouter = router({
       }
       
       console.log('[AppealsRouter] Inserting appeal into database...');
+      
+      // Calculate priority based on value difference and appeal date
+      const appealDate = new Date(input.appealDate);
+      const priority = calculateAppealPriority({
+        currentAssessedValue: input.currentAssessedValue,
+        appealedValue: input.appealedValue,
+        appealDate,
+        status: "pending",
+      });
+      
       const result = await db.insert(appeals).values({
         parcelId: input.parcelId,
-        appealDate: new Date(input.appealDate),
+        appealDate,
         currentAssessedValue: input.currentAssessedValue,
         appealedValue: input.appealedValue,
         appealReason: input.appealReason,
         countyName: input.countyName,
         filedBy: input.filedBy,
         status: "pending",
+        priority,
       });
       
       return {
