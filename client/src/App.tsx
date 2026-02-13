@@ -1,4 +1,8 @@
 import { GodModeTerminal } from "@/components/GodModeTerminal";
+import { CommandPalette } from "@/components/CommandPalette";
+import { Dock } from "@/components/Dock";
+import { Stage } from "@/components/Stage";
+import { SystemBar } from "@/components/SystemBar";
 import { IgnitionSequence } from "@/components/IgnitionSequence";
 import { useState } from "react";
 import { GodModeProvider } from "@/contexts/GodModeContext";
@@ -110,7 +114,14 @@ function App() {
                 <TooltipProvider>
                 <GodModeTerminal />
                 <Toaster />
-                <Router />
+                
+                {/* TerraFusion OS Architecture */}
+                <SystemBar />
+                <Stage>
+                  <Router />
+                </Stage>
+                <Dock />
+                <CommandPalette />
                 </TooltipProvider>
               </GodModeProvider>
             </JobProvider>
