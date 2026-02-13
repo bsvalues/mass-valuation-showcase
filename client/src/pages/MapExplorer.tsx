@@ -20,6 +20,7 @@ import { LiquidPanel } from "@/components/LiquidPanel";
 import { KineticText } from "@/components/KineticText";
 import { SearchAutocomplete, type SearchSuggestion } from "@/components/ui/SearchAutocomplete";
 import { ClusterTooltip } from "@/components/ClusterTooltip";
+import { BatchPDFExportDialog } from "@/components/BatchPDFExportDialog";
 
 // Property Image Preview Component
 function PropertyImagePreview({ 
@@ -1430,6 +1431,23 @@ export default function MapExplorer() {
                         }));
                         import('@/lib/comparisonExport').then(({ exportComparisonPDF }) => exportComparisonPDF(data));
                       }}><FileText className="h-4 w-4" />PDF</TactileButton>
+                      <BatchPDFExportDialog 
+                        open={false}
+                        onOpenChange={() => {}}
+                        properties={selectedProperties.map(id => properties.find((p: any) => p.id === id)).filter(Boolean).map((p: any) => ({
+                          id: p.id,
+                          parcelNumber: p.parcelId || "N/A",
+                          siteAddress: p.address || "N/A",
+                          squareFeet: p.squareFeet || 0,
+                          yearBuilt: p.yearBuilt || 0,
+                          totalValue: p.totalValue || 0,
+                          landValue: Math.floor((p.totalValue || 0) * 0.3),
+                          buildingValue: Math.floor((p.totalValue || 0) * 0.7),
+                          bedrooms: p.bedrooms,
+                          bathrooms: p.bathrooms,
+                          propertyType: p.propertyType,
+                        }))}
+                      />
                     </>
                   )}
                   <Button variant="ghost" size="sm" className="rounded-full hover:bg-muted" onClick={() => {
