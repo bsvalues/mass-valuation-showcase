@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { trpc } from '@/lib/trpc';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -82,6 +83,27 @@ export default function ClusterHeatmap() {
   const [selectedCluster, setSelectedCluster] = useState<number | null>(null);
   const [hoveredCluster, setHoveredCluster] = useState<number | null>(null);
 
+  // Fetch real cluster data from tRPC
+  const { data: clusters = [], isLoading } = trpc.clusterStats.getAllClusters.useQuery();
+  const { data: boundaries = [] } = trpc.clusterStats.getClusterBoundaries.useQuery();
+
+  // Map clusters to display format
+  const clusterData = clusters.map((cluster: any, index: number) => ({
+    id: cluster.clusterId || cluster.id || index,
+    name: `Cluster ${cluster.clusterId || cluster.id || index}`,
+    propertyCount: cluster.propertyCount || cluster.totalProperties || 0,
+    medianPrice: cluster.medianPrice || cluster.medianHomeValue || 0,
+    medianSqft: cluster.medianSqft || 2200,
+    medianAge: cluster.medianAge || 28,
+    color: ['#00FFEE', '#00D4FF', '#00AAFF', '#0088FF', '#0066FF'][index % 5],
+    bounds: boundaries.find((b: any) => b.clusterId === (cluster.clusterId || cluster.id))?.bounds || {
+      north: 46.28 - index * 0.04,
+      south: 46.24 - index * 0.04,
+      east: -119.26 + index * 0.04,
+      west: -119.32 + index * 0.04
+    }
+  }));
+
   const selectedClusterData = selectedCluster !== null 
     ? clusterData.find(c => c.id === selectedCluster) 
     : null;
@@ -108,7 +130,15 @@ export default function ClusterHeatmap() {
           </p>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-12">
+            <p className="text-[var(--color-text-secondary)]">Loading cluster data...</p>
+          </div>
+        )}
+
         {/* Stats Overview */}
+        {!isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {clusterData.map((cluster) => (
             <Card 
@@ -144,6 +174,7 @@ export default function ClusterHeatmap() {
             </Card>
           ))}
         </div>
+        )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

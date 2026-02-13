@@ -20,6 +20,7 @@ import { appealsRouter } from "./appealsRouter";
 import { resolutionTemplatesRouter } from "./resolutionTemplatesRouter";
 import { analyticsRouter } from "./analyticsRouter";
 import { templatesRouter } from "./templatesRouter";
+import { clusterStatsRouter } from "./clusterStatsRouter";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -45,6 +46,7 @@ export const appRouter = router({
   resolutionTemplates: resolutionTemplatesRouter,
   analytics: analyticsRouter,
   templates: templatesRouter,
+  clusterStats: clusterStatsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

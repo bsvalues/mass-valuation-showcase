@@ -3374,3 +3374,36 @@
 - [x] Add legend showing value ranges and colors
 - [x] Add route to App.tsx (/cluster-map)
 - [x] Test cluster visualization and drill-down
+
+
+## 🎯 Value Driver Integration - Phase 4
+
+### Feature 1: tRPC Cluster Data Endpoints ✅
+- [x] Create clusterStats tRPC router
+- [x] Add getClusterById procedure (fetch from neighborhoodStats table)
+- [x] Add getAllClusters procedure (fetch all 5 clusters with stats)
+- [x] Add getClusterProperties procedure (fetch properties by clusterId)
+- [x] Add getClusterBoundaries procedure (for map visualization)
+- [x] Register clusterStats router in main app router
+- [x] Update ClusterHeatmap to use real tRPC data
+- [ ] Update NeighborhoodComparison to use real tRPC data (future enhancement)
+- [x] Test cluster data fetching
+
+### Feature 2: Batch Export Integration
+- [ ] Find MapExplorer component
+- [ ] Add "Bulk Export" button to MapExplorer toolbar
+- [ ] Wire BatchPDFExportDialog to MapExplorer with filtered properties
+- [ ] Find Property List pages
+- [ ] Add "Bulk Export" button to property list toolbars
+- [ ] Test batch export from MapExplorer
+- [ ] Test batch export from property lists
+
+### Feature 3: Google Maps Cluster Visualization ✅
+- [x] Update ClusterHeatmap to use real tRPC cluster data
+- [x] Fetch cluster boundaries from database via tRPC
+- [x] Display cluster cards with real statistics
+- [x] Implement cluster selection and hover states
+- [x] Add loading states for data fetching
+- [ ] Draw cluster polygons on Google Maps (future enhancement)
+- [ ] Add property markers color-coded by cluster (future enhancement)
+- [x] Test cluster visualization with real data

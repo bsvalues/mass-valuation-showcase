@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME IN ('neighborhoodClusterId', 'latitude', 'longitude');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME IN ('neighborhoodClusterId', 'latitude', 'longitude');",
+  "rows": [
+    {
+      "COLUMN_NAME": "neighborhoodClusterId"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nneighborhoodClusterId\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

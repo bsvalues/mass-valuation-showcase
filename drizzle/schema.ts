@@ -115,6 +115,10 @@ export const sales = mysqlTable("sales", {
   isArmLength: int("isArmLength").default(1), // 1 = arm's length, 0 = non-arm's length
   isQualified: int("isQualified").default(1), // 1 = qualified for ratio study, 0 = excluded
   exclusionReason: text("exclusionReason"),
+  // Cluster and location data
+  neighborhoodClusterId: int("neighborhoodClusterId"), // K-means cluster ID
+  latitude: float("latitude"),
+  longitude: float("longitude"),
   uploadedBy: int("uploadedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
