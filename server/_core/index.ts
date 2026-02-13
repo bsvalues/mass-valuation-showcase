@@ -11,6 +11,7 @@ import { initializeWebSocket } from "../websocket";
 import { startBackgroundWorker } from "../backgroundWorker";
 import multer from "multer";
 import { handleFileUpload } from "../uploadEndpoint";
+import { initializeCronJobs } from "../cronJobs";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -82,6 +83,10 @@ async function startServer() {
     // Start background worker for processing jobs
     startBackgroundWorker();
     console.log('[BackgroundWorker] Job processor initialized');
+    
+    // Initialize cron jobs for automated tasks
+    initializeCronJobs();
+    console.log('[CronJobs] Automated tasks initialized');
   });
 }
 

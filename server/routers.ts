@@ -17,6 +17,7 @@ import { batchValuationRouter } from "./batchValuationRouter";
 import { defenseStudioRouter } from "./defenseStudioRouter";
 import { mlModelRouter } from "./mlModelRouter";
 import { appealsRouter } from "./appealsRouter";
+import { resolutionTemplatesRouter } from "./resolutionTemplatesRouter";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -39,6 +40,7 @@ export const appRouter = router({
   defenseStudio: defenseStudioRouter,
   mlModel: mlModelRouter,
   appeals: appealsRouter,
+  resolutionTemplates: resolutionTemplatesRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

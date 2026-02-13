@@ -38,6 +38,7 @@ import MLTraining from "./pages/MLTraining";
 import AppealsManagement from "./pages/AppealsManagement";
 import BulkAppealImportPage from "./pages/BulkAppealImportPage";
 import AppealAuditLog from "./pages/AppealAuditLog";
+import TemplateManagement from "./pages/TemplateManagement";
 import AppealAnalytics from "./pages/AppealAnalytics";
 import AppealComparison from "./pages/AppealComparison";
 
@@ -71,6 +72,7 @@ function Router() {
       <Route path={"/appeals/audit-log"} component={AppealAuditLog} />
       <Route path={"/appeals/analytics"} component={AppealAnalytics} />
       <Route path={"/appeals/comparison"} component={AppealComparison} />
+      <Route path={"/appeals/templates"} component={TemplateManagement} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />

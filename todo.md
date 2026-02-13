@@ -2730,3 +2730,30 @@
 - [ ] Build template editor component (future enhancement)
 - [x] Add template variables (parcel ID, owner name, etc.)
 - [x] Test template system
+
+
+## 🎨 Final Polish Features
+
+### Automated Reminder Cron Job
+- [ ] Create cron job configuration for daily reminder checks
+- [ ] Set up 9 AM daily schedule for runAppealReminderChecks()
+- [ ] Add error logging and monitoring
+- [ ] Test cron job execution
+
+### Resolution Template Management UI
+- [ ] Create TemplateManagement page component
+- [ ] Build template list view with category filters
+- [ ] Add template creation form
+- [ ] Implement template editor with variable insertion
+- [ ] Add live preview with variable substitution
+- [ ] Integrate with resolutionTemplatesRouter
+- [ ] Test template CRUD operations
+
+### Appeal Detail Modal
+- [ ] Create AppealDetailModal component
+- [ ] Display full appeal information
+- [ ] Integrate StatusHistoryTimeline
+- [ ] Integrate AppealComments
+- [ ] Integrate AppealDocuments
+- [ ] Add quick action buttons (status change, assign, resolve)
+- [ ] Test modal functionality
