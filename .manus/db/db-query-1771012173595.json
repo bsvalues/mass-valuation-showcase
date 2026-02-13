@@ -1,0 +1,9 @@
+{
+  "query": "\nALTER TABLE parcels \nADD COLUMN quality ENUM('economy', 'average', 'good', 'very_good', 'excellent') DEFAULT 'average',\nADD COLUMN condition ENUM('poor', 'fair', 'average', 'good', 'excellent') DEFAULT 'average',\nADD COLUMN lotSize INT,\nADD COLUMN propertySubtype VARCHAR(128),\nADD COLUMN renovationYear INT,\nADD COLUMN distanceToSchool FLOAT,\nADD COLUMN distanceToPark FLOAT,\nADD COLUMN distanceToTransit FLOAT,\nADD COLUMN distanceToDowntown FLOAT,\nADD COLUMN walkabilityScore INT,\nADD COLUMN neighborhoodClusterId INT;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute \nALTER TABLE parcels \nADD COLUMN quality ENUM('economy', 'average', 'good', 'very_good', 'excellent') DEFAULT 'average',\nADD COLUMN condition ENUM('poor', 'fair', 'average', 'good', 'excellent') DEFAULT 'average',\nADD COLUMN lotSize INT,\nADD COLUMN propertySubtype VARCHAR(128),\nADD COLUMN renovationYear INT,\nADD COLUMN distanceToSchool FLOAT,\nADD COLUMN distanceToPark FLOAT,\nADD COLUMN distanceToTransit FLOAT,\nADD COLUMN distanceToDowntown FLOAT,\nADD COLUMN walkabilityScore INT,\nADD COLUMN neighborhoodClusterId INT;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 4036
+}

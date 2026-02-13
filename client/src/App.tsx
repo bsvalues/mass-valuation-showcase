@@ -51,6 +51,7 @@ import AppealComparison from "./pages/AppealComparison";
 import AppealDefenseBuilder from "./pages/AppealDefenseBuilder";
 import MassAppraisalDashboard from "./pages/MassAppraisalDashboard";
 import RatioStudyAnalyzer from "./pages/RatioStudyAnalyzer";
+import ValueDriverAnalysis from "./pages/ValueDriverAnalysis";
 
 
 function Router() {
@@ -87,7 +88,8 @@ function Router() {
       <Route path={"/appeals/defense-builder"} component={AppealDefenseBuilder} />
       <Route path={"/appeal-defense"} component={AppealDefenseBuilder} />
       <Route path={"/mass-appraisal-dashboard"} component={MassAppraisalDashboard} />
-      <Route path={" /ratio-study-analyzer"} component={RatioStudyAnalyzer} />
+      <Route path={"/ratio-study-analyzer"} component={RatioStudyAnalyzer} />
+      <Route path={"/value-drivers"} component={ValueDriverAnalysis} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />

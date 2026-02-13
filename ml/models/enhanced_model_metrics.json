@@ -1,0 +1,33 @@
+{
+  "mae": 73569.14529191457,
+  "rmse": 240187.31534143694,
+  "r2": 0.7335150601117628,
+  "mape": 10953.175134210287,
+  "model_type": "GradientBoosting",
+  "feature_count": 20,
+  "feature_names": [
+    "square_feet",
+    "sqft_log",
+    "year_built",
+    "age",
+    "effective_age",
+    "age_squared",
+    "bedrooms",
+    "bathrooms",
+    "bath_bed_ratio",
+    "property_type",
+    "sale_year",
+    "years_since_sale",
+    "price_per_sqft",
+    "is_new",
+    "is_old",
+    "sqft_squared",
+    "sqft_x_age",
+    "sqft_x_bathrooms",
+    "assessed_value",
+    "bias"
+  ],
+  "training_samples": 19033,
+  "test_samples": 4759,
+  "trained_at": "2026-02-13T15:09:40.945066"
+}

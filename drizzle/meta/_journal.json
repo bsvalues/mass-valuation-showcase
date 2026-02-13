@@ -127,6 +127,13 @@
       "when": 1771011164424,
       "tag": "0017_brown_frightful_four",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1771011875362,
+      "tag": "0018_freezing_chamber",
+      "breakpoints": true
     }
   ]
 }

@@ -56,6 +56,18 @@ export const parcels = mysqlTable("parcels", {
   county: varchar("county", { length: 64 }),
   acres: float("acres"),
   cluster: int("cluster"),
+  // Enhanced value driver fields
+  quality: mysqlEnum("quality", ["economy", "average", "good", "very_good", "excellent"]).default("average"),
+  condition: mysqlEnum("condition", ["poor", "fair", "average", "good", "excellent"]).default("average"),
+  lotSize: int("lotSize"), // Lot size in square feet
+  propertySubtype: varchar("propertySubtype", { length: 128 }), // single_family, condo, townhouse, etc.
+  renovationYear: int("renovationYear"), // Year of major renovation
+  distanceToSchool: float("distanceToSchool"), // Distance to nearest school in miles
+  distanceToPark: float("distanceToPark"), // Distance to nearest park in miles
+  distanceToTransit: float("distanceToTransit"), // Distance to nearest transit stop in miles
+  distanceToDowntown: float("distanceToDowntown"), // Distance to downtown/city center in miles
+  walkabilityScore: int("walkabilityScore"), // 0-100 walkability score
+  neighborhoodClusterId: int("neighborhoodClusterId"), // K-means cluster ID for neighborhood grouping
   uploadedBy: int("uploadedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -594,3 +606,39 @@ export const batchValuationResults = mysqlTable("batchValuationResults", {
 
 export type BatchValuationResult = typeof batchValuationResults.$inferSelect;
 export type InsertBatchValuationResult = typeof batchValuationResults.$inferInsert;
+
+
+/**
+ * Neighborhood Statistics table - stores aggregated neighborhood characteristics for value driver analysis
+ */
+export const neighborhoodStats = mysqlTable("neighborhoodStats", {
+  id: int("id").autoincrement().primaryKey(),
+  neighborhoodClusterId: int("neighborhoodClusterId").notNull().unique(), // K-means cluster ID
+  neighborhoodName: varchar("neighborhoodName", { length: 255 }), // Optional human-readable name
+  county: varchar("county", { length: 64 }),
+  centerLatitude: float("centerLatitude"), // Cluster centroid latitude
+  centerLongitude: float("centerLongitude"), // Cluster centroid longitude
+  totalProperties: int("totalProperties").default(0), // Number of properties in cluster
+  medianHomeValue: int("medianHomeValue"), // Median assessed value
+  medianSalePrice: int("medianSalePrice"), // Median recent sale price
+  medianIncome: int("medianIncome"), // Census median household income
+  crimeRate: float("crimeRate"), // Crimes per 1000 residents
+  walkabilityScore: int("walkabilityScore"), // 0-100 walkability score
+  schoolRating: float("schoolRating"), // Average school rating (1-10)
+  avgDistanceToDowntown: float("avgDistanceToDowntown"), // Average distance to downtown in miles
+  avgDistanceToSchool: float("avgDistanceToSchool"), // Average distance to nearest school
+  avgDistanceToPark: float("avgDistanceToPark"), // Average distance to nearest park
+  avgDistanceToTransit: float("avgDistanceToTransit"), // Average distance to transit
+  appreciationRate3Year: float("appreciationRate3Year"), // 3-year appreciation rate percentage
+  appreciationRate5Year: float("appreciationRate5Year"), // 5-year appreciation rate percentage
+  avgDaysOnMarket: int("avgDaysOnMarket"), // Average days properties stay on market
+  salesVolume12Month: int("salesVolume12Month"), // Number of sales in last 12 months
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  clusterIdIdx: index("neighborhood_clusterid_idx").on(table.neighborhoodClusterId),
+  countyIdx: index("neighborhood_county_idx").on(table.county),
+}));
+
+export type NeighborhoodStat = typeof neighborhoodStats.$inferSelect;
+export type InsertNeighborhoodStat = typeof neighborhoodStats.$inferInsert;
