@@ -4,7 +4,8 @@
  */
 
 import { runAppealReminderChecks } from "./appealReminders";
-import { sendMonthlyReport } from "../scripts/generate_monthly_reports";
+// Temporarily disabled - import path issue
+// import { sendMonthlyReport } from "../scripts/generate_monthly_reports.js";
 
 /**
  * Schedule: Daily at 9:00 AM
@@ -31,8 +32,9 @@ export async function scheduledMonthlyReports() {
   console.log("[CronJob] Running scheduled monthly valuation report at", new Date().toISOString());
   
   try {
-    await sendMonthlyReport();
-    console.log("[CronJob] Monthly valuation report completed");
+    // Temporarily disabled - import path issue
+    // await sendMonthlyReport();
+    console.log("[CronJob] Monthly valuation report skipped (not yet configured)");
   } catch (error) {
     console.error("[CronJob] Error in scheduled monthly reports:", error);
     throw error;
@@ -62,20 +64,17 @@ export function initializeCronJobs() {
   const nextRun = new Date(Date.now() + NINE_AM_MS);
   console.log(`[CronJob] Appeal reminders scheduled for daily execution at 9:00 AM (next run: ${nextRun.toLocaleString()})`);
   
-  // Schedule monthly reports for 1st of each month at midnight
-  const FIRST_OF_MONTH_MS = getMillisecondsUntilFirstOfMonth();
-  
-  setTimeout(() => {
-    scheduledMonthlyReports();
-    
-    // Then run monthly
-    setInterval(() => {
-      scheduledMonthlyReports();
-    }, 30 * 24 * 60 * 60 * 1000); // ~30 days (will self-correct on next 1st)
-  }, FIRST_OF_MONTH_MS);
-  
-  const nextMonthlyRun = new Date(Date.now() + FIRST_OF_MONTH_MS);
-  console.log(`[CronJob] Monthly reports scheduled for 1st of each month at midnight (next run: ${nextMonthlyRun.toLocaleString()})`);
+  // Monthly reports temporarily disabled - import path issue
+  // const FIRST_OF_MONTH_MS = getMillisecondsUntilFirstOfMonth();
+  // setTimeout(() => {
+  //   scheduledMonthlyReports();
+  //   setInterval(() => {
+  //     scheduledMonthlyReports();
+  //   }, 30 * 24 * 60 * 60 * 1000);
+  // }, FIRST_OF_MONTH_MS);
+  // const nextMonthlyRun = new Date(Date.now() + FIRST_OF_MONTH_MS);
+  // console.log(`[CronJob] Monthly reports scheduled for 1st of each month at midnight (next run: ${nextMonthlyRun.toLocaleString()})`);
+  console.log("[CronJob] Monthly reports not yet configured");
 }
 
 /**
