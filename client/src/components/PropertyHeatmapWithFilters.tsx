@@ -11,7 +11,10 @@ import { X, Filter } from "lucide-react";
 
 export function PropertyHeatmapWithFilters() {
   // Fetch filter options
-  const { data: filterOptions, isLoading: optionsLoading } = trpc.analytics.getPropertyFilterOptions.useQuery();
+  // TODO: Re-enable when property analytics router is implemented
+  const filterOptions = { valueRange: { min: 0, max: 1000000 }, yearRange: { min: 1900, max: new Date().getFullYear() }, propertyTypes: [] as string[] };
+  const optionsLoading = false;
+  // const { data: filterOptions, isLoading: optionsLoading } = trpc.analytics.getPropertyFilterOptions.useQuery();
   
   // Filter state
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([]);
@@ -28,7 +31,10 @@ export function PropertyHeatmapWithFilters() {
   }, [filterOptions]);
   
   // Fetch heatmap data with filters
-  const { data: properties, isLoading: dataLoading } = trpc.analytics.getPropertyHeatmapData.useQuery(
+  // TODO: Re-enable when property analytics router is implemented
+  const properties: any[] = [];
+  const dataLoading = false;
+  /* const { data: properties, isLoading: dataLoading } = trpc.analytics.getPropertyHeatmapData.useQuery(
     filtersActive ? {
       propertyTypes: selectedPropertyTypes.length > 0 ? selectedPropertyTypes : undefined,
       minValue: valueRange[0],
@@ -39,7 +45,7 @@ export function PropertyHeatmapWithFilters() {
     {
       enabled: !optionsLoading,
     }
-  );
+  ); */
   
   const handleResetFilters = () => {
     setSelectedPropertyTypes([]);

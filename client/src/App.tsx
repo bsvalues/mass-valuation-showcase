@@ -45,6 +45,7 @@ import BulkAppealImportPage from "./pages/BulkAppealImportPage";
 import AppealAuditLog from "./pages/AppealAuditLog";
 import TemplateManagement from "./pages/TemplateManagement";
 import AppealAnalytics from "./pages/AppealAnalytics";
+import AppealsAnalytics from "./pages/AppealsAnalytics";
 import AppealComparison from "./pages/AppealComparison";
 import AppealDefenseBuilder from "./pages/AppealDefenseBuilder";
 import MassAppraisalDashboard from "./pages/MassAppraisalDashboard";
@@ -78,7 +79,7 @@ function Router() {
       <Route path={"/appeals"} component={AppealsManagement} />
       <Route path={"/appeals/import"} component={BulkAppealImportPage} />
       <Route path={"/appeals/audit-log"} component={AppealAuditLog} />
-      <Route path={"/appeals/analytics"} component={AppealAnalytics} />
+      <Route path={"/appeals/analytics"} component={AppealsAnalytics} />
       <Route path={"/appeals/comparison"} component={AppealComparison} />
       <Route path={"/appeals/templates"} component={TemplateManagement} />
       <Route path={"/appeals/defense-builder"} component={AppealDefenseBuilder} />

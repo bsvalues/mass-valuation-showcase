@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AppealDocumentUpload } from "@/components/AppealDocumentUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -277,6 +278,13 @@ export function AppealDetailsDialog({ appealId, open, onOpenChange, onUpdate }: 
             {!isEditing && appeal && (
               <div className="pt-6 border-t">
                 <AppealTimeline appealId={appeal.id} />
+              </div>
+            )}
+            
+            {/* Document Upload Section */}
+            {!isEditing && appealId && (
+              <div className="mt-6">
+                <AppealDocumentUpload appealId={appealId} />
               </div>
             )}
             

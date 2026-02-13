@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { appeals, appealTimeline } from "../drizzle/schema";
+import { appeals, appealTimeline, appealDocuments } from "../drizzle/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { sendAppealStatusChangeEmail } from "./emailNotifications";
 import { notifyOwner } from "./_core/notification";

@@ -11,6 +11,7 @@ import { initializeWebSocket } from "../websocket";
 import { startBackgroundWorker } from "../backgroundWorker";
 import multer from "multer";
 import { handleFileUpload } from "../uploadEndpoint";
+import { handleDocumentUpload, uploadMiddleware } from "../uploadDocument";
 import { initializeCronJobs } from "../cronJobs";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -47,6 +48,7 @@ async function startServer() {
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
   });
   app.post("/api/upload", upload.single('file'), handleFileUpload);
+  app.post("/api/upload-document", uploadMiddleware, handleDocumentUpload);
   // tRPC API
   app.use(
     "/api/trpc",
