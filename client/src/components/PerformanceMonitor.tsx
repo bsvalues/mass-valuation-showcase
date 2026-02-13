@@ -63,7 +63,9 @@ export function PerformanceMonitor({ children, enabled = import.meta.env.DEV }: 
     };
   }, [enabled]);
 
-  // React Profiler callback
+  // React Profiler callback - using ref to avoid infinite loops
+  const metricsRef = useState({ renderTime: 0, renderCount: 0, slowRenders: 0 })[0];
+
   const onRenderCallback: ProfilerOnRenderCallback = (
     id,
     phase,
@@ -74,25 +76,35 @@ export function PerformanceMonitor({ children, enabled = import.meta.env.DEV }: 
   ) => {
     if (!enabled) return;
 
-    setMetrics(prev => {
-      const slowRenders = actualDuration > 16 ? prev.slowRenders + 1 : prev.slowRenders; // 16ms = 60fps threshold
-      
+    // Update ref directly to avoid triggering re-renders
+    metricsRef.renderTime = actualDuration;
+    metricsRef.renderCount++;
+    
+    if (actualDuration > 16) {
+      metricsRef.slowRenders++;
       // Log slow renders
-      if (actualDuration > 16) {
-        console.warn(
-          `[TerraFusion Performance] Slow render detected: ${actualDuration.toFixed(2)}ms (target: <16ms for 60fps)`,
-          { id, phase, actualDuration, baseDuration }
-        );
-      }
-
-      return {
-        ...prev,
-        renderTime: actualDuration,
-        renderCount: prev.renderCount + 1,
-        slowRenders,
-      };
-    });
+      console.warn(
+        `[TerraFusion Performance] Slow render detected: ${actualDuration.toFixed(2)}ms (target: <16ms for 60fps)`,
+        { id, phase, actualDuration, baseDuration }
+      );
+    }
   };
+
+  // Periodically sync ref to state (every second)
+  useEffect(() => {
+    if (!enabled) return;
+
+    const interval = setInterval(() => {
+      setMetrics(prev => ({
+        ...prev,
+        renderTime: metricsRef.renderTime,
+        renderCount: metricsRef.renderCount,
+        slowRenders: metricsRef.slowRenders,
+      }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [enabled, metricsRef]);
 
   if (!enabled) {
     return <>{children}</>;
