@@ -45,6 +45,9 @@ import AppealAuditLog from "./pages/AppealAuditLog";
 import TemplateManagement from "./pages/TemplateManagement";
 import AppealAnalytics from "./pages/AppealAnalytics";
 import AppealComparison from "./pages/AppealComparison";
+import AppealDefenseBuilder from "./pages/AppealDefenseBuilder";
+import MassAppraisalDashboard from "./pages/MassAppraisalDashboard";
+import RatioStudyAnalyzer from "./pages/RatioStudyAnalyzer";
 
 
 function Router() {
@@ -77,6 +80,9 @@ function Router() {
       <Route path={"/appeals/analytics"} component={AppealAnalytics} />
       <Route path={"/appeals/comparison"} component={AppealComparison} />
       <Route path={"/appeals/templates"} component={TemplateManagement} />
+      <Route path={"/appeals/defense-builder"} component={AppealDefenseBuilder} />
+      <Route path={"/mass-appraisal-dashboard"} component={MassAppraisalDashboard} />
+      <Route path={" /ratio-study-analyzer"} component={RatioStudyAnalyzer} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />
