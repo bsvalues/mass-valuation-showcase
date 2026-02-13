@@ -4,6 +4,7 @@ import { Dock } from "@/components/Dock";
 import { Stage } from "@/components/Stage";
 import { SystemBar } from "@/components/SystemBar";
 import { IgnitionSequence } from "@/components/IgnitionSequence";
+import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import { useState } from "react";
 import { GodModeProvider } from "@/contexts/GodModeContext";
 import { GlobalSimulationProvider } from "@/contexts/GlobalSimulationContext";
@@ -108,10 +109,11 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="dark"
-        switchable
-      >
+      <PerformanceMonitor enabled={import.meta.env.DEV}>
+        <ThemeProvider
+          defaultTheme="dark"
+          switchable
+        >
         <AdaptiveThemeProvider>
       <GlobalSimulationProvider>
         <WAParcelProvider>
@@ -134,7 +136,8 @@ function App() {
           </WAParcelProvider>
         </GlobalSimulationProvider>
         </AdaptiveThemeProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </PerformanceMonitor>
     </ErrorBoundary>
   );
 }

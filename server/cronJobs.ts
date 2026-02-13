@@ -29,23 +29,26 @@ export async function scheduledAppealReminders() {
 export function initializeCronJobs() {
   console.log("[CronJob] Initializing cron jobs...");
   
+  // TEMPORARILY DISABLED: Column naming mismatch between schema and database
+  // TODO: Fix appeals table column names (hearingDate vs hearingdate, appealedValue vs appealedvalue)
+  
   // Schedule appeal reminders for 9:00 AM daily
   // Using node-cron or similar library in production
   // For now, we'll use setInterval for demonstration
   
-  const NINE_AM_MS = getMillisecondsUntilNextNineAM();
+  // const NINE_AM_MS = getMillisecondsUntilNextNineAM();
   
-  // Run first check at next 9 AM
-  setTimeout(() => {
-    scheduledAppealReminders();
-    
-    // Then run daily at 9 AM
-    setInterval(() => {
-      scheduledAppealReminders();
-    }, 24 * 60 * 60 * 1000); // 24 hours
-  }, NINE_AM_MS);
+  // // Run first check at next 9 AM
+  // setTimeout(() => {
+  //   scheduledAppealReminders();
+  //   
+  //   // Then run daily at 9 AM
+  //   setInterval(() => {
+  //     scheduledAppealReminders();
+  //   }, 24 * 60 * 60 * 1000); // 24 hours
+  // }, NINE_AM_MS);
   
-  console.log(`[CronJob] Appeal reminders scheduled for next 9:00 AM (in ${Math.round(NINE_AM_MS / 1000 / 60)} minutes)`);
+  console.log(`[CronJob] Appeal reminders temporarily disabled (schema mismatch)`);
 }
 
 /**

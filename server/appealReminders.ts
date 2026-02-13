@@ -27,7 +27,7 @@ export async function sendHearingReminders() {
       .from(appeals)
       .where(and(
         eq(appeals.status, "hearing_scheduled"),
-        sql`${appeals.hearingDate} BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)`,
+        sql`hearingdate BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)`,
         sql`${appeals.ownerEmail} IS NOT NULL`
       ));
 

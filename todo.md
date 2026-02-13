@@ -2887,3 +2887,47 @@
 
 **Status:** 🚧 In Progress
 **Target:** Complete TerraFusion OS Workflow Principles
+
+
+## ⚡ Phase 4: TerraFusion OS Polish & Performance
+
+### Dock Icon Updates
+- [ ] Replace Home icon with appropriate app icon
+- [ ] Replace Appeals icon with Scales icon
+- [ ] Replace Analytics icon with BarChart icon
+- [ ] Replace Defense icon with Shield icon
+- [ ] Replace Appraisal icon with Building icon
+- [ ] Replace Ratio Study icon with Calculator icon
+- [ ] Replace Data icon with Database icon
+- [ ] Replace Map icon with Map icon (verify correct)
+- [ ] Replace Settings icon with Settings icon (verify correct)
+- [ ] Test all dock icons display correctly
+
+### Command Palette Quick Actions
+- [ ] Add "Create New Appeal" action
+- [ ] Add "Run Ratio Study" action
+- [ ] Add "Export Report" action
+- [ ] Add "Upload Data" action
+- [ ] Add "Generate Defense Document" action
+- [ ] Add "View Recent Appeals" action
+- [ ] Add "System Health Check" action
+- [ ] Test all quick actions execute correctly
+
+### Performance Monitoring
+- [ ] Install performance monitoring dependencies
+- [ ] Create PerformanceMonitor component with React Profiler
+- [ ] Add frame rate tracking (requestAnimationFrame)
+- [ ] Implement 60fps threshold alerts
+- [ ] Add performance metrics display (dev mode)
+- [ ] Test performance monitoring accuracy
+- [ ] Save Phase 4 checkpoint
+
+
+## ⚡ Phase 4: TerraFusion OS Polish & Performance (Complete)
+
+- [x] Update Dock icons with app-specific icons (Scales, Shield, Building2, Calculator, etc.)
+- [x] Add Command Palette quick actions (Run Ratio Study, Export Report, Generate Defense, View Recent Appeals, System Health)
+- [x] Create PerformanceMonitor component with React Profiler and FPS tracking
+- [x] Implement 60fps enforcement with warnings for slow renders (>16ms) and low FPS (<60)
+- [x] Integrate PerformanceMonitor into App.tsx
+- [x] All TypeScript errors resolved

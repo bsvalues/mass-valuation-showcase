@@ -1,7 +1,7 @@
 import { useLocation } from 'wouter';
 import {
   Home,
-  FileText,
+  Scale,
   Map,
   Database,
   TrendingUp,
@@ -10,6 +10,8 @@ import {
   Shield,
   Layers,
   BarChart3,
+  Building2,
+  Calculator,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -34,7 +36,7 @@ export function Dock() {
     {
       id: 'appeals',
       label: 'Appeals',
-      icon: FileText,
+      icon: Scale,
       path: '/appeals',
       badge: 12, // Example: 12 pending appeals
     },
@@ -57,35 +59,24 @@ export function Dock() {
       path: '/wa-data-ingestion',
     },
     {
-      id: 'regression',
-      label: 'Regression',
-      icon: TrendingUp,
-      path: '/regression-studio',
-    },
-    {
-      id: 'avm',
-      label: 'AVM',
-      icon: Brain,
-      path: '/avm-studio',
-    },
-    {
-      id: 'models',
-      label: 'Models',
-      icon: Layers,
-      path: '/model-management',
-    },
-    {
-      id: 'users',
-      label: 'Users',
-      icon: Users,
-      path: '/admin/users',
-    },
-    {
-      id: 'governance',
-      label: 'Governance',
+      id: 'defense',
+      label: 'Defense',
       icon: Shield,
-      path: '/governance',
+      path: '/appeal-defense',
     },
+    {
+      id: 'appraisal',
+      label: 'Appraisal',
+      icon: Building2,
+      path: '/mass-appraisal',
+    },
+    {
+      id: 'ratio',
+      label: 'Ratio Study',
+      icon: Calculator,
+      path: '/ratio-study',
+    },
+
   ];
 
   const isActive = (path: string) => {

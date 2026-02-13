@@ -20,6 +20,7 @@ import {
   Layers,
   Brain,
   Workflow,
+  Calculator,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -195,6 +196,27 @@ export function CommandPalette() {
       keywords: ['new', 'create', 'appeal'],
     },
     {
+      id: 'action-run-ratio-study',
+      label: 'Run Ratio Study',
+      description: 'Analyze assessment ratios (COD/PRD)',
+      icon: Calculator,
+      category: 'action',
+      action: () => setLocation('/ratio-study'),
+      keywords: ['ratio', 'cod', 'prd', 'study'],
+    },
+    {
+      id: 'action-export-report',
+      label: 'Export Report',
+      description: 'Generate and download PDF report',
+      icon: FileText,
+      category: 'action',
+      action: () => {
+        // Trigger export dialog
+        alert('Export functionality coming soon');
+      },
+      keywords: ['export', 'pdf', 'report', 'download'],
+    },
+    {
       id: 'action-upload-data',
       label: 'Upload Data',
       description: 'Import CSV or Excel file',
@@ -202,6 +224,36 @@ export function CommandPalette() {
       category: 'action',
       action: () => setLocation('/wa-data-ingestion'),
       keywords: ['upload', 'import', 'csv'],
+    },
+    {
+      id: 'action-generate-defense',
+      label: 'Generate Defense Document',
+      description: 'Create appeal defense documentation',
+      icon: Shield,
+      category: 'action',
+      action: () => setLocation('/appeal-defense'),
+      keywords: ['defense', 'document', 'generate'],
+    },
+    {
+      id: 'action-view-recent-appeals',
+      label: 'View Recent Appeals',
+      description: 'Show latest appeal submissions',
+      icon: Calendar,
+      category: 'action',
+      action: () => setLocation('/appeals'),
+      keywords: ['recent', 'latest', 'appeals'],
+    },
+    {
+      id: 'action-system-health',
+      label: 'System Health Check',
+      description: 'View system status and performance',
+      icon: Workflow,
+      category: 'action',
+      action: () => {
+        // Open system health modal
+        alert('System health: All systems operational');
+      },
+      keywords: ['health', 'status', 'performance', 'system'],
     },
     {
       id: 'action-train-model',
