@@ -271,6 +271,25 @@ export default function AppealsManagement() {
     },
   });
 
+  // Bulk assign mutation
+  const bulkAssign = trpc.appeals.bulkAssign.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Assigned ${data.updated} appeals successfully`);
+      setSelectedAppeals(new Set());
+      setBulkUpdateMode(false);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Failed to bulk assign: ${error.message}`);
+    },
+  });
+
+  // Batch export query
+  const { refetch: exportAppeals } = trpc.appeals.batchExport.useQuery(
+    { appealIds: Array.from(selectedAppeals) },
+    { enabled: false }
+  );
+
   // Update status mutation
   const updateStatus = trpc.appeals.updateStatus.useMutation({
     onSuccess: () => {
@@ -491,6 +510,17 @@ export default function AppealsManagement() {
               <Download className="w-4 h-4 mr-2" />
               Export to CSV
             </Button>
+            <Button 
+              variant={bulkUpdateMode ? "default" : "outline"}
+              onClick={() => {
+                setBulkUpdateMode(!bulkUpdateMode);
+                if (bulkUpdateMode) {
+                  setSelectedAppeals(new Set());
+                }
+              }}
+            >
+              {bulkUpdateMode ? "Cancel Batch Mode" : "Batch Actions"}
+            </Button>
             <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
               <FileText className="w-4 h-4 mr-2" />
               Bulk Import
@@ -606,6 +636,98 @@ export default function AppealsManagement() {
             )}
           </CardContent>
         </Card>
+
+        {/* Batch Actions Toolbar */}
+        {bulkUpdateMode && selectedAppeals.size > 0 && (
+          <Card className="bg-primary/5 border-primary">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">
+                  {selectedAppeals.size} appeal{selectedAppeals.size > 1 ? 's' : ''} selected
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    className="px-3 py-2 border rounded-md text-sm bg-background"
+                    onChange={(e) => {
+                      if (!e.target.value) return;
+                      if (confirm(`Update ${selectedAppeals.size} appeals to ${e.target.value}?`)) {
+                        bulkUpdateStatus.mutate({
+                          appealIds: Array.from(selectedAppeals),
+                          status: e.target.value as AppealStatus,
+                        });
+                      }
+                      e.target.value = "";
+                    }}
+                    defaultValue=""
+                  >
+                    <option value="">Update Status...</option>
+                    <option value="pending">Pending</option>
+                    <option value="in_review">In Review</option>
+                    <option value="hearing_scheduled">Hearing Scheduled</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="withdrawn">Withdrawn</option>
+                  </select>
+                  <select
+                    className="px-3 py-2 border rounded-md text-sm bg-background"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "") return;
+                      if (confirm(`Assign ${selectedAppeals.size} appeals to ${staffList.find(s => s.id === parseInt(value))?.name || 'staff member'}?`)) {
+                        bulkAssign.mutate({
+                          appealIds: Array.from(selectedAppeals),
+                          assignedTo: value === "unassign" ? null : parseInt(value),
+                        });
+                      }
+                      e.target.value = "";
+                    }}
+                    defaultValue=""
+                  >
+                    <option value="">Assign To...</option>
+                    <option value="unassign">Unassign</option>
+                    {staffList.map(staff => (
+                      <option key={staff.id} value={staff.id}>
+                        {staff.name || staff.email || `User #${staff.id}`}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const result = await exportAppeals();
+                      if (result.data) {
+                        const headers = Object.keys(result.data[0]).join(',');
+                        const rows = result.data.map(row => Object.values(row).map(v => `"${v}"`).join(','));
+                        const csv = [headers, ...rows].join('\n');
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `selected_appeals_${new Date().toISOString().split('T')[0]}.csv`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success(`Exported ${selectedAppeals.size} appeals`);
+                      }
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Selected
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedAppeals(new Set());
+                      toast.info("Selection cleared");
+                    }}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

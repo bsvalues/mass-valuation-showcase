@@ -517,3 +517,27 @@ export const predictions = mysqlTable("predictions", {
 
 export type Prediction = typeof predictions.$inferSelect;
 export type InsertPrediction = typeof predictions.$inferInsert;
+
+
+/**
+ * Appeal Templates table - pre-defined templates for common appeal scenarios
+ */
+export const appealTemplates = mysqlTable("appealTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(), // e.g., "Residential Overvaluation"
+  description: text("description"), // Detailed description of when to use this template
+  category: mysqlEnum("category", ["residential", "commercial", "land", "industrial", "agricultural"]).notNull(),
+  defaultAppealReason: text("defaultAppealReason"), // Pre-filled appeal reason text
+  suggestedDocuments: text("suggestedDocuments"), // JSON array of suggested document types
+  estimatedProcessingDays: int("estimatedProcessingDays"), // Typical processing time
+  isActive: int("isActive").default(1).notNull(), // 1 = active, 0 = inactive
+  createdBy: int("createdBy"), // User ID who created the template
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  categoryIdx: index("template_category_idx").on(table.category),
+  isActiveIdx: index("template_isactive_idx").on(table.isActive),
+}));
+
+export type AppealTemplate = typeof appealTemplates.$inferSelect;
+export type InsertAppealTemplate = typeof appealTemplates.$inferInsert;

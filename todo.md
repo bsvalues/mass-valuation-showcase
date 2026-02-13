@@ -2993,3 +2993,43 @@
 - [x] Write tests for notification triggers
 - [x] End-to-end testing of all features
 - [x] Save final checkpoint
+
+
+## 🚀 Appeals Workflow Automation (In Progress)
+
+### Batch Actions
+- [x] Add multi-select checkboxes to Appeals Management table
+- [x] Implement bulk status update action
+- [x] Implement bulk assignment action
+- [x] Implement batch export to CSV/Excel
+- [x] Add batch action confirmation dialogs
+- [x] Create batch operations tRPC mutations
+- [x] Test batch operations with multiple appeals
+
+### Appeal Templates Library
+- [x] Create appealTemplates table schema
+- [x] Design template data structure (fields, defaults, docs)
+- [ ] Implement template CRUD mutations
+- [ ] Create Template Management UI page
+- [ ] Add template selector in Create Appeal form
+- [ ] Pre-fill form fields from selected template
+- [x] Include 3 default templates (residential, commercial, land)
+- [ ] Test template application workflow
+
+### Workflow Automation
+- [ ] Create workflowRules table schema
+- [ ] Design rule engine (conditions, actions, triggers)
+- [ ] Implement auto-assignment based on value threshold
+- [ ] Implement auto-assignment based on county
+- [ ] Implement auto-assignment based on property type
+- [ ] Add auto-hearing scheduling after review completion
+- [ ] Create Workflow Rules Management UI
+- [ ] Test automation triggers with various scenarios
+- [ ] Add audit logging for automated actions
+
+### Testing & Validation
+- [ ] Write tests for batch operations
+- [ ] Write tests for template system
+- [ ] Write tests for workflow automation
+- [ ] End-to-end testing of all workflows
+- [ ] Save final checkpoint

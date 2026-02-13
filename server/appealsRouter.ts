@@ -773,4 +773,86 @@ export const appealsRouter = router({
         throw new Error(`Failed to import appeals: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
+
+  /**
+   * Bulk assign appeals to staff member
+   */
+  bulkAssign: publicProcedure
+    .input(z.object({
+      appealIds: z.array(z.number()),
+      assignedTo: z.number().nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const { appealIds, assignedTo } = input;
+      
+      // Update all appeals
+      await db.update(appeals)
+        .set({ assignedTo })
+        .where(sql`${appeals.id} IN (${appealIds.join(',')})`);
+      
+      // Note: Timeline entries for assignment are tracked separately
+      // We don't insert timeline records here since assignment doesn't change status
+      
+      return {
+        success: true,
+        updated: appealIds.length,
+        message: `Successfully assigned ${appealIds.length} appeals`,
+      };
+    }),
+
+  /**
+   * Export appeals to CSV format
+   */
+  batchExport: publicProcedure
+    .input(z.object({
+      appealIds: z.array(z.number()).optional(),
+      status: z.enum(["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"]).optional(),
+      countyName: z.string().optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      let query = db.select().from(appeals);
+      
+      const conditions = [];
+      if (input.appealIds && input.appealIds.length > 0) {
+        conditions.push(sql`${appeals.id} IN (${input.appealIds.join(',')})`);
+      }
+      if (input.status) {
+        conditions.push(eq(appeals.status, input.status));
+      }
+      if (input.countyName) {
+        conditions.push(eq(appeals.countyName, input.countyName));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as any;
+      }
+      
+      const results = await query.orderBy(desc(appeals.createdAt));
+      
+      // Convert to CSV-friendly format
+      return results.map(appeal => ({
+        id: appeal.id,
+        parcelId: appeal.parcelId,
+        appealDate: appeal.appealDate.toISOString().split('T')[0],
+        currentAssessedValue: appeal.currentAssessedValue,
+        appealedValue: appeal.appealedValue,
+        finalValue: appeal.finalValue,
+        status: appeal.status,
+        appealReason: appeal.appealReason,
+        resolution: appeal.resolution,
+        countyName: appeal.countyName,
+        filedBy: appeal.filedBy,
+        assignedTo: appeal.assignedTo,
+        ownerEmail: appeal.ownerEmail,
+        hearingDate: appeal.hearingDate?.toISOString().split('T')[0],
+        resolutionDate: appeal.resolutionDate?.toISOString().split('T')[0],
+        createdAt: appeal.createdAt.toISOString().split('T')[0],
+      }));
+    }),
 });
