@@ -85,6 +85,7 @@ function Router() {
       <Route path={"/appeals/templates"} component={TemplateManagement} />
       <Route path={"/appeals/appeal-templates"} component={AppealTemplates} />
       <Route path={"/appeals/defense-builder"} component={AppealDefenseBuilder} />
+      <Route path={"/appeal-defense"} component={AppealDefenseBuilder} />
       <Route path={"/mass-appraisal-dashboard"} component={MassAppraisalDashboard} />
       <Route path={" /ratio-study-analyzer"} component={RatioStudyAnalyzer} />
       <Route path={"/data-import"} component={DataImport} />
