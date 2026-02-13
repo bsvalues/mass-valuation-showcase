@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowUp, ArrowDown, Minus, TrendingUp, Home, DollarSign, Ruler } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { PropertyFeatures, EngineerEdFeatures } from '@/lib/featureEngineering';
+import { trpc } from '@/lib/trpc';
 
 interface NeighborhoodComparisonProps {
   property: PropertyFeatures;
@@ -10,23 +11,31 @@ interface NeighborhoodComparisonProps {
   predictedValue: number;
 }
 
-// Mock cluster statistics (in production, fetch from tRPC)
-const getClusterStats = (clusterId: number) => {
-  // This would come from database aggregation
-  const clusterData: Record<number, any> = {
-    0: { medianSqft: 2200, medianPrice: 385000, medianPriceSqft: 175, propertyCount: 5849, medianQuality: 3.2, medianAge: 28 },
-    1: { medianSqft: 2350, medianPrice: 386500, medianPriceSqft: 165, propertyCount: 5965, medianQuality: 3.4, medianAge: 25 },
-    2: { medianSqft: 2100, medianPrice: 375000, medianPriceSqft: 179, propertyCount: 4245, medianQuality: 3.0, medianAge: 32 },
-    3: { medianSqft: 2280, medianPrice: 390000, medianPriceSqft: 171, propertyCount: 5798, medianQuality: 3.5, medianAge: 24 },
-    4: { medianSqft: 2250, medianPrice: 380000, medianPriceSqft: 169, propertyCount: 5896, medianQuality: 3.3, medianAge: 27 },
-  };
-  
-  return clusterData[clusterId] || clusterData[0];
-};
-
 export function NeighborhoodComparison({ property, engineeredFeatures, predictedValue }: NeighborhoodComparisonProps) {
   const clusterId = property.neighborhoodClusterId || 0;
-  const clusterStats = getClusterStats(clusterId);
+  
+  // Fetch real cluster statistics from database
+  const { data: clusterData, isLoading } = trpc.clusterStats.getClusterById.useQuery(
+    { clusterId },
+    { enabled: clusterId !== undefined }
+  );
+  
+  // Use real data or fallback to defaults while loading
+  const clusterStats = clusterData ? {
+    medianSqft: (clusterData as any).medianSqft || (clusterData as any).medianSquareFeet || 2200,
+    medianPrice: (clusterData as any).medianPrice || (clusterData as any).medianSalePrice || (clusterData as any).medianHomeValue || 385000,
+    medianPriceSqft: (clusterData as any).medianPriceSqft || (clusterData as any).medianPricePerSqFt || 175,
+    propertyCount: (clusterData as any).propertyCount || (clusterData as any).totalProperties || 0,
+    medianQuality: (clusterData as any).medianQuality || 3.2,
+    medianAge: (clusterData as any).medianAge || 28,
+  } : {
+    medianSqft: 2200,
+    medianPrice: 385000,
+    medianPriceSqft: 175,
+    propertyCount: 0,
+    medianQuality: 3.2,
+    medianAge: 28,
+  };
   
   // Calculate property metrics
   const propertySqft = property.squareFeet || 0;

@@ -130,6 +130,7 @@ export default function MapExplorer() {
     y: number;
     propertyIds: number[];
   } | null>(null);
+  const [batchExportDialogOpen, setBatchExportDialogOpen] = useState(false);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -1431,9 +1432,17 @@ export default function MapExplorer() {
                         }));
                         import('@/lib/comparisonExport').then(({ exportComparisonPDF }) => exportComparisonPDF(data));
                       }}><FileText className="h-4 w-4" />PDF</TactileButton>
+                      <TactileButton 
+                        variant="chrome" 
+                        className="gap-2 px-4 py-2 text-sm" 
+                        onClick={() => setBatchExportDialogOpen(true)}
+                      >
+                        <FileText className="h-4 w-4" />
+                        Bulk Export
+                      </TactileButton>
                       <BatchPDFExportDialog 
-                        open={false}
-                        onOpenChange={() => {}}
+                        open={batchExportDialogOpen}
+                        onOpenChange={setBatchExportDialogOpen}
                         properties={selectedProperties.map(id => properties.find((p: any) => p.id === id)).filter(Boolean).map((p: any) => ({
                           id: p.id,
                           parcelNumber: p.parcelId || "N/A",
