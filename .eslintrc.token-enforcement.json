@@ -1,0 +1,64 @@
+{
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "Literal[value=/^(#[0-9a-f]{3,8}|rgb|hsl)/i]",
+        "message": "❌ Direct color values are prohibited. Use design tokens from @/tokens/colors instead. Example: colorTokens.signal.primary"
+      },
+      {
+        "selector": "TemplateLiteral > TemplateElement[value.raw=/^(#[0-9a-f]{3,8}|rgb|hsl)/i]",
+        "message": "❌ Direct color values in template literals are prohibited. Use design tokens from @/tokens/colors instead."
+      },
+      {
+        "selector": "Literal[value=/^\\d+px$/]",
+        "message": "❌ Hardcoded pixel values are prohibited. Use spacing tokens from @/tokens/spacing instead. Example: spacingTokens[4] for 16px"
+      },
+      {
+        "selector": "Literal[value=/^\\d+ms$/]",
+        "message": "❌ Hardcoded duration values are prohibited. Use motion tokens from @/tokens/motion instead. Example: motionTokens.duration.normal"
+      }
+    ],
+    "no-restricted-properties": [
+      "error",
+      {
+        "object": "style",
+        "property": "color",
+        "message": "❌ Inline color styles are prohibited. Use Tailwind classes with design tokens or styled-components with token imports."
+      },
+      {
+        "object": "style",
+        "property": "backgroundColor",
+        "message": "❌ Inline background-color styles are prohibited. Use Tailwind classes with design tokens."
+      },
+      {
+        "object": "style",
+        "property": "margin",
+        "message": "❌ Inline margin styles are prohibited. Use Tailwind spacing classes based on 8px grid."
+      },
+      {
+        "object": "style",
+        "property": "padding",
+        "message": "❌ Inline padding styles are prohibited. Use Tailwind spacing classes based on 8px grid."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["*.tsx", "*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["**/index.css"],
+                "message": "❌ Do not import index.css directly. Design tokens are globally available via Tailwind."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

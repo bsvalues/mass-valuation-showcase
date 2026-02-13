@@ -323,9 +323,9 @@ export default function Home() {
 
         {/* Appeal Detail Modal */}
         <AppealDetailModal 
+          appealId={null}
           open={appealModalOpen}
           onOpenChange={setAppealModalOpen}
-          status={selectedStatus}
         />
 
         {/* Suite Quick-Access Cards */}

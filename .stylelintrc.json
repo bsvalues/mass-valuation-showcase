@@ -1,0 +1,49 @@
+{
+  "rules": {
+    "color-no-hex": [
+      true,
+      {
+        "message": "❌ Hex colors are prohibited outside @theme blocks. Use CSS variables (var(--color-*)) or Tailwind classes instead."
+      }
+    ],
+    "declaration-property-value-disallowed-list": {
+      "/^(margin|padding)/": [
+        "/^\\d+px$/",
+        "/^\\d+rem$/"
+      ],
+      "message": "❌ Hardcoded spacing values are prohibited. Use var(--spacing-*) tokens or Tailwind spacing classes."
+    },
+    "function-disallowed-list": [
+      "rgb",
+      "rgba",
+      "hsl",
+      "hsla"
+    ],
+    "unit-disallowed-list": {
+      "px": {
+        "ignoreProperties": [
+          "border-width",
+          "outline-width",
+          "box-shadow"
+        ]
+      }
+    },
+    "custom-property-pattern": [
+      "^(color|spacing|font|line-height|letter-spacing|duration|easing|radius)-",
+      {
+        "message": "❌ Custom properties must follow TerraFusion naming convention: --{category}-{name}"
+      }
+    ],
+    "selector-class-pattern": [
+      "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$",
+      {
+        "message": "❌ Class names must use kebab-case. Prefer Tailwind utility classes over custom CSS."
+      }
+    ]
+  },
+  "ignoreFiles": [
+    "**/*.tsx",
+    "**/*.ts",
+    "**/node_modules/**"
+  ]
+}

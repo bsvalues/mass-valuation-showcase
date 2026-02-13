@@ -3,25 +3,173 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/**
+ * TerraFusion OS Design Tokens
+ * Tailwind CSS v4 Configuration
+ * 
+ * Token Structure:
+ * - Colors: Liquid Glass, Government Night, Signal gradients
+ * - Spacing: 8px base grid system
+ * - Typography: Kinetic Type scales
+ * - Motion: Tactile physics and transitions
+ */
+
 @theme inline {
-  /* 2026 Design System - Cyber-Gradients */
-  --color-neon-cyan: oklch(0.8 0.2 195);
-  --color-neon-magenta: oklch(0.7 0.25 330);
-  --color-neon-gold: oklch(0.85 0.15 85);
-  --color-deep-charcoal: oklch(0.15 0.01 240);
-  --color-chrome-light: oklch(0.95 0.01 240);
-  --color-chrome-dark: oklch(0.3 0.02 240);
+  /* ========================================
+     TERRAFUSION COLOR TOKENS
+     ======================================== */
   
-  /* 2026 Animations */
-  --animate-squish: squish 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --animate-breathe: breathe 3s ease-in-out infinite;
-  --animate-warp: warp 0.5s ease-out;
-  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
+  /* Liquid Glass Tints (OS Chrome Only) */
+  --color-glass-1: rgba(255, 255, 255, 0.05);
+  --color-glass-2: rgba(255, 255, 255, 0.10);
+  --color-glass-3: rgba(255, 255, 255, 0.15);
+  --color-glass-4: rgba(255, 255, 255, 0.20);
   
+  /* Government Night Palette */
+  --color-government-night-base: #0A0E1A;
+  --color-government-night-elevated: #141824;
+  --color-government-night-surface: #1E2330;
+  --color-government-night-border: #2A3040;
+  
+  /* Signal Layer - Cyber-Gradients */
+  --color-signal-primary: #00FFEE;
+  --color-signal-primary-dark: #00D4FF;
+  --color-signal-secondary: #00D9D9;
+  --color-signal-secondary-dark: #00B8B8;
+  --color-signal-alert: #FF3366;
+  --color-signal-alert-dark: #CC2952;
+  --color-signal-success: #00FF88;
+  --color-signal-success-dark: #00CC6E;
+  --color-signal-warning: #FFB800;
+  --color-signal-warning-dark: #CC9300;
+  
+  /* Text Colors */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: rgba(255, 255, 255, 0.70);
+  --color-text-tertiary: rgba(255, 255, 255, 0.50);
+  --color-text-disabled: rgba(255, 255, 255, 0.30);
+  --color-text-inverse: #0A0E1A;
+  
+  /* Chart Colors */
+  --color-chart-1: #00FFEE;
+  --color-chart-2: #FF3366;
+  --color-chart-3: #FFB800;
+  --color-chart-4: #00FF88;
+  --color-chart-5: #00D4FF;
+  --color-chart-6: #B366FF;
+  
+  /* ========================================
+     SPACING TOKENS (8px Base Grid)
+     ======================================== */
+  
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-0\.5: 0.125rem;  /* 2px */
+  --spacing-1: 0.25rem;      /* 4px */
+  --spacing-1\.5: 0.375rem;  /* 6px */
+  --spacing-2: 0.5rem;       /* 8px - base unit */
+  --spacing-2\.5: 0.625rem;  /* 10px */
+  --spacing-3: 0.75rem;      /* 12px */
+  --spacing-3\.5: 0.875rem;  /* 14px */
+  --spacing-4: 1rem;         /* 16px */
+  --spacing-5: 1.25rem;      /* 20px */
+  --spacing-6: 1.5rem;       /* 24px */
+  --spacing-7: 1.75rem;      /* 28px */
+  --spacing-8: 2rem;         /* 32px */
+  --spacing-9: 2.25rem;      /* 36px */
+  --spacing-10: 2.5rem;      /* 40px */
+  --spacing-11: 2.75rem;     /* 44px - minimum touch target */
+  --spacing-12: 3rem;        /* 48px */
+  --spacing-14: 3.5rem;      /* 56px */
+  --spacing-16: 4rem;        /* 64px */
+  --spacing-20: 5rem;        /* 80px */
+  --spacing-24: 6rem;        /* 96px */
+  --spacing-32: 8rem;        /* 128px */
+  --spacing-40: 10rem;       /* 160px */
+  --spacing-48: 12rem;       /* 192px */
+  --spacing-64: 16rem;       /* 256px */
+  
+  /* ========================================
+     TYPOGRAPHY TOKENS
+     ======================================== */
+  
+  /* Font Families */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+  --font-display: "Inter", sans-serif;
+  
+  /* Font Sizes - Mobile First */
+  --font-size-display-mobile: 2.5rem;    /* 40px */
+  --font-size-display-tablet: 3rem;      /* 48px */
+  --font-size-display-desktop: 3.5rem;   /* 56px */
+  --font-size-h1-mobile: 2rem;           /* 32px */
+  --font-size-h1-tablet: 2.25rem;        /* 36px */
+  --font-size-h1-desktop: 2.5rem;        /* 40px */
+  --font-size-h2-mobile: 1.5rem;         /* 24px */
+  --font-size-h2-tablet: 1.75rem;        /* 28px */
+  --font-size-h2-desktop: 2rem;          /* 32px */
+  --font-size-h3-mobile: 1.25rem;        /* 20px */
+  --font-size-h3-tablet: 1.375rem;       /* 22px */
+  --font-size-h3-desktop: 1.5rem;        /* 24px */
+  --font-size-h4-mobile: 1.125rem;       /* 18px */
+  --font-size-h4-desktop: 1.25rem;       /* 20px */
+  --font-size-body-large: 1.125rem;      /* 18px */
+  --font-size-body-base: 1rem;           /* 16px */
+  --font-size-body-small: 0.875rem;      /* 14px */
+  --font-size-body-xs: 0.75rem;          /* 12px */
+  
+  /* Line Heights */
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  --line-height-loose: 2;
+  
+  /* Letter Spacing */
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+  
+  /* ========================================
+     MOTION TOKENS
+     ======================================== */
+  
+  /* Durations */
+  --duration-instant: 0ms;
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 700ms;
+  
+  /* Easing Functions */
+  --easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --easing-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+  --easing-sharp: cubic-bezier(0.4, 0.0, 0.6, 1);
+  --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* Tactile Physics (Commitment Actions Only) */
+  --spring-stiff-tension: 300;
+  --spring-stiff-friction: 20;
+  --spring-bouncy-tension: 200;
+  --spring-bouncy-friction: 12;
+  --spring-gentle-tension: 150;
+  --spring-gentle-friction: 25;
+  
+  /* ========================================
+     SEMANTIC MAPPINGS
+     ======================================== */
+  
+  /* Border Radius */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Semantic Color Mappings */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -41,11 +189,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -58,49 +201,49 @@
 
 :root {
   /* TerraFusion OS Design Language */
-  --terra-midnight: #0a0e1a;
-  --terra-deep-space: #050810;
-  --terra-cyan: #00d9d9;
-  --terra-cyan-bright: #00ffee;
+  --terra-midnight: var(--color-government-night-base);
+  --terra-deep-space: var(--color-government-night-elevated);
+  --terra-cyan: var(--color-signal-secondary);
+  --terra-cyan-bright: var(--color-signal-primary);
   --terra-cyan-glow: rgba(0, 217, 217, 0.4);
-  --terra-gold: #ffd700;
-  --terra-glass: rgba(11, 16, 32, 0.7);
-  --terra-glass-border: rgba(0, 255, 238, 0.2);
+  --terra-gold: var(--color-signal-warning);
+  --terra-glass: var(--color-glass-3);
+  --terra-glass-border: var(--color-glass-2);
 
   --primary: var(--terra-cyan-bright);
   --primary-foreground: var(--terra-midnight);
   --sidebar-primary: var(--terra-cyan-bright);
   --sidebar-primary-foreground: var(--terra-midnight);
   
-  --chart-1: var(--terra-cyan-bright);
-  --chart-2: var(--terra-gold);
-  --chart-3: #ff00ff; /* Magenta for "Ultimate Power" */
-  --chart-4: #00ff00; /* Green for "Fair" */
-  --chart-5: #ff0000; /* Red for "Drift" */
+  --chart-1: var(--color-chart-1);
+  --chart-2: var(--color-chart-2);
+  --chart-3: var(--color-chart-3);
+  --chart-4: var(--color-chart-4);
+  --chart-5: var(--color-chart-5);
 
   --radius: 0.75rem;
   
   /* Default to Dark Mode values as base */
   --background: var(--terra-midnight);
-  --foreground: #e2e8f0;
+  --foreground: var(--color-text-primary);
   --card: var(--terra-glass);
-  --card-foreground: #e2e8f0;
+  --card-foreground: var(--color-text-primary);
   --popover: var(--terra-midnight);
-  --popover-foreground: #e2e8f0;
-  --secondary: rgba(255, 255, 255, 0.1);
-  --secondary-foreground: #e2e8f0;
-  --muted: rgba(255, 255, 255, 0.05);
-  --muted-foreground: #94a3b8;
+  --popover-foreground: var(--color-text-primary);
+  --secondary: var(--color-glass-2);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-glass-1);
+  --muted-foreground: var(--color-text-secondary);
   --accent: var(--terra-cyan-glow);
   --accent-foreground: var(--terra-midnight);
-  --destructive: #ef4444;
+  --destructive: var(--color-signal-alert);
   --destructive-foreground: #ffffff;
   --border: var(--terra-glass-border);
-  --input: rgba(255, 255, 255, 0.1);
+  --input: var(--color-glass-2);
   --ring: var(--terra-cyan-bright);
   
   --sidebar: var(--terra-deep-space);
-  --sidebar-foreground: #e2e8f0;
+  --sidebar-foreground: var(--color-text-primary);
   --sidebar-accent: var(--terra-cyan-glow);
   --sidebar-accent-foreground: var(--terra-midnight);
   --sidebar-border: var(--terra-glass-border);
@@ -116,16 +259,58 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
     background-image: 
       radial-gradient(circle at 50% 0%, rgba(0, 217, 217, 0.12), transparent 50%),
       radial-gradient(circle at 0% 100%, rgba(10, 14, 26, 1), transparent 60%);
     background-attachment: fixed;
   }
   
-  /* Typography - JetBrains Mono for numbers */
+  /* Typography Hierarchy */
+  h1 {
+    font-size: var(--font-size-h1-mobile);
+    line-height: var(--line-height-tight);
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-tight);
+  }
+  
+  h2 {
+    font-size: var(--font-size-h2-mobile);
+    line-height: var(--line-height-snug);
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-tight);
+  }
+  
+  h3 {
+    font-size: var(--font-size-h3-mobile);
+    line-height: var(--line-height-snug);
+    font-weight: 600;
+  }
+  
+  h4 {
+    font-size: var(--font-size-h4-mobile);
+    line-height: var(--line-height-normal);
+    font-weight: 500;
+  }
+  
+  /* Responsive Typography */
+  @media (min-width: 768px) {
+    h1 { font-size: var(--font-size-h1-tablet); }
+    h2 { font-size: var(--font-size-h2-tablet); }
+    h3 { font-size: var(--font-size-h3-tablet); }
+  }
+  
+  @media (min-width: 1024px) {
+    h1 { font-size: var(--font-size-h1-desktop); }
+    h2 { font-size: var(--font-size-h2-desktop); }
+    h3 { font-size: var(--font-size-h3-desktop); }
+    h4 { font-size: var(--font-size-h4-desktop); }
+  }
+  
+  /* Monospace for numbers */
   .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
   }
 }
 
@@ -134,8 +319,8 @@
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: var(--spacing-4);
+    padding-right: var(--spacing-4);
   }
 
   .flex {
@@ -145,25 +330,66 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
+      padding-left: var(--spacing-6);
+      padding-right: var(--spacing-6);
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem;
-      padding-right: 2rem;
-      max-width: 1400px; /* Wider for "God Mode" view */
+      padding-left: var(--spacing-8);
+      padding-right: var(--spacing-8);
+      max-width: 1400px;
     }
   }
 
-  /* Quantum Glass Card */
+  /* ========================================
+     MATERIAL LAYER COMPONENTS
+     ======================================== */
+
+  /* Liquid Glass (OS Chrome Only) */
+  .liquid-glass {
+    background: linear-gradient(
+      135deg,
+      var(--color-glass-3) 0%,
+      var(--color-glass-2) 100%
+    );
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--color-glass-2);
+    box-shadow: 
+      0 8px 32px 0 rgba(0, 0, 0, 0.37),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Bento Card (Data Walls) */
+  .bento-card {
+    @apply bg-card border border-border rounded-lg p-6;
+    transition: transform var(--duration-normal) var(--easing-standard);
+  }
+  
+  .bento-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Tactile Button (Commitment Actions Only) */
+  .tactile-button {
+    transition: transform var(--duration-fast) var(--easing-bounce);
+  }
+  
+  .tactile-button:active {
+    transform: scale(0.95);
+  }
+
+  /* ========================================
+     TERRAFUSION LEGACY COMPONENTS
+     (Preserved for backwards compatibility)
+     ======================================== */
+
   .terra-card {
     @apply bg-[rgba(11,16,32,0.7)] backdrop-blur-xl border border-[rgba(0,255,238,0.2)] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
   }
 
-  /* Neon Cyan Pulse */
   .terra-pulse {
     animation: pulse-cyan 2s infinite;
   }
@@ -174,12 +400,10 @@
     100% { box-shadow: 0 0 0 0 rgba(0, 255, 238, 0); }
   }
 
-  /* Golden Ratio Easing */
   .terra-transition {
     transition: all 0.6s cubic-bezier(0.618, 0, 0.382, 1);
   }
   
-  /* Visual Haptics */
   .active-recoil:active {
     transform: scale(0.98);
     transition: transform 0.05s cubic-bezier(0.618, 0, 0.382, 1);
@@ -206,7 +430,7 @@
     }
   }
   
-  /* Logo Animation */
+  /* Logo Animations */
   .logo-ring-outer {
     animation: spin-slow 20s linear infinite;
     transform-origin: center;
@@ -237,7 +461,6 @@
     50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 8px var(--terra-cyan)); }
   }
   
-  /* TerraFusion Logo Animations */
   .animate-spin-slow {
     animation: spin-slow 20s linear infinite;
   }
@@ -250,7 +473,10 @@
     animation: pulse-core 3s ease-in-out infinite;
   }
   
-  /* 2026 Design System Animations */
+  /* ========================================
+     MOTION KEYFRAMES
+     ======================================== */
+  
   @keyframes squish {
     0% { transform: scale(1); }
     50% { transform: scale(0.92) scaleY(1.08); }
@@ -281,22 +507,10 @@
     }
   }
   
-  /* Liquid Glass Utility */
-  .liquid-glass {
-    background: linear-gradient(
-      135deg,
-      rgba(11, 16, 32, 0.8) 0%,
-      rgba(11, 16, 32, 0.6) 100%
-    );
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(0, 255, 238, 0.15);
-    box-shadow: 
-      0 8px 32px 0 rgba(0, 0, 0, 0.37),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
-  }
+  /* ========================================
+     ACCESSIBILITY: REDUCED MOTION
+     ======================================== */
   
-  /* Reduced Motion Fallback */
   @media (prefers-reduced-motion: reduce) {
     .liquid-glass {
       backdrop-filter: blur(8px);

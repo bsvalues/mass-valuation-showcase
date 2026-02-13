@@ -200,8 +200,8 @@ export function AppealDetailModal({ appealId, open, onOpenChange }: AppealDetail
                   
                   <div className="flex items-center gap-2 text-sm">
                     <User className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">Owner:</span>
-                    <span>{appeal.ownerName || "N/A"}</span>
+                    <span className="font-medium">Parcel ID:</span>
+                    <span>{appeal.parcelId}</span>
                   </div>
                 </div>
               </div>
