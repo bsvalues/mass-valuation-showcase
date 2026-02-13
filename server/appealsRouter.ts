@@ -724,4 +724,53 @@ export const appealsRouter = router({
       
       return history;
     }),
+
+  /**
+   * Bulk import appeals from CSV
+   */
+  bulkImport: publicProcedure
+    .input(z.object({
+      appeals: z.array(z.object({
+        parcelId: z.string(),
+        appealDate: z.string(), // ISO date string
+        currentAssessedValue: z.number(),
+        appealedValue: z.number(),
+        finalValue: z.number().optional(),
+        status: z.enum(["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"]),
+        appealReason: z.string(),
+        resolution: z.string().optional(),
+        countyName: z.string(),
+        filedBy: z.number().optional(),
+        assignedTo: z.number().optional(),
+        ownerEmail: z.string().email(),
+        hearingDate: z.string().optional(), // ISO date string
+        resolutionDate: z.string().optional(), // ISO date string
+      })),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      try {
+        // Convert date strings to Date objects
+        const appealsToInsert = input.appeals.map(appeal => ({
+          ...appeal,
+          appealDate: new Date(appeal.appealDate),
+          hearingDate: appeal.hearingDate ? new Date(appeal.hearingDate) : null,
+          resolutionDate: appeal.resolutionDate ? new Date(appeal.resolutionDate) : null,
+        }));
+
+        // Insert all appeals
+        const result = await db.insert(appeals).values(appealsToInsert);
+
+        return {
+          success: true,
+          count: input.appeals.length,
+          message: `Successfully imported ${input.appeals.length} appeals`,
+        };
+      } catch (error) {
+        console.error('[Appeals] Bulk import error:', error);
+        throw new Error(`Failed to import appeals: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }),
 });

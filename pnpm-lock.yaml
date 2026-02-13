@@ -130,9 +130,6 @@ importers:
       '@types/mapbox-gl':
         specifier: ^3.4.1
         version: 3.4.1
-      '@types/papaparse':
-        specifier: ^5.5.2
-        version: 5.5.2
       '@types/pdf-parse':
         specifier: ^1.1.5
         version: 1.1.5
@@ -323,6 +320,9 @@ importers:
       '@types/node':
         specifier: ^24.7.0
         version: 24.7.0
+      '@types/papaparse':
+        specifier: ^5.5.2
+        version: 5.5.2
       '@types/react':
         specifier: ^19.2.1
         version: 19.2.1
