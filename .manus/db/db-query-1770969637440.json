@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `resolutionTemplates` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `name` varchar(255) NOT NULL,\n  `category` enum('approved','denied','partially_approved','withdrawn') NOT NULL,\n  `templateText` text NOT NULL,\n  `variables` text,\n  `createdBy` int,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `resolutionTemplates_id` PRIMARY KEY(`id`),\n  INDEX `template_category_idx` (`category`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute CREATE TABLE IF NOT EXISTS `resolutionTemplates` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `name` varchar(255) NOT NULL,\n  `category` enum('approved','denied','partially_approved','withdrawn') NOT NULL,\n  `templateText` text NOT NULL,\n  `variables` text,\n  `createdBy` int,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `resolutionTemplates_id` PRIMARY KEY(`id`),\n  INDEX `template_category_idx` (`category`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 253
+}

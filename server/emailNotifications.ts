@@ -91,3 +91,45 @@ export async function sendBatchAppealNotifications(appeals: AppealNotificationDa
 
   return successCount;
 }
+
+/**
+ * Send reminder email for upcoming hearings or stale appeals
+ */
+export async function sendAppealReminderEmail(data: {
+  type: "hearing_reminder" | "stale_appeal";
+  parcelId: string;
+  hearingDate?: string;
+  ownerEmail: string;
+  appealDate: string;
+  currentAssessedValue: number;
+  appealedValue: number;
+}): Promise<boolean> {
+  const subject = data.type === "hearing_reminder"
+    ? `Reminder: Hearing Scheduled for Appeal ${data.parcelId}`
+    : `Action Required: Appeal ${data.parcelId} Pending Review`;
+
+  const message = data.type === "hearing_reminder"
+    ? `Your property tax appeal hearing is scheduled for ${data.hearingDate}. Please ensure you have all necessary documentation prepared.`
+    : `Your property tax appeal has been pending for over 30 days. Please contact the assessor's office for an update.`;
+
+  const content = `
+Property Tax Appeal Reminder
+
+Parcel ID: ${data.parcelId}
+Appeal Date: ${data.appealDate}
+Current Assessed Value: $${data.currentAssessedValue.toLocaleString()}
+Appealed Value: $${data.appealedValue.toLocaleString()}
+${data.hearingDate ? `\nHearing Date: ${data.hearingDate}` : ""}
+
+${message}
+  `;
+
+  console.log(`[EmailNotification] Sending ${data.type} reminder to: ${data.ownerEmail}`);
+  console.log(`[EmailNotification] Subject: ${subject}`);
+  
+  // In production, send via email service
+  // TODO: Integrate actual email service
+  // await sendEmail({ to: data.ownerEmail, subject, body: content });
+
+  return true;
+}

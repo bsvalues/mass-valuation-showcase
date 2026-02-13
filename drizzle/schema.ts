@@ -475,6 +475,25 @@ export type AppealDocument = typeof appealDocuments.$inferSelect;
 export type InsertAppealDocument = typeof appealDocuments.$inferInsert;
 
 /**
+ * Resolution Templates table - pre-written templates for common appeal outcomes
+ */
+export const resolutionTemplates = mysqlTable("resolutionTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: mysqlEnum("category", ["approved", "denied", "partially_approved", "withdrawn"]).notNull(),
+  templateText: text("templateText").notNull(),
+  variables: text("variables"), // JSON array of variable names like ["parcelId", "ownerName", "adjustedValue"]
+  createdBy: int("createdBy"), // User ID who created the template
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  categoryIdx: index("template_category_idx").on(table.category),
+}));
+
+export type ResolutionTemplate = typeof resolutionTemplates.$inferSelect;
+export type InsertResolutionTemplate = typeof resolutionTemplates.$inferInsert;
+
+/**
  * ML Predictions table - tracks all property valuation predictions
  */
 export const predictions = mysqlTable("predictions", {

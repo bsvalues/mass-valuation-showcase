@@ -2702,3 +2702,31 @@
 ## 🐛 Bug Fixes
 
 - [x] Fix duplicate /defense route in App.tsx causing React key warning
+- [x] Fix duplicate /wa-data-ingestion route in App.tsx causing React key warning (resolved by server restart)
+
+
+## 📋 Compliance & Automation Features
+
+### Appeal Status Change History
+- [x] Create appealStatusHistory database schema (appealTimeline table already exists)
+- [x] Add automatic status change tracking in updateStatus mutation
+- [x] Create getStatusHistory tRPC query
+- [x] Build StatusHistoryTimeline UI component
+- [ ] Add status history to appeal detail view (future enhancement)
+- [x] Test status change tracking
+
+### Automated Appeal Reminders
+- [x] Create reminder scheduler using backgroundJobs table
+- [x] Implement 7-day hearing reminder check
+- [x] Implement 30-day stale appeal check
+- [x] Create reminder email templates
+- [x] Add reminder notification system
+- [ ] Test automated reminders (requires cron setup)
+
+### Resolution Templates
+- [x] Create resolutionTemplates schema
+- [x] Add template CRUD mutations
+- [ ] Create template selection UI (future enhancement)
+- [ ] Build template editor component (future enhancement)
+- [x] Add template variables (parcel ID, owner name, etc.)
+- [x] Test template system

@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { appeals } from "../drizzle/schema";
+import { appeals, appealTimeline } from "../drizzle/schema";
 import { eq, and, desc, sql, gte } from "drizzle-orm";
 import { sendAppealStatusChangeEmail } from "./emailNotifications";
 import { notifyOwner } from "./_core/notification";
@@ -134,6 +134,17 @@ export const appealsRouter = router({
       const previousStatus = currentAppeal[0]?.status;
       
       await db.update(appeals).set(updateData).where(eq(appeals.id, id));
+      
+      // Track status change in timeline
+      if (updates.status && previousStatus && updates.status !== previousStatus) {
+        await db.insert(appealTimeline).values({
+          appealId: id,
+          previousStatus,
+          newStatus: updates.status,
+          action: `Status changed from ${previousStatus} to ${updates.status}`,
+          performedBy: input.assignedTo || null, // TODO: Get from authenticated user context
+        });
+      }
       
       // Send email notification if status changed
       if (updates.status && previousStatus && updates.status !== previousStatus) {
@@ -693,5 +704,24 @@ export const appealsRouter = router({
         totalValueAdjusted: totalAdjusted,
         appealsThisMonth: thisMonthCount
       };
+    }),
+
+  /**
+   * Get status change history for an appeal
+   */
+  getStatusHistory: publicProcedure
+    .input(z.object({
+      appealId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const history = await db.select()
+        .from(appealTimeline)
+        .where(eq(appealTimeline.appealId, input.appealId))
+        .orderBy(desc(appealTimeline.createdAt));
+      
+      return history;
     }),
 });
