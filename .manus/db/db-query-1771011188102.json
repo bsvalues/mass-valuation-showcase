@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `batchValuationResults` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `jobId` int NOT NULL,\n  `parcelId` varchar(64) NOT NULL,\n  `predictedValue` int NOT NULL,\n  `confidence` float,\n  `actualValue` int,\n  `valueDifference` int,\n  `percentDifference` float,\n  `propertyType` varchar(50),\n  `squareFeet` int,\n  `yearBuilt` int,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `batchValuationResults_id` PRIMARY KEY(`id`),\n  INDEX `batchresult_jobid_idx` (`jobId`),\n  INDEX `batchresult_parcelid_idx` (`parcelId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute CREATE TABLE IF NOT EXISTS `batchValuationResults` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `jobId` int NOT NULL,\n  `parcelId` varchar(64) NOT NULL,\n  `predictedValue` int NOT NULL,\n  `confidence` float,\n  `actualValue` int,\n  `valueDifference` int,\n  `percentDifference` float,\n  `propertyType` varchar(50),\n  `squareFeet` int,\n  `yearBuilt` int,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `batchValuationResults_id` PRIMARY KEY(`id`),\n  INDEX `batchresult_jobid_idx` (`jobId`),\n  INDEX `batchresult_parcelid_idx` (`parcelId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 248
+}

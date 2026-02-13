@@ -542,3 +542,55 @@ export const appealTemplates = mysqlTable("appealTemplates", {
 
 export type AppealTemplate = typeof appealTemplates.$inferSelect;
 export type InsertAppealTemplate = typeof appealTemplates.$inferInsert;
+
+
+/**
+ * Batch Valuation Jobs table - tracks mass valuation processing jobs
+ */
+export const batchValuationJobs = mysqlTable("batchValuationJobs", {
+  id: int("id").autoincrement().primaryKey(),
+  jobName: varchar("jobName", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed", "cancelled"]).notNull().default("pending"),
+  totalParcels: int("totalParcels").notNull(),
+  completedParcels: int("completedParcels").notNull().default(0),
+  failedParcels: int("failedParcels").notNull().default(0),
+  progress: int("progress").notNull().default(0), // Percentage 0-100
+  modelVersion: varchar("modelVersion", { length: 50 }),
+  filterCriteria: text("filterCriteria"), // JSON string of filter params used
+  errorLog: text("errorLog"), // JSON array of error messages
+  userId: int("userId").notNull(), // User who created the job
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, (table) => ({
+  statusIdx: index("batchjob_status_idx").on(table.status),
+  userIdIdx: index("batchjob_userid_idx").on(table.userId),
+  createdAtIdx: index("batchjob_createdat_idx").on(table.createdAt),
+}));
+
+export type BatchValuationJob = typeof batchValuationJobs.$inferSelect;
+export type InsertBatchValuationJob = typeof batchValuationJobs.$inferInsert;
+
+/**
+ * Batch Valuation Results table - stores individual prediction results from batch jobs
+ */
+export const batchValuationResults = mysqlTable("batchValuationResults", {
+  id: int("id").autoincrement().primaryKey(),
+  jobId: int("jobId").notNull(), // Foreign key to batchValuationJobs
+  parcelId: varchar("parcelId", { length: 64 }).notNull(),
+  predictedValue: int("predictedValue").notNull(),
+  confidence: float("confidence"), // Confidence interval or score
+  actualValue: int("actualValue"), // Current assessed value for comparison
+  valueDifference: int("valueDifference"), // predictedValue - actualValue
+  percentDifference: float("percentDifference"), // (valueDifference / actualValue) * 100
+  propertyType: varchar("propertyType", { length: 50 }),
+  squareFeet: int("squareFeet"),
+  yearBuilt: int("yearBuilt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  jobIdIdx: index("batchresult_jobid_idx").on(table.jobId),
+  parcelIdIdx: index("batchresult_parcelid_idx").on(table.parcelId),
+}));
+
+export type BatchValuationResult = typeof batchValuationResults.$inferSelect;
+export type InsertBatchValuationResult = typeof batchValuationResults.$inferInsert;
