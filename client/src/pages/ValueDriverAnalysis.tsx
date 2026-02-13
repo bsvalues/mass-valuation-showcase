@@ -42,6 +42,7 @@ import {
   type EngineerEdFeatures
 } from '@/lib/featureEngineering';
 import { exportValueDriverReport } from '@/lib/pdfExport';
+import { NeighborhoodComparison } from '@/components/NeighborhoodComparison';
 
 export default function ValueDriverAnalysis() {
   const [location] = useLocation();
@@ -254,6 +255,7 @@ export default function ValueDriverAnalysis() {
             <TabsTrigger value="whatif">What-If Analysis</TabsTrigger>
             <TabsTrigger value="breakdown">Value Breakdown</TabsTrigger>
             <TabsTrigger value="profile">Property Profile</TabsTrigger>
+            <TabsTrigger value="comparison">Neighborhood Comparison</TabsTrigger>
           </TabsList>
 
           {/* Value Drivers Tab */}
@@ -511,6 +513,15 @@ export default function ValueDriverAnalysis() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Neighborhood Comparison Tab */}
+          <TabsContent value="comparison" className="space-y-4">
+            <NeighborhoodComparison 
+              property={property}
+              engineeredFeatures={engineeredFeatures}
+              predictedValue={predictedValue}
+            />
           </TabsContent>
         </Tabs>
       </div>

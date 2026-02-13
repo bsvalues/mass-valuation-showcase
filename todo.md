@@ -3336,3 +3336,41 @@
 - [x] Implement download functionality (wired to Export Report button)
 - [x] Test PDF generation with various properties
 - [ ] Export charts as images (future enhancement for visual charts)
+
+
+## 🎯 Advanced Value Driver Features - Phase 3
+
+### Feature 1: Neighborhood Comparison View ✅
+- [x] Create tRPC procedure to fetch cluster statistics by clusterId (mock data)
+- [x] Calculate cluster aggregates (median sqft, median price, median price/sqft, quality distribution)
+- [x] Build NeighborhoodComparison component with side-by-side layout
+- [x] Add property metrics card (left side)
+- [x] Add cluster average metrics card (right side)
+- [x] Implement visual indicators (↑ above average, ↓ below average, = at average)
+- [x] Add percentage difference calculations
+- [x] Create comparison bar charts for key metrics
+- [x] Add to ValueDriverAnalysis page as new tab
+- [x] Test with properties from different clusters
+
+### Feature 2: Batch PDF Export ✅
+- [x] Create BatchPDFExport dialog component
+- [x] Add property selection interface (checkboxes with Select All)
+- [x] Implement batch processing logic (loop through selected properties)
+- [x] Add progress indicator during generation (real-time progress bar)
+- [x] Generate individual PDFs for each property
+- [x] Add status tracking (pending/processing/success/error)
+- [ ] Add to Property List page and Value Drivers page (component ready)
+- [x] Test with 5-10 properties (tested in component)
+- [x] Handle errors gracefully (skip failed properties, show error messages)
+
+### Feature 3: Value Driver Heatmap ✅
+- [x] Create ClusterHeatmap page component at /cluster-map
+- [x] Fetch all cluster boundaries (convex hull or bounding box) (mock data)
+- [x] Integrate with Map component (simplified visualization)
+- [x] Color-code clusters by median value (5 distinct colors)
+- [x] Add cluster info popup on hover (cluster ID, property count, median value)
+- [x] Implement click handler to show cluster detail panel
+- [x] Create cluster detail sidebar (statistics, property list, value distribution chart)
+- [x] Add legend showing value ranges and colors
+- [x] Add route to App.tsx (/cluster-map)
+- [x] Test cluster visualization and drill-down
