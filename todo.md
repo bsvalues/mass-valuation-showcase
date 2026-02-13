@@ -3094,7 +3094,7 @@
 - [ ] Add priority update on appeal status changes
 - [ ] Display priority badges in Appeals Management table
 - [ ] Add priority filter to Appeals Management
-- [ ] Add priority sorting option
+- [x] Add priority sorting option
 
 ### Email Templates System
 - [ ] Create emailTemplates table schema
@@ -3110,4 +3110,37 @@
 - [ ] Write unit tests for priority scoring logic
 - [ ] Write unit tests for email template rendering
 - [ ] End-to-end testing of all features
+- [ ] Save final checkpoint
+
+
+## 🚀 Priority & Email Templates (Final Phase)
+
+### Priority UI Integration
+- [x] Add priority badges to Appeals Management table
+- [x] Add priority filter dropdown
+- [x] Add priority sorting option
+- [x] Use color-coded badges (low=slate, medium=blue, high=orange, critical=red)
+- [x] Test priority display and filtering
+
+### Email Templates System
+- [ ] Create emailTemplates table schema
+- [ ] Design template structure with merge fields
+- [ ] Seed 3 default templates (hearing notice, resolution, document request)
+- [ ] Create emailTemplates tRPC router
+- [ ] Build Email Templates Management UI page
+- [ ] Implement merge field replacement logic
+- [ ] Test template rendering with real appeal data
+
+### Priority Auto-Update Job
+- [ ] Create priority update cron job (runs daily)
+- [ ] Implement bulk priority recalculation
+- [ ] Add logging for priority changes
+- [ ] Test cron job execution
+- [ ] Verify priority escalation works correctly
+
+### Testing & Delivery
+- [ ] Write unit tests for priority UI components
+- [ ] Write unit tests for email template rendering
+- [ ] Write unit tests for priority auto-update job
+- [ ] End-to-end testing
 - [ ] Save final checkpoint

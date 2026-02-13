@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 import { AppealCreateDialog } from "@/components/AppealCreateDialog";
 import { AppealDetailsDialog } from "@/components/AppealDetailsDialog";
 import { BulkAppealImport } from "@/components/BulkAppealImport";
+import { getPriorityLabel, getPriorityColor, type Priority } from "@/lib/priorityUtils";
 
 type AppealStatus = "pending" | "in_review" | "hearing_scheduled" | "resolved" | "withdrawn";
 
@@ -22,6 +23,7 @@ interface Appeal {
   appealedValue: number;
   finalValue: number | null;
   status: AppealStatus;
+  priority: Priority;
   appealReason: string | null;
   resolution: string | null;
   countyName: string | null;
@@ -102,9 +104,14 @@ function AppealCard({ appeal, onClick, onAssign, staffList }: {
               <p className="text-xs text-muted-foreground">{appeal.countyName}</p>
             )}
           </div>
-          <Badge variant="outline" className={config.color}>
-            {config.label}
-          </Badge>
+          <div className="flex flex-col gap-1 items-end">
+            <Badge variant="outline" className={config.color}>
+              {config.label}
+            </Badge>
+            <Badge variant="outline" className={getPriorityColor(appeal.priority)}>
+              {getPriorityLabel(appeal.priority)}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -233,6 +240,7 @@ export default function AppealsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCounty, setFilterCounty] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<AppealStatus | "">("");
+  const [filterPriority, setFilterPriority] = useState<Priority | "">("");
   const [filterValueMin, setFilterValueMin] = useState<string>("");
   const [filterValueMax, setFilterValueMax] = useState<string>("");
   const [filterDateFrom, setFilterDateFrom] = useState<string>("");
@@ -351,6 +359,11 @@ export default function AppealsManagement() {
     
     // Status filter
     if (filterStatus && appeal.status !== filterStatus) {
+      return false;
+    }
+    
+    // Priority filter
+    if (filterPriority && appeal.priority !== filterPriority) {
       return false;
     }
     
@@ -535,7 +548,7 @@ export default function AppealsManagement() {
         {/* Search and Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* Search */}
               <div className="lg:col-span-2">
                 <input
@@ -573,6 +586,19 @@ export default function AppealsManagement() {
                 <option value="hearing_scheduled">Hearing Scheduled</option>
                 <option value="resolved">Resolved</option>
                 <option value="withdrawn">Withdrawn</option>
+              </select>
+              
+              {/* Priority Filter */}
+              <select
+                value={filterPriority}
+                onChange={(e) => setFilterPriority(e.target.value as Priority | "")}
+                className="px-3 py-2 border rounded-md text-sm bg-background"
+              >
+                <option value="">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
               </select>
             </div>
             
