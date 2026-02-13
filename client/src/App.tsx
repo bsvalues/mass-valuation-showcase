@@ -59,7 +59,8 @@ function Router() {
       <Route path={"/analysis"} component={MarketAnalysis} />
       <Route path={"/defense"} component={DefenseStudio} />
       <Route path={"/neural-core"} component={NeuralCore} />
-      <Route path={"/admin/users"} component={AdminUsers} />      <Route path={"/county-progress"} component={CountyProgressDashboard} />
+      <Route path={"/admin/users"} component={AdminUsers} />
+      <Route path={"/county-progress"} component={CountyProgressDashboard} />
       <Route path={"/county-data-dashboard"} component={CountyDataDashboard} />
       <Route path={"/county-detail/:countyName"} component={CountyDetail} />
       <Route path={"/qa-ratio-studies"} component={QARatioStudies} />

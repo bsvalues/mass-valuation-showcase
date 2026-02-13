@@ -2697,3 +2697,8 @@
 - [x] Design side-by-side comparison layout
 - [x] Add comparison route to App.tsx
 - [x] Test comparison with multiple appeals
+
+
+## 🐛 Bug Fixes
+
+- [x] Fix duplicate /defense route in App.tsx causing React key warning
