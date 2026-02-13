@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
@@ -40,9 +41,18 @@ import {
   type PropertyFeatures,
   type EngineerEdFeatures
 } from '@/lib/featureEngineering';
+import { exportValueDriverReport } from '@/lib/pdfExport';
 
 export default function ValueDriverAnalysis() {
-  // Sample property state (in real app, would come from selected parcel)
+  const [location] = useLocation();
+  
+  // Parse URL parameters
+  const urlParams = useMemo(() => {
+    const search = window.location.search;
+    return new URLSearchParams(search);
+  }, [location]);
+
+  // Initialize property from URL params or defaults
   const [property, setProperty] = useState<PropertyFeatures>({
     squareFeet: 2400,
     yearBuilt: 1995,
@@ -65,6 +75,27 @@ export default function ValueDriverAnalysis() {
     propertyType: 'residential',
     propertySubtype: 'single_family'
   });
+
+  // Load property data from URL parameters
+  useEffect(() => {
+    const sqft = urlParams.get('sqft');
+    const yearBuilt = urlParams.get('yearBuilt');
+    const totalValue = urlParams.get('totalValue');
+    const landValue = urlParams.get('landValue');
+    const buildingValue = urlParams.get('buildingValue');
+    const parcelId = urlParams.get('parcelId');
+
+    if (sqft || yearBuilt || totalValue) {
+      setProperty(prev => ({
+        ...prev,
+        squareFeet: sqft ? parseInt(sqft) : prev.squareFeet,
+        yearBuilt: yearBuilt ? parseInt(yearBuilt) : prev.yearBuilt,
+        totalValue: totalValue ? parseInt(totalValue) : prev.totalValue,
+        landValue: landValue ? parseInt(landValue) : prev.landValue,
+        buildingValue: buildingValue ? parseInt(buildingValue) : prev.buildingValue,
+      }));
+    }
+  }, [urlParams]);
 
   // Engineer features
   const engineeredFeatures = useMemo(() => engineerFeatures(property), [property]);
@@ -107,6 +138,16 @@ export default function ValueDriverAnalysis() {
     { name: 'Quality Premium', value: Math.round((predictedValue - (property.totalValue || 0)) * 0.7), color: '#0044FF' },
   ];
 
+  // Handle PDF export
+  const handleExportPDF = () => {
+    exportValueDriverReport({
+      property,
+      engineeredFeatures,
+      predictedValue,
+      featureImportance: featureImportanceData,
+    });
+  };
+
   // Radar chart data for property profile
   const propertyProfileData = [
     { attribute: 'Size', value: Math.min(100, ((property.squareFeet || 0) / 50)), fullMark: 100 },
@@ -130,7 +171,10 @@ export default function ValueDriverAnalysis() {
               Understand all factors driving property valuations
             </p>
           </div>
-          <Button className="bg-[var(--color-signal-primary)] hover:bg-[var(--color-signal-primary)]/90">
+          <Button 
+            onClick={handleExportPDF}
+            className="bg-[var(--color-signal-primary)] hover:bg-[var(--color-signal-primary)]/90"
+          >
             <Download className="w-4 h-4 mr-2" />
             Export Report
           </Button>

@@ -3305,3 +3305,34 @@
 - [x] Create feature engineering utility library (client/src/lib/featureEngineering.ts)
 - [x] Document model performance improvements (R²: 0.249 → 0.7335)
 - [x] Save checkpoint with all enhancements
+
+
+## 🎯 Value Driver Enhancements - Phase 2
+
+### Feature 1: Neighborhood Clustering ✅
+- [x] Create Python script for K-means clustering on lat/long coordinates
+- [x] Determine optimal number of clusters (5 market segments identified)
+- [x] Run clustering on 27,753 properties
+- [x] Populate neighborhoodClusterId field in sales table
+- [x] Calculate neighborhood statistics (median price, sqft, age, quality)
+- [x] Populate neighborhoodStats table with aggregates
+- [ ] Add cluster visualization to Map Explorer (future enhancement)
+
+### Feature 2: Property Details Integration ✅
+- [x] Find parcel detail pages in codebase (PropertyDetailModal)
+- [x] Add "Analyze Value Drivers" button to parcel detail UI
+- [x] Implement deep linking with URL parameters (/value-drivers?parcelId=xxx)
+- [x] Pre-populate ValueDriverAnalysis sliders from parcel data
+- [ ] Add property comparison feature (compare to neighborhood average) (future enhancement)
+- [x] Test navigation flow from parcel to value drivers
+
+### Feature 3: PDF Export ✅
+- [x] Install jsPDF and html2canvas libraries
+- [x] Create PDF template with TerraFusion branding
+- [x] Export feature importance to PDF (text-based bars)
+- [x] Include valuation metrics (4 key metrics boxes)
+- [x] Add property details summary section (9 property attributes)
+- [x] Add engineered features summary (8 derived metrics)
+- [x] Implement download functionality (wired to Export Report button)
+- [x] Test PDF generation with various properties
+- [ ] Export charts as images (future enhancement for visual charts)

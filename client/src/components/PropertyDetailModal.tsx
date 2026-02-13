@@ -7,7 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Building2, Calendar, DollarSign, Home, MapPin, Ruler, TrendingUp } from "lucide-react";
+import { Building2, Calendar, DollarSign, Home, MapPin, Ruler, TrendingUp, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -35,6 +37,21 @@ export function PropertyDetailModal({
   propertyId,
   property,
 }: PropertyDetailModalProps) {
+  const [, setLocation] = useLocation();
+
+  const handleAnalyzeValueDrivers = () => {
+    // Close modal and navigate to value drivers page with property data
+    onOpenChange(false);
+    const params = new URLSearchParams({
+      parcelId: property?.parcelNumber || '',
+      sqft: property?.squareFootage || '',
+      yearBuilt: property?.yearBuilt || '',
+      totalValue: property?.totalValue || '',
+      landValue: property?.landValue || '',
+      buildingValue: property?.buildingValue || '',
+    });
+    setLocation(`/value-drivers?${params.toString()}`);
+  };
   // Fetch property history when modal opens
   const { data: history, isLoading: historyLoading } = trpc.parcels.getHistory.useQuery(
     { parcelId: propertyId! },
@@ -96,13 +113,24 @@ export function PropertyDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[rgba(10,14,26,0.95)] border-[#00FFFF]/20">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-[#00FFFF] flex items-center gap-2">
-            <Building2 className="w-6 h-6" />
-            Property Details
-          </DialogTitle>
-          <DialogDescription className="text-slate-400">
-            Parcel #{property.parcelNumber}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-2xl text-[#00FFFF] flex items-center gap-2">
+                <Building2 className="w-6 h-6" />
+                Property Details
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Parcel #{property.parcelNumber}
+              </DialogDescription>
+            </div>
+            <Button
+              onClick={handleAnalyzeValueDrivers}
+              className="bg-[#00FFFF]/10 hover:bg-[#00FFFF]/20 text-[#00FFFF] border border-[#00FFFF]/30"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analyze Value Drivers
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
