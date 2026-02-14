@@ -53,6 +53,8 @@ import MassAppraisalDashboard from "./pages/MassAppraisalDashboard";
 import RatioStudyAnalyzer from "./pages/RatioStudyAnalyzer";
 import ValueDriverAnalysis from "./pages/ValueDriverAnalysis";
 import ClusterHeatmap from "./pages/ClusterHeatmap";
+import PropertyComparison from "./pages/PropertyComparison";
+import AssessmentReview from "./pages/AssessmentReview";
 
 
 function Router() {
@@ -92,6 +94,8 @@ function Router() {
       <Route path={"/ratio-study-analyzer"} component={RatioStudyAnalyzer} />
       <Route path={"/value-drivers"} component={ValueDriverAnalysis} />
       <Route path={"/cluster-map"} component={ClusterHeatmap} />
+      <Route path={"/property-comparison"} component={PropertyComparison} />
+      <Route path={"/assessment-review"} component={AssessmentReview} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />

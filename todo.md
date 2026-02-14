@@ -3469,3 +3469,44 @@
 - [x] Add logging for cron job execution
 - [x] Add manual trigger function (triggerMonthlyReportManually)
 - [ ] Test manual execution of report script (ready to test)
+
+
+## 🎯 Advanced Analytics Features
+
+### Feature 1: Property Comparison Tool ✅
+- [x] Create PropertyComparison page component at /property-comparison
+- [x] Add property selection interface (search + add up to 4 properties)
+- [x] Build side-by-side comparison table with key metrics (11 metrics)
+- [x] Add synchronized bar charts for metric comparison
+- [x] Implement radar chart overlay showing all properties (5 dimensions)
+- [x] Add property badges with remove functionality
+- [x] Create comparison export to PDF button (ready for implementation)
+- [x] Add route to App.tsx
+- [ ] Connect to real tRPC data (currently using mock data)
+- [ ] Test with 2-4 properties from different clusters
+
+### Feature 2: Assessment Review Dashboard ✅
+- [x] Create AssessmentReview page component at /assessment-review
+- [x] Calculate ratio variance (property ratio vs cluster median)
+- [x] Flag properties with >15% variance (warning) and >20% (critical)
+- [x] Build dashboard table with sortable columns
+- [x] Add variance severity indicators (warning/critical badges)
+- [x] Implement "Analyze" button linking to ValueDriverAnalysis
+- [x] Add status badges (pending/approved/flagged)
+- [x] Create variance distribution chart (7 ranges)
+- [x] Add filters (severity, status) and sorting
+- [x] Add route to App.tsx
+- [x] Create 4 summary cards (total, critical, warning, pending)
+- [ ] Add tRPC procedure to fetch high-variance properties from database
+- [ ] Add bulk review actions (approve/flag for reassessment)
+
+### Feature 3: Visual Cluster Map with Google Maps
+- [ ] Update ClusterHeatmap to use real Google Maps component
+- [ ] Fetch cluster boundaries from database (convex hull coordinates)
+- [ ] Draw cluster polygons with color coding by median value
+- [ ] Add property markers within each cluster
+- [ ] Implement marker click handler to show property details
+- [ ] Add cluster info window on polygon click
+- [ ] Create legend showing cluster colors and value ranges
+- [ ] Add zoom controls and cluster selection
+- [ ] Test map visualization with all 5 clusters
