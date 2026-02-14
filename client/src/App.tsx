@@ -115,11 +115,12 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
-  const [ignited, setIgnited] = useState(false);
+  const [ignited, setIgnited] = useState(true); // Skip ignition for now
 
-  if (!ignited) {
-    return <IgnitionSequence onComplete={() => setIgnited(true)} />;
-  }
+  // Ignition sequence temporarily disabled for development
+  // if (!ignited) {
+  //   return <IgnitionSequence onComplete={() => setIgnited(true)} />;
+  // }
 
   return (
     <ErrorBoundary>

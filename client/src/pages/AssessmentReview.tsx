@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BentoCard, BentoGrid } from "@/components/terra/BentoCard";
+import { TactileButton } from "@/components/terra/TactileButton";
+import { LiquidPanel } from "@/components/terra/LiquidPanel";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { AlertTriangle, ArrowUpDown, ExternalLink, Filter, Loader2, CheckSquare, Square } from "lucide-react";
+import { AlertTriangle, TrendingUp, Clock, CheckCircle2, Filter, Loader2, CheckSquare, Square, Target } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,6 +29,16 @@ interface HighVarianceProperty {
   status: "pending" | "approved" | "flagged";
 }
 
+/**
+ * Assessment Review - TerraFusion Canonical Scene
+ * 
+ * Design Principles Applied:
+ * - Bento Grid for KPI cards (attention allocators)
+ * - LiquidPanel for chart visualization (OS chrome)
+ * - TactileButton for bulk actions (commitment actions)
+ * - Glass materials for table (data-dense surface)
+ * - Keyboard shortcuts (A/F/Esc) for power users
+ */
 export default function AssessmentReview() {
   const [, setLocation] = useLocation();
   const [sortBy, setSortBy] = useState<string>("variancePercent");
@@ -51,7 +61,7 @@ export default function AssessmentReview() {
     },
   });
 
-  // Fetch high-variance properties using tRPC
+  // Fetch high-variance properties
   const { data: highVarianceData, isLoading } = trpc.assessmentReview.getHighVarianceProperties.useQuery({
     minVariancePercent: 15,
     limit: 100,
@@ -60,7 +70,6 @@ export default function AssessmentReview() {
     status: filterStatus as "all" | "pending" | "approved" | "flagged",
   });
 
-  // Use real data from tRPC
   const properties: HighVarianceProperty[] = (highVarianceData || []).map(p => ({
     id: p.id.toString(),
     parcelId: p.parcelId,
@@ -76,7 +85,6 @@ export default function AssessmentReview() {
     status: p.status,
   }));
 
-  // Apply sorting
   const sortedProperties = [...properties].sort((a, b) => {
     if (sortBy === "variancePercent") {
       return Math.abs(b.variancePercent) - Math.abs(a.variancePercent);
@@ -84,24 +92,21 @@ export default function AssessmentReview() {
     return 0;
   });
 
-  // Calculate summary stats
+  // Summary stats
   const totalProperties = properties.length;
   const criticalCount = properties.filter(p => p.severity === "critical").length;
   const warningCount = properties.filter(p => p.severity === "warning").length;
   const pendingCount = properties.filter(p => p.status === "pending").length;
 
-  // Variance distribution data for chart
+  // Variance distribution for chart
   const varianceDistribution = [
-    { range: "0-5%", count: properties.filter(p => Math.abs(p.variancePercent) <= 5).length },
-    { range: "5-10%", count: properties.filter(p => Math.abs(p.variancePercent) > 5 && Math.abs(p.variancePercent) <= 10).length },
-    { range: "10-15%", count: properties.filter(p => Math.abs(p.variancePercent) > 10 && Math.abs(p.variancePercent) <= 15).length },
     { range: "15-20%", count: properties.filter(p => Math.abs(p.variancePercent) > 15 && Math.abs(p.variancePercent) <= 20).length },
     { range: "20-25%", count: properties.filter(p => Math.abs(p.variancePercent) > 20 && Math.abs(p.variancePercent) <= 25).length },
     { range: "25-30%", count: properties.filter(p => Math.abs(p.variancePercent) > 25 && Math.abs(p.variancePercent) <= 30).length },
-    { range: ">30%", count: properties.filter(p => Math.abs(p.variancePercent) > 30).length },
+    { range: "30%+", count: properties.filter(p => Math.abs(p.variancePercent) > 30).length },
   ];
 
-  // Bulk action handlers
+  // Bulk actions
   const handleSelectAll = () => {
     if (selectedIds.size === sortedProperties.length) {
       setSelectedIds(new Set());
@@ -110,344 +115,322 @@ export default function AssessmentReview() {
     }
   };
 
-  const handleToggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const handleBulkAction = (action: string, newStatus: "pending" | "approved" | "flagged") => {
+  const handleBulkAction = (status: "approved" | "flagged" | "pending") => {
     if (selectedIds.size === 0) {
-      toast.error("Please select at least one property");
+      toast.error("No properties selected");
       return;
     }
 
     bulkUpdate.mutate({
       propertyIds: Array.from(selectedIds).map(id => parseInt(id)),
-      newStatus,
-      action,
-      notes: `Bulk ${action} action`,
+      newStatus: status,
+      action: `bulk_${status}`,
+      notes: `Bulk ${status} action via Assessment Review`,
     });
-  };
-
-  const handleAnalyze = (property: HighVarianceProperty) => {
-    setLocation(`/value-drivers?parcelId=${property.parcelId}&sqft=2000&yearBuilt=2005&assessedValue=${property.assessedValue}&salePrice=${property.salePrice}`);
   };
 
   // Keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input field
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      switch (e.key.toLowerCase()) {
-        case 'a':
-          e.preventDefault();
-          handleBulkAction('approve', 'approved');
-          break;
-        case 'f':
-          e.preventDefault();
-          handleBulkAction('flag', 'flagged');
-          break;
-        case 'escape':
-          e.preventDefault();
-          setSelectedIds(new Set());
-          toast.info('Selection cleared');
-          break;
+      if (e.key.toLowerCase() === "a" && selectedIds.size > 0) {
+        e.preventDefault();
+        handleBulkAction("approved");
+      } else if (e.key.toLowerCase() === "f" && selectedIds.size > 0) {
+        e.preventDefault();
+        handleBulkAction("flagged");
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setSelectedIds(new Set());
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIds]); // Re-attach listener when selectedIds changes
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [selectedIds]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-signal-primary mx-auto mb-4 animate-spin" />
+          <p className="text-text-secondary">Loading assessment data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Assessment Review Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Identify and review properties with high assessment-to-sale ratio variance
-          </p>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Flagged</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalProperties}</div>
-              <p className="text-xs text-muted-foreground mt-1">&gt;15% variance from cluster median</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Critical</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{criticalCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">&gt;20% variance</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Warning</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-amber-600">{warningCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">15-20% variance</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Pending Review</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{pendingCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">Awaiting action</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Variance Distribution Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Variance Distribution</CardTitle>
-            <CardDescription>Number of properties by variance range</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={varianceDistribution}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="range" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Filters and Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <CardTitle>High Variance Properties</CardTitle>
-                <CardDescription>Properties requiring assessment review</CardDescription>
-              </div>
-
-              <div className="flex gap-2">
-                <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Severity</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                    <SelectItem value="warning">Warning</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="flagged">Flagged</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {selectedIds.size > 0 && (
-              <div className="mb-4 flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <span className="text-sm font-medium">
-                  {selectedIds.size} {selectedIds.size === 1 ? "property" : "properties"} selected
-                </span>
-                <div className="flex gap-2 ml-auto">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    onClick={() => handleBulkAction("approve", "approved")}
-                    disabled={bulkUpdate.isPending}
-                    className="flex items-center gap-2"
-                  >
-                    Approve Selected
-                    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs rounded bg-background/50 border">A</kbd>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleBulkAction("flag", "flagged")}
-                    disabled={bulkUpdate.isPending}
-                    className="flex items-center gap-2"
-                  >
-                    Flag Selected
-                    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs rounded bg-background/50 border">F</kbd>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleBulkAction("reset", "pending")}
-                    disabled={bulkUpdate.isPending}
-                  >
-                    Reset to Pending
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => { setSelectedIds(new Set()); toast.info('Selection cleared'); }}
-                    className="flex items-center gap-2"
-                  >
-                    Clear
-                    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs rounded bg-background/50 border">Esc</kbd>
-                  </Button>
-                </div>
-              </div>
-            )}
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Loading properties...</span>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">
-                      <Checkbox
-                        checked={selectedIds.size === sortedProperties.length && sortedProperties.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Parcel ID</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead className="text-right">Assessed</TableHead>
-                    <TableHead className="text-right">Sale Price</TableHead>
-                    <TableHead className="text-right">Ratio</TableHead>
-                    <TableHead className="text-right">Variance</TableHead>
-                    <TableHead>Severity</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedProperties.map((property) => (
-                    <TableRow 
-                      key={property.id}
-                      onMouseEnter={(e) => {
-                        setHoveredProperty(property);
-                        setMousePosition({ x: e.clientX, y: e.clientY });
-                      }}
-                      onMouseLeave={() => setHoveredProperty(null)}
-                      onMouseMove={(e) => setMousePosition({ x: e.clientX, y: e.clientY })}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    >
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedIds.has(property.id)}
-                          onCheckedChange={() => handleToggleSelect(property.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{property.parcelId}</TableCell>
-                      <TableCell>{property.address}</TableCell>
-                      <TableCell className="text-right">${property.assessedValue.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">${property.salePrice.toLocaleString()}</TableCell>
-                      <TableCell className="text-right font-mono">{property.ratio.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                        <span className={property.variancePercent > 0 ? "text-red-600" : "text-green-600"}>
-                          {property.variancePercent > 0 ? "+" : ""}{property.variancePercent.toFixed(1)}%
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={property.severity === "critical" ? "destructive" : "default"}>
-                          {property.severity}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            property.status === "approved"
-                              ? "default"
-                              : property.status === "flagged"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                        >
-                          {property.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAnalyze(property)}
-                        >
-                          <ExternalLink className="w-4 h-4 mr-1" />
-                          Analyze
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-
-            {!isLoading && sortedProperties.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 px-4">
-                <AlertTriangle className="w-12 h-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No High-Variance Properties Found</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
-                  No properties match your current filter criteria. This could mean your assessments are performing well!
-                </p>
-                <div className="bg-muted/50 rounded-lg p-4 max-w-md">
-                  <p className="text-sm font-medium mb-2">Suggestions:</p>
-                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                    <li>Try adjusting the severity filter to include both Warning and Critical</li>
-                    <li>Change the status filter to view all properties</li>
-                    <li>Lower the variance threshold (currently set to 15%)</li>
-                    <li>Check if properties need to be imported or updated</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* Hero Section */}
+      <div>
+        <h1 className="text-4xl font-bold text-text-primary mb-2">
+          Assessment Review
+        </h1>
+        <p className="text-lg text-text-secondary">
+          High-variance properties requiring attention. {totalProperties} properties flagged with ratio variance &gt;15%.
+        </p>
       </div>
 
-      {/* Property Preview Card on Hover */}
+      {/* KPI Bento Grid */}
+      <BentoGrid>
+        <BentoCard
+          title="Total Flagged"
+          icon={<AlertTriangle className="w-5 h-5" />}
+          span="1"
+        >
+          <div className="text-4xl font-bold text-text-primary">{totalProperties}</div>
+          <div className="text-sm text-text-secondary mt-1">Properties requiring review</div>
+        </BentoCard>
+
+        <BentoCard
+          title="Critical"
+          icon={<AlertTriangle className="w-5 h-5 text-signal-alert" />}
+          span="1"
+          actionable={criticalCount > 0}
+        >
+          <div className="text-4xl font-bold text-signal-alert">{criticalCount}</div>
+          <div className="text-sm text-text-secondary mt-1">Variance &gt;25%</div>
+        </BentoCard>
+
+        <BentoCard
+          title="Warning"
+          icon={<TrendingUp className="w-5 h-5 text-chart-3" />}
+          span="1"
+        >
+          <div className="text-4xl font-bold text-chart-3">{warningCount}</div>
+          <div className="text-sm text-text-secondary mt-1">Variance 15-25%</div>
+        </BentoCard>
+
+        <BentoCard
+          title="Pending Review"
+          icon={<Clock className="w-5 h-5" />}
+          span="1"
+        >
+          <div className="text-4xl font-bold text-text-primary">{pendingCount}</div>
+          <div className="text-sm text-text-secondary mt-1">Awaiting action</div>
+        </BentoCard>
+      </BentoGrid>
+
+      {/* Variance Distribution Chart */}
+      <LiquidPanel intensity={2} className="p-6">
+        <h3 className="text-lg font-semibold text-text-primary mb-4">Variance Distribution</h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={varianceDistribution}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+            <XAxis dataKey="range" stroke="rgba(255,255,255,0.5)" />
+            <YAxis stroke="rgba(255,255,255,0.5)" />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "rgba(10, 14, 26, 0.9)",
+                border: "1px solid rgba(0, 255, 238, 0.3)",
+                borderRadius: "8px",
+              }}
+            />
+            <Bar dataKey="count" fill="var(--color-signal-primary)" />
+          </BarChart>
+        </ResponsiveContainer>
+      </LiquidPanel>
+
+      {/* Filters & Bulk Actions */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Select value={filterSeverity} onValueChange={setFilterSeverity}>
+            <SelectTrigger className="w-40 bg-glass-1 border-glass-border">
+              <SelectValue placeholder="Severity" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Severity</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="warning">Warning</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-40 bg-glass-1 border-glass-border">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="flagged">Flagged</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-text-secondary">
+              {selectedIds.size} selected
+            </span>
+            <TactileButton
+              variant="neon"
+              size="sm"
+              commitment
+              onClick={() => handleBulkAction("approved")}
+              disabled={bulkUpdate.isPending}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Approve <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-glass-2 rounded">A</kbd>
+            </TactileButton>
+            <TactileButton
+              variant="glass"
+              size="sm"
+              commitment
+              onClick={() => handleBulkAction("flagged")}
+              disabled={bulkUpdate.isPending}
+            >
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Flag <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-glass-2 rounded">F</kbd>
+            </TactileButton>
+            <TactileButton
+              variant="glass"
+              size="sm"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-glass-2 rounded">Esc</kbd>
+            </TactileButton>
+          </div>
+        )}
+      </div>
+
+      {/* Properties Table */}
+      <LiquidPanel intensity={1} className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-glass-border hover:bg-glass-1">
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedIds.size === sortedProperties.length && sortedProperties.length > 0}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
+                <TableHead className="text-text-secondary">Parcel ID</TableHead>
+                <TableHead className="text-text-secondary">Address</TableHead>
+                <TableHead className="text-text-secondary text-right">Assessed Value</TableHead>
+                <TableHead className="text-text-secondary text-right">Sale Price</TableHead>
+                <TableHead className="text-text-secondary text-right">Ratio</TableHead>
+                <TableHead className="text-text-secondary text-right">Variance</TableHead>
+                <TableHead className="text-text-secondary">Severity</TableHead>
+                <TableHead className="text-text-secondary">Status</TableHead>
+                <TableHead className="text-text-secondary">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedProperties.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <CheckCircle2 className="w-12 h-12 text-chart-4" />
+                      <div>
+                        <p className="text-lg font-medium text-text-primary">No High-Variance Properties Found</p>
+                        <p className="text-sm text-text-secondary mt-1">
+                          All properties are within acceptable variance thresholds. Try adjusting filters.
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                sortedProperties.map((property) => (
+                  <TableRow
+                    key={property.id}
+                    className="border-glass-border hover:bg-glass-1 transition-colors cursor-pointer"
+                    onMouseEnter={(e) => {
+                      setHoveredProperty(property);
+                      setMousePosition({ x: e.clientX, y: e.clientY });
+                    }}
+                    onMouseMove={(e) => {
+                      setMousePosition({ x: e.clientX, y: e.clientY });
+                    }}
+                    onMouseLeave={() => setHoveredProperty(null)}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(property.id)}
+                        onCheckedChange={(checked) => {
+                          const newSelected = new Set(selectedIds);
+                          if (checked) {
+                            newSelected.add(property.id);
+                          } else {
+                            newSelected.delete(property.id);
+                          }
+                          setSelectedIds(newSelected);
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell className="font-mono text-sm text-text-primary">{property.parcelId}</TableCell>
+                    <TableCell className="text-text-primary">{property.address}</TableCell>
+                    <TableCell className="text-right text-text-primary">
+                      ${property.assessedValue.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right text-text-primary">
+                      ${property.salePrice.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right text-text-primary">
+                      {property.ratio.toFixed(3)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      <span className={property.variancePercent > 0 ? "text-chart-4" : "text-signal-alert"}>
+                        {property.variancePercent > 0 ? "+" : ""}
+                        {property.variancePercent.toFixed(1)}%
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={property.severity === "critical" ? "destructive" : "default"}>
+                        {property.severity}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          property.status === "approved"
+                            ? "default"
+                            : property.status === "flagged"
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {property.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <TactileButton
+                        variant="glass"
+                        size="sm"
+                        onClick={() => setLocation(`/property-comparison?ids=${property.id}`)}
+                      >
+                        <Target className="w-4 h-4 mr-1" />
+                        Analyze
+                      </TactileButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </LiquidPanel>
+
+      {/* Property Preview Card */}
       {hoveredProperty && (
         <PropertyPreviewCard
           property={{
             parcelId: hoveredProperty.parcelId,
             address: hoveredProperty.address,
-            sqft: 2000, // Default value - would be fetched from property details
-            yearBuilt: 2005,
-            bedrooms: 3,
-            bathrooms: 2,
+            sqft: 0, // Not available in this context
+            yearBuilt: 0,
+            bedrooms: 0,
+            bathrooms: 0,
             assessedValue: hoveredProperty.assessedValue,
             salePrice: hoveredProperty.salePrice,
           }}
           position={mousePosition}
         />
       )}
-    </DashboardLayout>
+    </div>
   );
 }

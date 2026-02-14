@@ -524,3 +524,94 @@
     }
   }
 }
+
+/* ========================================
+   TERRAFUSION UTILITY CLASSES
+   ======================================== */
+
+@layer utilities {
+  /* Glass Background Utilities */
+  .bg-glass-1 {
+    background-color: var(--color-glass-1);
+  }
+  
+  .bg-glass-2 {
+    background-color: var(--color-glass-2);
+  }
+  
+  .bg-glass-3 {
+    background-color: var(--color-glass-3);
+  }
+  
+  .bg-glass-4 {
+    background-color: var(--color-glass-4);
+  }
+  
+  /* Government Night Backgrounds */
+  .bg-government-night-base {
+    background-color: var(--color-government-night-base);
+  }
+  
+  .bg-government-night-elevated {
+    background-color: var(--color-government-night-elevated);
+  }
+  
+  .bg-government-night-surface {
+    background-color: var(--color-government-night-surface);
+  }
+  
+  /* Border Colors */
+  .border-glass-border {
+    border-color: var(--color-glass-2);
+  }
+  
+  .border-government-night-border {
+    border-color: var(--color-government-night-border);
+  }
+  
+  /* Signal Colors */
+  .text-signal-primary {
+    color: var(--color-signal-primary);
+  }
+  
+  .bg-signal-primary {
+    background-color: var(--color-signal-primary);
+  }
+  
+  .text-signal-secondary {
+    color: var(--color-signal-secondary);
+  }
+  
+  .bg-signal-secondary {
+    background-color: var(--color-signal-secondary);
+  }
+  
+  /* Text Colors */
+  .text-text-primary {
+    color: var(--color-text-primary);
+  }
+  
+  .text-text-secondary {
+    color: var(--color-text-secondary);
+  }
+  
+  .text-text-tertiary {
+    color: var(--color-text-tertiary);
+  }
+  
+  /* Neon Shadows */
+  .shadow-neon {
+    box-shadow: 0 0 20px rgba(0, 255, 238, 0.3),
+                0 0 40px rgba(0, 255, 238, 0.1);
+  }
+  
+  .shadow-neon-strong {
+    box-shadow: 0 0 30px rgba(0, 255, 238, 0.5),
+                0 0 60px rgba(0, 255, 238, 0.2);
+  }
+  
+  /* Scale Utilities for Tactile Physics */
+  .scale-96 {
+    transform: scale(0.96);
+  }
+}

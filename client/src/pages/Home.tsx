@@ -1,408 +1,242 @@
-import { useAuth } from "@/_core/hooks/useAuth";
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { trpc } from "@/lib/trpc";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// Layout provided by App.tsx (SystemBar, Stage, Dock)
+import { BentoCard, BentoGrid } from "@/components/terra/BentoCard";
+import { TactileButton } from "@/components/terra/TactileButton";
 import { 
-  ArrowUpRight, 
-  BarChart3, 
-  Brain, 
-  Calculator, 
-  CheckCircle2, 
-  Clock, 
   Database, 
-  Factory, 
-  Layers, 
-  MapIcon, 
-  Shield, 
-  ShieldCheck, 
-  Sliders, 
   TrendingUp, 
-  Upload, 
-  Users, 
-  Zap 
+  BarChart3, 
+  Shield, 
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  Zap,
+  Target,
 } from "lucide-react";
-import { Link } from "wouter";
-import { useState } from "react";
-import { AppealDetailModal } from "@/components/AppealDetailModal";
-import { AppealExportButton } from "@/components/AppealExportButton";
-import { useGlobalSimulation } from "@/contexts/GlobalSimulationContext";
-import { LineChart, Line, Area, ResponsiveContainer, Tooltip } from "recharts";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 
+/**
+ * Home - "Mission Control" Canonical Scene
+ * 
+ * TerraFusion Design Principles Applied:
+ * - Bento Grid as "Attention Allocator" - each card promotes next required step
+ * - Context Mode: Cards expand/shrink based on user's current workflow state
+ * - "3 Clicks to Value": Dock → Mission Control → Specific Tool
+ * - Glass materials for OS chrome only, Bento cards for data modules
+ */
 export default function Home() {
-  const { user, loading, error, isAuthenticated } = useAuth();
-  const { systemResonance, isRevalRunning } = useGlobalSimulation();
+  const { user, loading } = useAuth();
   
-  // Fetch appeals status counts and trend data
-  const [dateRange, setDateRange] = useState<"7" | "30" | "90">("30");
-  const [appealModalOpen, setAppealModalOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<"pending" | "in_review" | "hearing_scheduled" | "resolved" | "withdrawn" | null>(null);
-  const { data: statusCounts } = trpc.appeals.getStatusCounts.useQuery();
-  const { data: trendData } = trpc.appeals.getTrendData.useQuery({ dateRange });
+  // System health metrics would be fetched here in production
 
-  const handleStatusClick = (status: "pending" | "in_review" | "hearing_scheduled" | "resolved" | "withdrawn") => {
-    setSelectedStatus(status);
-    setAppealModalOpen(true);
-  };
-
-  const suiteCards = [
-    {
-      title: "DATA SUITE",
-      description: "Ingest, manage, and visualize property data from multiple sources",
-      icon: Database,
-      color: "from-blue-500 to-cyan-500",
-      items: [
-        { label: "WA Data Ingestion", href: "/wa-data-ingestion", icon: Upload },
-        { label: "County Dashboard", href: "/county-data-dashboard", icon: BarChart3 },
-        { label: "Map Explorer", href: "/map-explorer", icon: MapIcon },
-      ]
-    },
-    {
-      title: "VALUATION SUITE",
-      description: "Core valuation engines for mass appraisal and automated valuation models",
-      icon: Factory,
-      color: "from-purple-500 to-pink-500",
-      items: [
-        { label: "Mass Valuation Studio", href: "/mass-valuation", icon: Factory },
-        { label: "AVM Studio", href: "/avm-studio", icon: Brain },
-        { label: "Batch Valuation", href: "/batch-valuation", icon: Zap },
-        { label: "Cost Matrix", href: "/cost-matrix", icon: Calculator },
-      ]
-    },
-    {
-      title: "ANALYSIS SUITE",
-      description: "Statistical analysis, calibration, and quality assurance tools",
-      icon: TrendingUp,
-      color: "from-green-500 to-emerald-500",
-      items: [
-        { label: "Market Analysis", href: "/analysis", icon: BarChart3 },
-        { label: "Calibration Studio", href: "/calibration", icon: Sliders },
-        { label: "Regression Studio", href: "/regression", icon: TrendingUp },
-        { label: "QA / Ratio Studies", href: "/qa-ratio-studies", icon: ShieldCheck },
-      ]
-    },
-    {
-      title: "GOVERNANCE SUITE",
-      description: "Defense preparation, compliance tracking, and audit trails",
-      icon: Shield,
-      color: "from-amber-500 to-orange-500",
-      items: [
-        { label: "Defense Studio", href: "/defense", icon: Shield },
-        { label: "Governance & Audit", href: "/governance", icon: ShieldCheck },
-      ]
-    },
-  ];
-
-  if (user?.role === 'admin') {
-    suiteCards.push({
-      title: "PLATFORM",
-      description: "System administration and model management",
-      icon: Layers,
-      color: "from-slate-500 to-gray-500",
-      items: [
-        { label: "Model Management", href: "/model-management", icon: Layers },
-        { label: "User Management", href: "/admin/users", icon: Users },
-      ]
-    });
-  }
+  // Show layout immediately, user info will load in background
 
   return (
-    <DashboardLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-thin tracking-tight text-foreground">
-            System Overview
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Monitor system health and access all Suite modules
-          </p>
-        </div>
+    <>
+      {/* Hero Section */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-text-primary mb-2">
+          Mission Control
+        </h1>
+        <p className="text-lg text-text-secondary">
+          Engineering Certainty in Valuation. {user?.name}, your next actions are prioritized below.
+        </p>
+      </div>
 
-        {/* System-Wide KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">System Vitality</CardTitle>
-              <Zap className="h-4 w-4 text-[#00FFFF]" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{systemResonance.toFixed(3)}</div>
-              <p className="text-xs text-muted-foreground flex items-center mt-1">
-                <CheckCircle2 className="w-3 h-3 text-green-500 mr-1" />
-                Quantum Core Active
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Assessed Value</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$42.8B</div>
-              <p className="text-xs text-muted-foreground flex items-center mt-1">
-                <ArrowUpRight className="w-3 h-3 text-green-500 mr-1" />
-                <span className="text-green-500 font-medium">+4.2%</span> from last year
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Jurisdictions</CardTitle>
-              <MapIcon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-muted-foreground flex items-center mt-1">
-                <CheckCircle2 className="w-3 h-3 text-green-500 mr-1" />
-                All systems operational
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Processing Status</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{isRevalRunning ? "Running" : "Idle"}</div>
-              <p className="text-xs text-muted-foreground flex items-center mt-1">
-                {isRevalRunning ? (
-                  <>
-                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping mr-2" />
-                    Processing valuations
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-3 h-3 text-green-500 mr-1" />
-                    Ready for next job
-                  </>
-                )}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Appeals Widget */}
-        <Card>
-          <CardHeader>
+      {/* Bento Grid - Living Dashboard */}
+      <BentoGrid>
+        {/* Data Ingestion Status */}
+        <BentoCard
+          title="Data Ingestion"
+          description="Washington County 2026 Assessment Roll"
+          icon={<Database className="w-5 h-5" />}
+          span="2"
+          actionable={false}
+        >
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-[#00FFFF]" />
-                  Recent Appeals
-                </CardTitle>
-                <CardDescription>Property tax appeal status overview</CardDescription>
-              </div>
-              <div className="flex gap-1">
-                <Button 
-                  size="sm" 
-                  variant={dateRange === "7" ? "default" : "outline"}
-                  onClick={() => setDateRange("7")}
-                  className="h-7 px-2 text-xs"
-                >
-                  7d
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={dateRange === "30" ? "default" : "outline"}
-                  onClick={() => setDateRange("30")}
-                  className="h-7 px-2 text-xs"
-                >
-                  30d
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant={dateRange === "90" ? "default" : "outline"}
-                  onClick={() => setDateRange("90")}
-                  className="h-7 px-2 text-xs"
-                >
-                  90d
-                </Button>
-              </div>
-              <AppealExportButton status={selectedStatus || undefined} />
+              <span className="text-sm text-text-secondary">Total Parcels</span>
+              <span className="text-2xl font-bold text-text-primary">27,753</span>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Status Counts */}
-              <div className="grid grid-cols-5 gap-4">
-                <button 
-                  onClick={() => handleStatusClick('pending')}
-                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
-                >
-                  <div className="text-2xl font-bold text-foreground">{statusCounts?.pending ?? 0}</div>
-                  <div className="text-xs text-muted-foreground">Pending</div>
-                </button>
-                <button 
-                  onClick={() => handleStatusClick('in_review')}
-                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
-                >
-                  <div className="text-2xl font-bold text-foreground">{statusCounts?.in_review ?? 0}</div>
-                  <div className="text-xs text-muted-foreground">In Review</div>
-                </button>
-                <button 
-                  onClick={() => handleStatusClick('hearing_scheduled')}
-                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
-                >
-                  <div className="text-2xl font-bold text-foreground">{statusCounts?.hearing_scheduled ?? 0}</div>
-                  <div className="text-xs text-muted-foreground">Hearing</div>
-                </button>
-                <button 
-                  onClick={() => handleStatusClick('resolved')}
-                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
-                >
-                  <div className="text-2xl font-bold text-foreground">{statusCounts?.resolved ?? 0}</div>
-                  <div className="text-xs text-muted-foreground">Resolved</div>
-                </button>
-                <button 
-                  onClick={() => handleStatusClick('withdrawn')}
-                  className="text-center hover:bg-accent/50 rounded-lg p-2 transition-colors cursor-pointer"
-                >
-                  <div className="text-2xl font-bold text-foreground">{statusCounts?.withdrawn ?? 0}</div>
-                  <div className="text-xs text-muted-foreground">Withdrawn</div>
-                </button>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-text-secondary">Last Sync</span>
+              <span className="text-sm text-text-primary flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-chart-4" />
+                2 hours ago
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-text-secondary">Data Quality</span>
+              <span className="text-sm text-chart-4 font-medium">98.4% Pass</span>
+            </div>
+
+            <TactileButton
+              variant="glass"
+              size="sm"
+              className="w-full mt-4"
+              onClick={() => window.location.href = "/wa-data-ingestion"}
+            >
+              View Details
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </TactileButton>
+          </div>
+        </BentoCard>
+
+        {/* Valuation Model Status */}
+        <BentoCard
+          title="Valuation Model"
+          description="2026 Mass Appraisal Run"
+          icon={<TrendingUp className="w-5 h-5" />}
+          span="1"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-text-secondary" />
+              <span className="text-sm text-text-secondary">Status:</span>
+              <span className="text-sm text-chart-4 font-medium">Ready</span>
+            </div>
+            
+            <div className="text-xs text-text-tertiary">
+              Last calibration: Jan 15, 2026
+            </div>
+
+            <TactileButton
+              variant="neon"
+              size="sm"
+              commitment
+              className="w-full mt-4"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Run Model
+            </TactileButton>
+          </div>
+        </BentoCard>
+
+        {/* Assessment Review - Actionable Card */}
+        <BentoCard
+          title="Assessment Review"
+          description="High-variance properties require attention"
+          icon={<AlertTriangle className="w-5 h-5" />}
+          span="2"
+          actionable
+        >
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-signal-alert">142</div>
+                <div className="text-xs text-text-secondary">Properties flagged</div>
               </div>
               
-              {/* Recharts Sparkline */}
-              <div className="h-16">
-                {trendData && trendData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={trendData}>
-                      <defs>
-                        <linearGradient id="appealGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#00FFFF" stopOpacity={0.3} />
-                          <stop offset="100%" stopColor="#00FFFF" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--popover))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '6px',
-                          padding: '8px 12px'
-                        }}
-                        labelStyle={{ color: 'hsl(var(--popover-foreground))', fontSize: '12px' }}
-                        itemStyle={{ color: '#00FFFF', fontSize: '12px' }}
-                        formatter={(value: number) => [`${value} appeals`, 'Count']}
-                        labelFormatter={(label: string) => `Date: ${label}`}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="count"
-                        stroke="#00FFFF"
-                        strokeWidth={2}
-                        fill="url(#appealGradient)"
-                        fillOpacity={1}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full bg-muted/20 rounded flex items-center justify-center text-xs text-muted-foreground">
-                    No trend data available
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex justify-end">
-                <Link href="/appeals">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    View All Appeals
-                    <ArrowUpRight className="w-4 h-4" />
-                  </Button>
-                </Link>
+              <div className="flex-1">
+                <div className="text-3xl font-bold text-chart-3">18.7%</div>
+                <div className="text-xs text-text-secondary">Avg variance</div>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Appeal Detail Modal */}
-        <AppealDetailModal 
-          appealId={null}
-          open={appealModalOpen}
-          onOpenChange={setAppealModalOpen}
-        />
+            <div className="p-3 rounded-lg bg-signal-alert/10 border border-signal-alert/30">
+              <p className="text-sm text-text-primary">
+                <strong>Action Required:</strong> Review properties with ratio variance &gt;15% before certification deadline (Feb 28).
+              </p>
+            </div>
 
-        {/* Suite Quick-Access Cards */}
-        <div>
-          <h2 className="text-xl font-medium tracking-tight text-foreground mb-4">
-            Suite Modules
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {suiteCards.map((suite) => (
-              <Card key={suite.title} className="group hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden">
-                <div className={`absolute inset-0 bg-gradient-to-br ${suite.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <suite.icon className="w-5 h-5 text-[#00FFFF]" />
-                        <CardTitle className="text-sm font-bold tracking-wide uppercase text-[#00FFFF]/80">
-                          {suite.title}
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-sm">
-                        {suite.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {suite.items.map((item) => (
-                      <Link key={item.href} href={item.href}>
-                        <div className="flex items-center justify-between p-2 rounded-md hover:bg-accent transition-colors group/item">
-                          <div className="flex items-center gap-2">
-                            <item.icon className="w-4 h-4 text-muted-foreground group-hover/item:text-[#00FFFF] transition-colors" />
-                            <span className="text-sm text-foreground/80 group-hover/item:text-foreground transition-colors">
-                              {item.label}
-                            </span>
-                          </div>
-                          <ArrowUpRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <TactileButton
+              variant="neon"
+              size="sm"
+              className="w-full"
+              onClick={() => window.location.href = "/assessment-review"}
+            >
+              <Target className="w-4 h-4 mr-2" />
+              Review Now
+            </TactileButton>
+          </div>
+        </BentoCard>
+
+        {/* Analysis Tools */}
+        <BentoCard
+          title="Analysis Suite"
+          description="Property comparison and market trends"
+          icon={<BarChart3 className="w-5 h-5" />}
+          span="1"
+        >
+          <div className="space-y-3">
+            <button
+              onClick={() => window.location.href = "/property-comparison"}
+              className="w-full text-left p-2 rounded-lg hover:bg-glass-1 transition-colors"
+            >
+              <div className="text-sm font-medium text-text-primary">Property Comparison</div>
+              <div className="text-xs text-text-secondary">Side-by-side analysis</div>
+            </button>
+            
+            <button
+              onClick={() => window.location.href = "/map-explorer"}
+              className="w-full text-left p-2 rounded-lg hover:bg-glass-1 transition-colors"
+            >
+              <div className="text-sm font-medium text-text-primary">Map Explorer</div>
+              <div className="text-xs text-text-secondary">Spatial analysis</div>
+            </button>
+          </div>
+        </BentoCard>
+
+        {/* Governance & Compliance */}
+        <BentoCard
+          title="Governance"
+          description="Audit logs and compliance tracking"
+          icon={<Shield className="w-5 h-5" />}
+          span="full"
+        >
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <div className="text-2xl font-bold text-text-primary">1,247</div>
+              <div className="text-xs text-text-secondary">Audit events (30 days)</div>
+            </div>
+            
+            <div>
+              <div className="text-2xl font-bold text-chart-4">100%</div>
+              <div className="text-xs text-text-secondary">Compliance score</div>
+            </div>
+            
+            <div>
+              <div className="text-2xl font-bold text-text-primary">14</div>
+              <div className="text-xs text-text-secondary">Days until certification</div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 mt-4">
+            <TactileButton
+              variant="glass"
+              size="sm"
+              onClick={() => window.location.href = "/assessment-audit-log"}
+            >
+              View Audit Log
+            </TactileButton>
+            
+            <TactileButton
+              variant="glass"
+              size="sm"
+            >
+              Export Report
+            </TactileButton>
+          </div>
+        </BentoCard>
+      </BentoGrid>
+
+      {/* System Status Footer */}
+      <div className="mt-8 p-4 rounded-xl bg-glass-1 border border-glass-border">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-chart-4 animate-pulse" />
+            <span className="text-text-secondary">System Status:</span>
+            <span className="text-chart-4 font-medium">All Systems Operational</span>
+          </div>
+          
+          <div className="text-text-tertiary">
+            TerraFusion OS v1.0 • Washington County Assessor's Office
           </div>
         </div>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest system actions and updates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { title: "Model Calibration Complete", time: "2 hours ago", type: "success" },
-                { title: "New Sales Data Ingested", time: "5 hours ago", type: "info" },
-                { title: "PRD Alert: Sector 7G", time: "1 day ago", type: "warning" },
-                { title: "Weekly Backup Verified", time: "1 day ago", type: "success" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start pb-4 border-b border-border last:border-0 last:pb-0">
-                  <div className={`w-2 h-2 mt-1.5 rounded-full mr-3 ${
-                    item.type === 'success' ? 'bg-green-500' : 
-                    item.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
