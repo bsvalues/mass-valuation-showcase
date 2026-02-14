@@ -119,6 +119,8 @@ export const sales = mysqlTable("sales", {
   neighborhoodClusterId: int("neighborhoodClusterId"), // K-means cluster ID
   latitude: float("latitude"),
   longitude: float("longitude"),
+  // Assessment review status
+  status: mysqlEnum("status", ["pending", "approved", "flagged"]).default("pending"),
   uploadedBy: int("uploadedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

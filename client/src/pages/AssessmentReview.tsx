@@ -7,9 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { AlertTriangle, ArrowUpDown, ExternalLink, Filter, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowUpDown, ExternalLink, Filter, Loader2, CheckSquare, Square } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { PropertyPreviewCard } from "@/components/PropertyPreviewCard";
 
 interface HighVarianceProperty {
   id: string;
@@ -31,7 +34,23 @@ export default function AssessmentReview() {
   const [sortBy, setSortBy] = useState<string>("variancePercent");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [hoveredProperty, setHoveredProperty] = useState<HighVarianceProperty | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const utils = trpc.useUtils();
   
+  // Bulk update mutation
+  const bulkUpdate = trpc.assessmentReview.bulkUpdateStatus.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      setSelectedIds(new Set());
+      utils.assessmentReview.getHighVarianceProperties.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update properties");
+    },
+  });
+
   // Fetch high-variance properties using tRPC
   const { data: highVarianceData, isLoading } = trpc.assessmentReview.getHighVarianceProperties.useQuery({
     minVariancePercent: 15,
@@ -81,6 +100,39 @@ export default function AssessmentReview() {
     { range: "25-30%", count: properties.filter(p => Math.abs(p.variancePercent) > 25 && Math.abs(p.variancePercent) <= 30).length },
     { range: ">30%", count: properties.filter(p => Math.abs(p.variancePercent) > 30).length },
   ];
+
+  // Bulk action handlers
+  const handleSelectAll = () => {
+    if (selectedIds.size === sortedProperties.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedProperties.map(p => p.id)));
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkAction = (action: string, newStatus: "pending" | "approved" | "flagged") => {
+    if (selectedIds.size === 0) {
+      toast.error("Please select at least one property");
+      return;
+    }
+
+    bulkUpdate.mutate({
+      propertyIds: Array.from(selectedIds).map(id => parseInt(id)),
+      newStatus,
+      action,
+      notes: `Bulk ${action} action`,
+    });
+  };
 
   const handleAnalyze = (property: HighVarianceProperty) => {
     setLocation(`/value-drivers?parcelId=${property.parcelId}&sqft=2000&yearBuilt=2005&assessedValue=${property.assessedValue}&salePrice=${property.salePrice}`);
@@ -195,6 +247,39 @@ export default function AssessmentReview() {
             </div>
           </CardHeader>
           <CardContent>
+            {selectedIds.size > 0 && (
+              <div className="mb-4 flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <span className="text-sm font-medium">
+                  {selectedIds.size} {selectedIds.size === 1 ? "property" : "properties"} selected
+                </span>
+                <div className="flex gap-2 ml-auto">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => handleBulkAction("approve", "approved")}
+                    disabled={bulkUpdate.isPending}
+                  >
+                    Approve Selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleBulkAction("flag", "flagged")}
+                    disabled={bulkUpdate.isPending}
+                  >
+                    Flag Selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleBulkAction("reset", "pending")}
+                    disabled={bulkUpdate.isPending}
+                  >
+                    Reset to Pending
+                  </Button>
+                </div>
+              </div>
+            )}
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -204,6 +289,12 @@ export default function AssessmentReview() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox
+                        checked={selectedIds.size === sortedProperties.length && sortedProperties.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead>Parcel ID</TableHead>
                     <TableHead>Address</TableHead>
                     <TableHead className="text-right">Assessed</TableHead>
@@ -217,7 +308,22 @@ export default function AssessmentReview() {
                 </TableHeader>
                 <TableBody>
                   {sortedProperties.map((property) => (
-                    <TableRow key={property.id}>
+                    <TableRow 
+                      key={property.id}
+                      onMouseEnter={(e) => {
+                        setHoveredProperty(property);
+                        setMousePosition({ x: e.clientX, y: e.clientY });
+                      }}
+                      onMouseLeave={() => setHoveredProperty(null)}
+                      onMouseMove={(e) => setMousePosition({ x: e.clientX, y: e.clientY })}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(property.id)}
+                          onCheckedChange={() => handleToggleSelect(property.id)}
+                        />
+                      </TableCell>
                       <TableCell className="font-mono text-sm">{property.parcelId}</TableCell>
                       <TableCell>{property.address}</TableCell>
                       <TableCell className="text-right">${property.assessedValue.toLocaleString()}</TableCell>
@@ -263,13 +369,43 @@ export default function AssessmentReview() {
             )}
 
             {!isLoading && sortedProperties.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No high-variance properties found matching the selected filters.
+              <div className="flex flex-col items-center justify-center py-12 px-4">
+                <AlertTriangle className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No High-Variance Properties Found</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
+                  No properties match your current filter criteria. This could mean your assessments are performing well!
+                </p>
+                <div className="bg-muted/50 rounded-lg p-4 max-w-md">
+                  <p className="text-sm font-medium mb-2">Suggestions:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Try adjusting the severity filter to include both Warning and Critical</li>
+                    <li>Change the status filter to view all properties</li>
+                    <li>Lower the variance threshold (currently set to 15%)</li>
+                    <li>Check if properties need to be imported or updated</li>
+                  </ul>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Property Preview Card on Hover */}
+      {hoveredProperty && (
+        <PropertyPreviewCard
+          property={{
+            parcelId: hoveredProperty.parcelId,
+            address: hoveredProperty.address,
+            sqft: 2000, // Default value - would be fetched from property details
+            yearBuilt: 2005,
+            bedrooms: 3,
+            bathrooms: 2,
+            assessedValue: hoveredProperty.assessedValue,
+            salePrice: hoveredProperty.salePrice,
+          }}
+          position={mousePosition}
+        />
+      )}
     </DashboardLayout>
   );
 }

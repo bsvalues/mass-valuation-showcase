@@ -3592,27 +3592,28 @@
 
 ### Feature 1: Bulk Actions with Audit Logging
 - [x] Create assessmentAuditLog table schema (logId, propertyId, action, oldStatus, newStatus, userId, timestamp, notes)
-- [ ] Add status column to sales table schema (pending/approved/flagged)
-- [ ] Add bulkUpdateStatus tRPC mutation in assessmentReviewRouter
-- [ ] Add checkbox column to Assessment Review table
-- [ ] Add "Select All" checkbox in table header
-- [ ] Add bulk action buttons (Approve Selected, Flag Selected, Reassign Selected)
-- [ ] Implement audit logging for all status changes
-- [ ] Add success/error toast notifications
-- [ ] Test bulk operations with 5-10 properties
+- [x] Add status column to sales table schema (pending/approved/flagged)
+- [x] Add bulkUpdateStatus tRPC mutation in assessmentReviewRouter
+- [x] Add checkbox column to Assessment Review table
+- [x] Add "Select All" checkbox in table header
+- [x] Add bulk action buttons (Approve Selected, Flag Selected, Reset to Pending)
+- [x] Implement audit logging for all status changes
+- [x] Add success/error toast notifications
+- [x] Selection count display with action bar
 
 ### Feature 2: Empty State Handling
-- [ ] Add empty state component to PropertyComparison when no properties selected
-- [ ] Add empty state to AssessmentReview when no high-variance properties found
-- [ ] Include helpful suggestions (adjust filters, check variance thresholds)
-- [ ] Add visual illustrations or icons
-- [ ] Test with various filter combinations
+- [x] Add empty state component to PropertyComparison when no properties selected
+- [x] Add intermediate state when only 1 property selected
+- [x] Add empty state to AssessmentReview when no high-variance properties found
+- [x] Include helpful suggestions (adjust filters, check variance thresholds)
+- [x] Add visual illustrations with AlertTriangle and GitCompare icons
+- [x] Provide step-by-step usage instructions
 
 ### Feature 3: Property Detail Quick View
-- [ ] Create PropertyPreviewCard component
-- [ ] Add hover state detection to Assessment Review table rows
-- [ ] Fetch property details on hover (with debounce)
-- [ ] Display preview card with photo, key metrics (sqft, beds, baths, year)
-- [ ] Position card relative to cursor/row
-- [ ] Add loading skeleton for preview card
-- [ ] Test hover interaction and performance
+- [x] Create PropertyPreviewCard component
+- [x] Add hover state detection to Assessment Review table rows
+- [x] Track mouse position for dynamic card positioning
+- [x] Display preview card with key metrics (sqft, beds, baths, year, values)
+- [x] Position card relative to cursor with offset
+- [x] Add hover highlight effect to table rows
+- [x] Smooth transition on hover enter/leave

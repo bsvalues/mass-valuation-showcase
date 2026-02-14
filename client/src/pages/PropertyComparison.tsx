@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
-import { Plus, X, Download, Loader2 } from "lucide-react";
+import { Plus, X, Download, Loader2, GitCompare } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 interface Property {
@@ -160,6 +160,43 @@ export default function PropertyComparison() {
             )}
           </CardContent>
         </Card>
+
+        {selectedProperties.length === 0 && (
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center justify-center">
+                <GitCompare className="w-16 h-16 text-muted-foreground/50 mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No Properties Selected</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
+                  Start by searching for properties using the search box above. You can compare up to 4 properties side-by-side.
+                </p>
+                <div className="bg-muted/50 rounded-lg p-4 max-w-md">
+                  <p className="text-sm font-medium mb-2">How to use:</p>
+                  <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                    <li>Type a parcel ID or address in the search box</li>
+                    <li>Click "Add to Comparison" on properties you want to compare</li>
+                    <li>Select at least 2 properties to see comparison charts</li>
+                    <li>Use the comparison table and charts to analyze differences</li>
+                  </ol>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedProperties.length === 1 && (
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center justify-center">
+                <GitCompare className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Add More Properties to Compare</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  You've selected 1 property. Add at least one more property to see comparison charts and analysis.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {selectedProperties.length >= 2 && (
           <>

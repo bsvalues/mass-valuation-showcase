@@ -104,6 +104,60 @@ export const assessmentReviewRouter = router({
     ];
   }),
 
-  // TODO: Bulk update mutation - requires status column in sales table schema
-  // Will be implemented in next phase after schema migration
+  bulkUpdateStatus: publicProcedure
+    .input(
+      z.object({
+        propertyIds: z.array(z.number()),
+        newStatus: z.enum(["pending", "approved", "flagged"]),
+        action: z.string(), // 'approve', 'flag', 'reassign'
+        notes: z.string().optional(),
+        userId: z.number().optional(),
+        userName: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { propertyIds, newStatus, action, notes, userId, userName } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      try {
+        // Get current status of properties
+        const properties = await db
+          .select({
+            id: sales.id,
+            status: sales.status,
+          })
+          .from(sales)
+          .where(sql`${sales.id} IN (${sql.join(propertyIds.map(id => sql`${id}`), sql`, `)})`);
+
+        // Update sales table with new status
+        await db
+          .update(sales)
+          .set({ status: newStatus })
+          .where(sql`${sales.id} IN (${sql.join(propertyIds.map(id => sql`${id}`), sql`, `)})`);
+
+        // Create audit log entries
+        const { assessmentAuditLog } = await import("../drizzle/schema");
+        const auditEntries = properties.map(prop => ({
+          propertyId: prop.id,
+          action,
+          oldStatus: prop.status || "pending",
+          newStatus,
+          userId: userId || null,
+          userName: userName || "System",
+          notes: notes || null,
+        }));
+
+        await db.insert(assessmentAuditLog).values(auditEntries);
+
+        return {
+          success: true,
+          updatedCount: propertyIds.length,
+          message: `Successfully updated ${propertyIds.length} properties to ${newStatus}`,
+        };
+      } catch (error) {
+        console.error("Bulk update error:", error);
+        throw new Error("Failed to update property statuses");
+      }
+    }),
 });
