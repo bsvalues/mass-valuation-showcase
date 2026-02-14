@@ -55,6 +55,7 @@ import ValueDriverAnalysis from "./pages/ValueDriverAnalysis";
 import ClusterHeatmap from "./pages/ClusterHeatmap";
 import PropertyComparison from "./pages/PropertyComparison";
 import AssessmentReview from "./pages/AssessmentReview";
+import AssessmentAuditLog from "./pages/AssessmentAuditLog";
 
 
 function Router() {
@@ -96,6 +97,7 @@ function Router() {
       <Route path={"/cluster-map"} component={ClusterHeatmap} />
       <Route path={"/property-comparison"} component={PropertyComparison} />
       <Route path={"/assessment-review"} component={AssessmentReview} />
+      <Route path={"/assessment-audit-log"} component={AssessmentAuditLog} />
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />

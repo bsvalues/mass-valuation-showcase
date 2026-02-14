@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,6 +138,35 @@ export default function AssessmentReview() {
     setLocation(`/value-drivers?parcelId=${property.parcelId}&sqft=2000&yearBuilt=2005&assessedValue=${property.assessedValue}&salePrice=${property.salePrice}`);
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case 'a':
+          e.preventDefault();
+          handleBulkAction('approve', 'approved');
+          break;
+        case 'f':
+          e.preventDefault();
+          handleBulkAction('flag', 'flagged');
+          break;
+        case 'escape':
+          e.preventDefault();
+          setSelectedIds(new Set());
+          toast.info('Selection cleared');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedIds]); // Re-attach listener when selectedIds changes
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -258,16 +287,20 @@ export default function AssessmentReview() {
                     variant="default"
                     onClick={() => handleBulkAction("approve", "approved")}
                     disabled={bulkUpdate.isPending}
+                    className="flex items-center gap-2"
                   >
                     Approve Selected
+                    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs rounded bg-background/50 border">A</kbd>
                   </Button>
                   <Button
                     size="sm"
                     variant="destructive"
                     onClick={() => handleBulkAction("flag", "flagged")}
                     disabled={bulkUpdate.isPending}
+                    className="flex items-center gap-2"
                   >
                     Flag Selected
+                    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs rounded bg-background/50 border">F</kbd>
                   </Button>
                   <Button
                     size="sm"
@@ -276,6 +309,15 @@ export default function AssessmentReview() {
                     disabled={bulkUpdate.isPending}
                   >
                     Reset to Pending
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => { setSelectedIds(new Set()); toast.info('Selection cleared'); }}
+                    className="flex items-center gap-2"
+                  >
+                    Clear
+                    <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-xs rounded bg-background/50 border">Esc</kbd>
                   </Button>
                 </div>
               </div>

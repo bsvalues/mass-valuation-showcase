@@ -160,4 +160,48 @@ export const assessmentReviewRouter = router({
         throw new Error("Failed to update property statuses");
       }
     }),
+
+  getAuditLogs: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().default(50),
+        offset: z.number().default(0),
+        userId: z.number().optional(),
+        action: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const { limit, offset, userId, action, startDate, endDate } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      const { assessmentAuditLog } = await import("../drizzle/schema");
+
+      // Build where conditions
+      const conditions = [];
+      if (userId) {
+        conditions.push(eq(assessmentAuditLog.userId, userId));
+      }
+      if (action) {
+        conditions.push(eq(assessmentAuditLog.action, action));
+      }
+      if (startDate) {
+        conditions.push(gte(assessmentAuditLog.timestamp, new Date(startDate)));
+      }
+      if (endDate) {
+        conditions.push(sql`${assessmentAuditLog.timestamp} <= ${new Date(endDate)}`);
+      }
+
+      const logs = await db
+        .select()
+        .from(assessmentAuditLog)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(sql`${assessmentAuditLog.timestamp} DESC`)
+        .limit(limit)
+        .offset(offset);
+
+      return logs;
+    }),
 });

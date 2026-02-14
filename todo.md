@@ -3625,3 +3625,26 @@
 - [x] Fixed Breadcrumb component using duplicate href keys (changed to index-based keys)
 - [x] Removed duplicate command entries in CommandPalette (wa-data-ingestion and map-explorer)
 - [x] Verified no duplicate route definitions in App.tsx or DashboardLayout
+
+
+## 🎨 UX Enhancements
+
+### Status Badge Column
+- [x] Add status column to Assessment Review table
+- [x] Create Badge component with color-coded indicators (Pending=amber, Approved=green, Flagged=red)
+- [x] Display status badges in table rows
+
+### Keyboard Shortcuts
+- [x] Add keyboard event listener for bulk actions
+- [x] Implement A key to approve selected properties
+- [x] Implement F key to flag selected properties
+- [x] Implement Esc key to clear selection
+- [x] Add keyboard shortcut hints to UI (kbd badges on buttons)
+
+### Audit Log Viewer
+- [x] Create AuditLogViewer page component
+- [x] Add tRPC query to fetch audit logs with pagination
+- [x] Implement filtering by action type and date range
+- [x] Add route /assessment-audit-log
+- [x] Add navigation link in DashboardLayout sidebar
+- [x] Add breadcrumb mapping for audit log page

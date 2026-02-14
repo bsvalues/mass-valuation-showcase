@@ -113,6 +113,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         { icon: ShieldCheck, label: "QA / Ratio Studies", href: "/qa-ratio-studies" },
         { icon: GitCompare, label: "Property Comparison", href: "/property-comparison" },
         { icon: AlertTriangle, label: "Assessment Review", href: "/assessment-review" },
+        { icon: FileText, label: "Assessment Audit Log", href: "/assessment-audit-log" },
       ]
     },
     {
@@ -159,6 +160,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       '/qa-ratio-studies': { suite: 'Analysis Suite', page: 'QA / Ratio Studies' },
       '/property-comparison': { suite: 'Analysis Suite', page: 'Property Comparison' },
       '/assessment-review': { suite: 'Analysis Suite', page: 'Assessment Review' },
+      '/assessment-audit-log': { suite: 'Analysis Suite', page: 'Assessment Audit Log' },
       '/defense': { suite: 'Governance Suite', page: 'Defense Studio' },
       '/governance': { suite: 'Governance Suite', page: 'Governance & Audit' },
       '/model-management': { suite: 'Platform', page: 'Model Management' },
