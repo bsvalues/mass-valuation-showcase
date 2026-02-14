@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BentoCard, BentoGrid } from "@/components/terra/BentoCard";
+import { TactileButton } from "@/components/terra/TactileButton";
+import { LiquidPanel } from "@/components/terra/LiquidPanel";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
-import { Plus, X, Download, Loader2, GitCompare } from "lucide-react";
+import { Plus, X, Download, Loader2, GitCompare, Home, Ruler, Calendar, Bed, Bath, DollarSign } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 interface Property {
@@ -25,6 +25,15 @@ interface Property {
   clusterId: number;
 }
 
+/**
+ * Property Comparison - TerraFusion Canonical Scene
+ * 
+ * Design Principles Applied:
+ * - Bento Grid for property cards (side-by-side comparison)
+ * - LiquidPanel for charts (synchronized visualizations)
+ * - TactileButton for actions (add/remove properties)
+ * - Glass materials for search and tables
+ */
 export default function PropertyComparison() {
   const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,7 +44,6 @@ export default function PropertyComparison() {
     { enabled: searchQuery.length > 2 }
   );
 
-  // Use real search results or empty array
   const availableProperties: Property[] = (searchResults || []).map(r => ({
     id: r.id.toString(),
     parcelId: r.parcelId,
@@ -46,7 +54,7 @@ export default function PropertyComparison() {
     bathrooms: r.bathrooms || 0,
     assessedValue: r.assessedValue || 0,
     salePrice: r.salePrice || 0,
-    pricePerSqft: r.sqft ? Math.round(r.salePrice / r.sqft) : 0,
+    pricePerSqft: r.sqft ? Math.round((r.salePrice || r.assessedValue) / r.sqft) : 0,
     quality: "Average",
     condition: "Good",
     clusterId: 1
@@ -86,272 +94,328 @@ export default function PropertyComparison() {
       }), {})
     },
     {
-      metric: "Assessed Value (K)",
+      metric: "Bedrooms",
       ...selectedProperties.reduce((acc, prop, idx) => ({
         ...acc,
-        [`Property ${idx + 1}`]: Math.round(prop.assessedValue / 1000)
+        [`Property ${idx + 1}`]: prop.bedrooms
       }), {})
-    }
+    },
+    {
+      metric: "Bathrooms",
+      ...selectedProperties.reduce((acc, prop, idx) => ({
+        ...acc,
+        [`Property ${idx + 1}`]: prop.bathrooms
+      }), {})
+    },
   ];
 
-  // Radar chart data
   const radarData = [
-    { metric: "Size", ...selectedProperties.reduce((acc, prop, idx) => ({ ...acc, [`P${idx + 1}`]: (prop.sqft / 3000) * 100 }), {}) },
-    { metric: "Age", ...selectedProperties.reduce((acc, prop, idx) => ({ ...acc, [`P${idx + 1}`]: ((2026 - prop.yearBuilt) / 50) * 100 }), {}) },
-    { metric: "Value", ...selectedProperties.reduce((acc, prop, idx) => ({ ...acc, [`P${idx + 1}`]: (prop.assessedValue / 600000) * 100 }), {}) },
-    { metric: "Price/Sqft", ...selectedProperties.reduce((acc, prop, idx) => ({ ...acc, [`P${idx + 1}`]: (prop.pricePerSqft / 300) * 100 }), {}) },
-    { metric: "Bedrooms", ...selectedProperties.reduce((acc, prop, idx) => ({ ...acc, [`P${idx + 1}`]: (prop.bedrooms / 5) * 100 }), {}) }
+    {
+      attribute: "Size",
+      ...selectedProperties.reduce((acc, prop, idx) => ({
+        ...acc,
+        [`P${idx + 1}`]: (prop.sqft / 3000) * 100
+      }), {})
+    },
+    {
+      attribute: "Value",
+      ...selectedProperties.reduce((acc, prop, idx) => ({
+        ...acc,
+        [`P${idx + 1}`]: (prop.pricePerSqft / 500) * 100
+      }), {})
+    },
+    {
+      attribute: "Age",
+      ...selectedProperties.reduce((acc, prop, idx) => ({
+        ...acc,
+        [`P${idx + 1}`]: ((2026 - prop.yearBuilt) / 100) * 100
+      }), {})
+    },
+    {
+      attribute: "Beds",
+      ...selectedProperties.reduce((acc, prop, idx) => ({
+        ...acc,
+        [`P${idx + 1}`]: (prop.bedrooms / 5) * 100
+      }), {})
+    },
+    {
+      attribute: "Baths",
+      ...selectedProperties.reduce((acc, prop, idx) => ({
+        ...acc,
+        [`P${idx + 1}`]: (prop.bathrooms / 4) * 100
+      }), {})
+    },
   ];
-
-  const colors = ["#00FFEE", "#0088FF", "#FF6B9D", "#FFB800"];
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Property Comparison</h1>
-          <p className="text-muted-foreground">Compare up to 4 properties side-by-side</p>
-        </div>
+    <div className="space-y-6">
+      {/* Hero Section */}
+      <div>
+        <h1 className="text-4xl font-bold text-text-primary mb-2">
+          Property Comparison
+        </h1>
+        <p className="text-lg text-text-secondary">
+          Side-by-side analysis of up to 4 properties. {selectedProperties.length} of 4 selected.
+        </p>
+      </div>
 
-        {/* Property Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Properties</CardTitle>
-            <CardDescription>Search and add properties to compare (max 4)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Search by parcel ID or address..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button>Search</Button>
-            </div>
+      {/* Property Search */}
+      <LiquidPanel intensity={1} className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Input
+              placeholder="Search by parcel ID or address..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-glass-2 border-glass-border"
+            />
+            {isSearching && <Loader2 className="w-5 h-5 animate-spin text-signal-primary" />}
+          </div>
 
-            {/* Quick add mock properties for demo */}
-            <div className="flex gap-2">
-              {availableProperties.map((prop: Property) => (
-                <Button
-                  key={prop.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addProperty(prop)}
-                  disabled={selectedProperties.length >= 4 || selectedProperties.some(p => p.id === prop.id)}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  {prop.address}
-                </Button>
-              ))}
-            </div>
-
-            {/* Selected Properties */}
-            {selectedProperties.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                {selectedProperties.map((prop, idx) => (
-                  <Badge key={prop.id} variant="secondary" className="px-3 py-2">
-                    <span className="mr-2">{prop.address}</span>
-                    <button onClick={() => removeProperty(prop.id)} className="hover:text-destructive">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
+          {searchQuery.length > 2 && availableProperties.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm text-text-secondary">{availableProperties.length} properties found</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {availableProperties.map((property) => (
+                  <div
+                    key={property.id}
+                    className="flex items-center justify-between p-3 bg-glass-2 border border-glass-border rounded-lg hover:bg-glass-3 transition-colors"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">{property.address}</p>
+                      <p className="text-xs text-text-secondary">Parcel: {property.parcelId}</p>
+                    </div>
+                    <TactileButton
+                      variant="glass"
+                      size="sm"
+                      onClick={() => addProperty(property)}
+                      disabled={selectedProperties.length >= 4 || selectedProperties.some(p => p.id === property.id)}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </TactileButton>
+                  </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {selectedProperties.length === 0 && (
-          <Card>
-            <CardContent className="py-12">
-              <div className="flex flex-col items-center justify-center">
-                <GitCompare className="w-16 h-16 text-muted-foreground/50 mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Properties Selected</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-4">
-                  Start by searching for properties using the search box above. You can compare up to 4 properties side-by-side.
-                </p>
-                <div className="bg-muted/50 rounded-lg p-4 max-w-md">
-                  <p className="text-sm font-medium mb-2">How to use:</p>
-                  <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                    <li>Type a parcel ID or address in the search box</li>
-                    <li>Click "Add to Comparison" on properties you want to compare</li>
-                    <li>Select at least 2 properties to see comparison charts</li>
-                    <li>Use the comparison table and charts to analyze differences</li>
-                  </ol>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {selectedProperties.length === 1 && (
-          <Card>
-            <CardContent className="py-12">
-              <div className="flex flex-col items-center justify-center">
-                <GitCompare className="w-12 h-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Add More Properties to Compare</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md">
-                  You've selected 1 property. Add at least one more property to see comparison charts and analysis.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {selectedProperties.length >= 2 && (
-          <>
-            {/* Comparison Table */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Property Details</CardTitle>
-                  <Button variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export PDF
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Metric</TableHead>
-                      {selectedProperties.map((prop, idx) => (
-                        <TableHead key={prop.id}>Property {idx + 1}</TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">Address</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.address}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Parcel ID</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.parcelId}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Square Feet</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.sqft.toLocaleString()}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Year Built</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.yearBuilt}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Bedrooms</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.bedrooms}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Bathrooms</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.bathrooms}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Assessed Value</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>${prop.assessedValue.toLocaleString()}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Price per Sqft</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>${prop.pricePerSqft}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Quality</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.quality}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Condition</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.condition}</TableCell>
-                      ))}
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Cluster ID</TableCell>
-                      {selectedProperties.map(prop => (
-                        <TableCell key={prop.id}>{prop.clusterId}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Metric Comparison</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={comparisonData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="metric" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      {selectedProperties.map((_, idx) => (
-                        <Bar key={idx} dataKey={`Property ${idx + 1}`} fill={colors[idx]} />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Property Profile Overlay</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RadarChart data={radarData}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="metric" />
-                      <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                      {selectedProperties.map((_, idx) => (
-                        <Radar
-                          key={idx}
-                          name={`Property ${idx + 1}`}
-                          dataKey={`P${idx + 1}`}
-                          stroke={colors[idx]}
-                          fill={colors[idx]}
-                          fillOpacity={0.3}
-                        />
-                      ))}
-                      <Legend />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
             </div>
-          </>
-        )}
+          )}
+        </div>
+      </LiquidPanel>
 
-        {selectedProperties.length < 2 && (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Select at least 2 properties to begin comparison
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </DashboardLayout>
+      {/* Empty State */}
+      {selectedProperties.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16">
+          <GitCompare className="w-16 h-16 text-text-secondary mb-4" />
+          <h3 className="text-xl font-semibold text-text-primary mb-2">No Properties Selected</h3>
+          <p className="text-text-secondary text-center max-w-md">
+            Search for properties above and add them to compare side-by-side. You can select up to 4 properties at once.
+          </p>
+        </div>
+      )}
+
+      {selectedProperties.length === 1 && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <GitCompare className="w-12 h-12 text-chart-3 mb-3" />
+          <h3 className="text-lg font-semibold text-text-primary mb-2">Add More Properties</h3>
+          <p className="text-text-secondary text-center max-w-md">
+            You need at least 2 properties to see comparison charts. Add 1-3 more properties to begin analysis.
+          </p>
+        </div>
+      )}
+
+      {/* Property Cards Bento Grid */}
+      {selectedProperties.length > 0 && (
+        <BentoGrid>
+          {selectedProperties.map((property, idx) => (
+            <BentoCard
+              key={property.id}
+              title={`Property ${idx + 1}`}
+              icon={<Home className="w-5 h-5" />}
+              span="1"
+            >
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-text-primary">{property.address}</p>
+                  <p className="text-xs text-text-secondary font-mono">Parcel: {property.parcelId}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Ruler className="w-4 h-4 text-text-secondary" />
+                    <span className="text-text-primary">{property.sqft.toLocaleString()} sqft</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-text-secondary" />
+                    <span className="text-text-primary">{property.yearBuilt}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Bed className="w-4 h-4 text-text-secondary" />
+                    <span className="text-text-primary">{property.bedrooms} beds</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Bath className="w-4 h-4 text-text-secondary" />
+                    <span className="text-text-primary">{property.bathrooms} baths</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-glass-border">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-text-secondary">Assessed Value</span>
+                    <span className="text-sm font-semibold text-text-primary">
+                      ${property.assessedValue.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-text-secondary">Price/Sqft</span>
+                    <span className="text-sm font-semibold text-signal-primary">
+                      ${property.pricePerSqft}/sqft
+                    </span>
+                  </div>
+                </div>
+
+                <TactileButton
+                  variant="glass"
+                  size="sm"
+                  onClick={() => removeProperty(property.id)}
+                  className="w-full"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Remove
+                </TactileButton>
+              </div>
+            </BentoCard>
+          ))}
+        </BentoGrid>
+      )}
+
+      {/* Comparison Charts */}
+      {selectedProperties.length >= 2 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Bar Chart */}
+          <LiquidPanel intensity={2} className="p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-4">Property Metrics</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={comparisonData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="metric" stroke="rgba(255,255,255,0.5)" />
+                <YAxis stroke="rgba(255,255,255,0.5)" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(10, 14, 26, 0.9)",
+                    border: "1px solid rgba(0, 255, 238, 0.3)",
+                    borderRadius: "8px",
+                  }}
+                />
+                <Legend />
+                {selectedProperties.map((_, idx) => (
+                  <Bar
+                    key={idx}
+                    dataKey={`Property ${idx + 1}`}
+                    fill={`hsl(${180 + idx * 60}, 70%, 50%)`}
+                  />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </LiquidPanel>
+
+          {/* Radar Chart */}
+          <LiquidPanel intensity={2} className="p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-4">Attribute Comparison</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="rgba(255,255,255,0.2)" />
+                <PolarAngleAxis dataKey="attribute" stroke="rgba(255,255,255,0.5)" />
+                <PolarRadiusAxis stroke="rgba(255,255,255,0.3)" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(10, 14, 26, 0.9)",
+                    border: "1px solid rgba(0, 255, 238, 0.3)",
+                    borderRadius: "8px",
+                  }}
+                />
+                <Legend />
+                {selectedProperties.map((_, idx) => (
+                  <Radar
+                    key={idx}
+                    name={`Property ${idx + 1}`}
+                    dataKey={`P${idx + 1}`}
+                    stroke={`hsl(${180 + idx * 60}, 70%, 50%)`}
+                    fill={`hsl(${180 + idx * 60}, 70%, 50%)`}
+                    fillOpacity={0.3}
+                  />
+                ))}
+              </RadarChart>
+            </ResponsiveContainer>
+          </LiquidPanel>
+        </div>
+      )}
+
+      {/* Detailed Comparison Table */}
+      {selectedProperties.length >= 2 && (
+        <LiquidPanel intensity={1} className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-glass-border">
+                  <TableHead className="text-text-secondary">Attribute</TableHead>
+                  {selectedProperties.map((_, idx) => (
+                    <TableHead key={idx} className="text-text-secondary">Property {idx + 1}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="border-glass-border">
+                  <TableCell className="font-medium text-text-primary">Address</TableCell>
+                  {selectedProperties.map((prop) => (
+                    <TableCell key={prop.id} className="text-text-primary">{prop.address}</TableCell>
+                  ))}
+                </TableRow>
+                <TableRow className="border-glass-border">
+                  <TableCell className="font-medium text-text-primary">Parcel ID</TableCell>
+                  {selectedProperties.map((prop) => (
+                    <TableCell key={prop.id} className="font-mono text-sm text-text-primary">{prop.parcelId}</TableCell>
+                  ))}
+                </TableRow>
+                <TableRow className="border-glass-border">
+                  <TableCell className="font-medium text-text-primary">Square Feet</TableCell>
+                  {selectedProperties.map((prop) => (
+                    <TableCell key={prop.id} className="text-text-primary">{prop.sqft.toLocaleString()}</TableCell>
+                  ))}
+                </TableRow>
+                <TableRow className="border-glass-border">
+                  <TableCell className="font-medium text-text-primary">Year Built</TableCell>
+                  {selectedProperties.map((prop) => (
+                    <TableCell key={prop.id} className="text-text-primary">{prop.yearBuilt}</TableCell>
+                  ))}
+                </TableRow>
+                <TableRow className="border-glass-border">
+                  <TableCell className="font-medium text-text-primary">Bedrooms</TableCell>
+                  {selectedProperties.map((prop) => (
+                    <TableCell key={prop.id} className="text-text-primary">{prop.bedrooms}</TableCell>
+                  ))}
+                </TableRow>
+                <TableRow className="border-glass-border">
+                  <TableCell className="font-medium text-text-primary">Bathrooms</TableCell>
+                  {selectedProperties.map((prop) => (
+                    <TableCell key={prop.id} className="text-text-primary">{prop.bathrooms}</TableCell>
+                  ))}
+                </TableRow>
+                <TableRow className="border-glass-border">
+                  <TableCell className="font-medium text-text-primary">Assessed Value</TableCell>
+                  {selectedProperties.map((prop) => (
+                    <TableCell key={prop.id} className="text-text-primary">${prop.assessedValue.toLocaleString()}</TableCell>
+                  ))}
+                </TableRow>
+                <TableRow className="border-glass-border">
+                  <TableCell className="font-medium text-text-primary">Price/Sqft</TableCell>
+                  {selectedProperties.map((prop) => (
+                    <TableCell key={prop.id} className="font-semibold text-signal-primary">${prop.pricePerSqft}/sqft</TableCell>
+                  ))}
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </LiquidPanel>
+      )}
+    </div>
   );
 }

@@ -3676,10 +3676,10 @@
 - [x] Implement tint layer system for glass surfaces
 
 ### Phase 4: Canonical Scenes
-- [x] Rebuild Home page as "Mission Control" Canonical Scene- [x] Migrate Assessment Review to TerraFusion design with Bento GridProperty Comparison to TerraFusion design
+- [x] Rebuild Home page as "Mission Control" Canonical Scene- [x] Migrate Assessment Review to TerraFusion design w- [x] Migrate Property Comparison to TerraFusion design
 - [ ] Migrate Map Explorer to TerraFusion design
-- [ ] Migrate Audit Log Viewer to TerraFusion design
-- [ ] Migrate WA Data Ingestion to TerraFusion design
+- [x] Migrate Audit Log Viewer to TerraFusion design
+- [x] Migrate WA Data Ingestion to TerraFusion design
 - [ ] Migrate all remaining pages to TerraFusion design
 
 ### Phase 5: Remove Old Components

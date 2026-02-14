@@ -1,15 +1,25 @@
 import { useState } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { BentoCard, BentoGrid } from "@/components/terra/BentoCard";
+import { TactileButton } from "@/components/terra/TactileButton";
+import { LiquidPanel } from "@/components/terra/LiquidPanel";
 import { VisualDataFlowPipeline, type PipelineStageData } from "@/components/wa-data/VisualDataFlowPipeline";
 import { AIFieldMappingCoPilot, type FieldMapping } from "@/components/wa-data/AIFieldMappingCoPilot";
 import { CapabilityUnlockDashboard, type Capability } from "@/components/wa-data/CapabilityUnlockDashboard";
 import { WAParcelLoader } from "@/components/wa-data/WAParcelLoader";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { MapIcon, TrendingUp, FileText, Zap, Shield, Upload, CheckSquare, Map, Eye } from "lucide-react";
+import { MapIcon, TrendingUp, FileText, Zap, Shield, Upload, CheckSquare, Map, Eye, Database, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
+/**
+ * WA Data Ingestion - TerraFusion Canonical Scene
+ * 
+ * Design Principles Applied:
+ * - Bento Grid for capability cards
+ * - LiquidPanel for pipeline visualization
+ * - TactileButton for activation actions
+ * - Glass materials for data layers
+ */
 export default function WADataIngestion() {
   // Pipeline State
   const [pipelineStages, setPipelineStages] = useState<PipelineStageData[]>([
@@ -60,7 +70,7 @@ export default function WADataIngestion() {
       sourceField: "PARID",
       targetField: "parcel_id",
       confidence: 98,
-      status: "pending",
+      status: "confirmed",
       sampleValues: ["12345-001", "12345-002", "12345-003"],
       learnedFrom: "King County",
     },
@@ -68,7 +78,7 @@ export default function WADataIngestion() {
       sourceField: "SITUS_ADDR",
       targetField: "situs_address",
       confidence: 95,
-      status: "pending",
+      status: "confirmed",
       sampleValues: ["123 Main St", "456 Oak Ave", "789 Pine Rd"],
       learnedFrom: "Benton County",
     },
@@ -76,21 +86,21 @@ export default function WADataIngestion() {
       sourceField: "LAND_VAL",
       targetField: "land_value",
       confidence: 92,
-      status: "pending",
+      status: "confirmed",
       sampleValues: ["125000", "89000", "215000"],
     },
     {
       sourceField: "IMPR_VAL",
       targetField: "improvement_value",
       confidence: 92,
-      status: "pending",
+      status: "confirmed",
       sampleValues: ["285000", "195000", "425000"],
     },
     {
       sourceField: "TOT_VAL",
       targetField: "total_value",
       confidence: 98,
-      status: "pending",
+      status: "confirmed",
       sampleValues: ["410000", "284000", "640000"],
     },
   ]);
@@ -98,272 +108,207 @@ export default function WADataIngestion() {
   // Capability State
   const [dataLayers, setDataLayers] = useState({
     parcelFabric: true,
-    countyRoll: false,
-    salesStream: false,
+    countyRoll: true,
+    salesStream: true,
   });
 
-  const capabilities: Capability[] = [
+  const [capabilities, setCapabilities] = useState<Capability[]>([
     {
-      id: "cockpit_map",
-      name: "Quantum Cockpit Map",
-      description: "Interactive parcel visualization with clustering",
-      icon: MapIcon,
-      unlocked: dataLayers.parcelFabric,
-      requirements: { parcelFabric: true },
-      badge: { label: "Core", variant: "default" },
-    },
-    {
-      id: "comps_selection",
-      name: "Comparable Sales",
-      description: "AI-powered comparable property finder",
-      icon: FileText,
-      unlocked: dataLayers.salesStream,
-      requirements: { salesStream: true },
-      badge: { label: "Analytics", variant: "secondary" },
-    },
-    {
-      id: "ratio_studies",
-      name: "Ratio Studies",
-      description: "Statistical assessment quality analysis",
+      id: "mass-appraisal",
+      name: "Mass Appraisal Models",
       icon: TrendingUp,
-      unlocked: dataLayers.countyRoll && dataLayers.salesStream,
-      requirements: { countyRoll: true, salesStream: true },
-      badge: { label: "Advanced", variant: "outline" },
-    },
-    {
-      id: "model_calibration",
-      name: "Model Calibration Studio",
-      description: "Fine-tune valuation models with ML",
-      icon: Zap,
-      unlocked: dataLayers.parcelFabric && dataLayers.countyRoll && dataLayers.salesStream,
+      unlocked: true,
       requirements: { parcelFabric: true, countyRoll: true, salesStream: true },
-      badge: { label: "Pro", variant: "outline" },
+      description: "Run CAMA models for property valuation",
     },
     {
-      id: "appeals_support",
-      name: "Appeals Support",
-      description: "Automated defense documentation",
+      id: "equity-analysis",
+      name: "Equity Analysis",
       icon: Shield,
-      unlocked: dataLayers.parcelFabric && dataLayers.countyRoll && dataLayers.salesStream,
-      requirements: { parcelFabric: true, countyRoll: true, salesStream: true },
-      badge: { label: "Pro", variant: "outline" },
+      unlocked: true,
+      requirements: { parcelFabric: true, salesStream: true },
+      description: "COD, PRD, and ratio studies",
     },
-  ];
-
-  const targetFields = [
-    { value: "parcel_id", label: "Parcel ID", description: "Unique parcel identifier (APN/PARID)" },
-    { value: "situs_address", label: "Situs Address", description: "Property street address" },
-    { value: "land_value", label: "Land Value", description: "Assessed land value in dollars" },
-    { value: "improvement_value", label: "Improvement Value", description: "Assessed building value" },
-    { value: "total_value", label: "Total Value", description: "Total assessed value" },
-    { value: "property_class", label: "Property Class", description: "Property classification code" },
-    { value: "year_built", label: "Year Built", description: "Construction year" },
-    { value: "building_sqft", label: "Building Sq Ft", description: "Building square footage" },
-  ];
+    {
+      id: "spatial-analytics",
+      name: "Spatial Analytics",
+      icon: MapIcon,
+      unlocked: true,
+      requirements: { parcelFabric: true },
+      description: "Geographic market analysis",
+    },
+    {
+      id: "appeal-prediction",
+      name: "Appeal Prediction",
+      icon: FileText,
+      unlocked: true,
+      requirements: { parcelFabric: true, salesStream: true, countyRoll: true },
+      description: "AI-powered appeal risk scoring",
+    },
+  ]);
 
   const handleConfirmMapping = (sourceField: string, targetField: string) => {
-    setFieldMappings((prev) =>
-      prev.map((m) => (m.sourceField === sourceField ? { ...m, status: "confirmed" as const } : m))
-    );
-    toast.success(`Mapped ${sourceField} → ${targetField}`);
+    setFieldMappings(fieldMappings.map(m =>
+      m.sourceField === sourceField ? { ...m, status: "confirmed" as const, targetField } : m
+    ));
+    toast.success(`Confirmed mapping for ${sourceField}`);
   };
 
   const handleSkipMapping = (sourceField: string) => {
-    setFieldMappings((prev) =>
-      prev.map((m) => (m.sourceField === sourceField ? { ...m, status: "skipped" as const } : m))
-    );
-    toast.info(`Skipped ${sourceField}`);
+    setFieldMappings(fieldMappings.map(m =>
+      m.sourceField === sourceField ? { ...m, status: "skipped" as const } : m
+    ));
+    toast.info(`Skipped mapping for ${sourceField}`);
   };
 
-  const handleManualMap = (sourceField: string, targetField: string) => {
-    setFieldMappings((prev) =>
-      prev.map((m) =>
-        m.sourceField === sourceField
-          ? { ...m, targetField, status: "manual" as const, confidence: 100 }
-          : m
-      )
-    );
-    toast.success(`Manually mapped ${sourceField} → ${targetField}`);
+  const handleManualMapping = (sourceField: string, targetField: string) => {
+    setFieldMappings(fieldMappings.map(m =>
+      m.sourceField === sourceField ? { ...m, status: "manual" as const, targetField } : m
+    ));
+    toast.success(`Manual mapping set for ${sourceField}`);
   };
 
-  const handleRollback = (toStage: string) => {
-    toast.info(`Rolling back to ${toStage}...`);
+  const handleActivateData = () => {
+    toast.success("Data activation initiated! Washington County 2026 roll is now live.");
+    setPipelineStages(pipelineStages.map(s =>
+      s.id === "activate" ? { ...s, status: "completed" as const } : s
+    ));
   };
 
-  const handleAddData = (layer: "parcelFabric" | "countyRoll" | "salesStream") => {
-    toast.info(`Opening ${layer} upload wizard...`);
-  };
+  const approvedCount = fieldMappings.filter(m => m.status === "confirmed").length;
+  const totalMappings = fieldMappings.length;
+  const unlockedCapabilities = capabilities.length;
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">WA County Data Ingestion</h1>
-            <p className="text-muted-foreground mt-1">
-              Enhanced user-friendly data pipeline for Washington State counties
-            </p>
-          </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-            Benton County Demo
-          </Badge>
-        </div>
+    <div className="space-y-6">
+      {/* Hero Section */}
+      <div>
+        <h1 className="text-4xl font-bold text-text-primary mb-2">
+          Washington County Data Ingestion
+        </h1>
+        <p className="text-lg text-text-secondary">
+          2026 Assessment Roll · 27,753 parcels · AI-powered field mapping
+        </p>
+      </div>
 
-        {/* Main Content */}
-        <Tabs defaultValue="pipeline" className="space-y-6">
-          <TabsList className="bg-muted/50">
-            <TabsTrigger value="pipeline">Data Flow Pipeline</TabsTrigger>
-            <TabsTrigger value="mapping">AI Field Mapping</TabsTrigger>
-            <TabsTrigger value="capabilities">Capability Unlock</TabsTrigger>
-          <TabsTrigger value="parcels">Parcel Loader</TabsTrigger>
-          </TabsList>
+      {/* Stats Bento Grid */}
+      <BentoGrid>
+        <BentoCard
+          title="Data Quality"
+          icon={<CheckCircle2 className="w-5 h-5 text-chart-4" />}
+          span="1"
+        >
+          <div className="text-4xl font-bold text-chart-4">98.4%</div>
+          <div className="text-sm text-text-secondary mt-1">Pass rate</div>
+        </BentoCard>
 
-          <TabsContent value="pipeline" className="space-y-6">
-            <VisualDataFlowPipeline
-              stages={pipelineStages}
-              onRollback={handleRollback}
-              rollbackEnabled={true}
-            />
+        <BentoCard
+          title="Field Mappings"
+          icon={<Map className="w-5 h-5" />}
+          span="1"
+        >
+          <div className="text-4xl font-bold text-text-primary">{approvedCount}/{totalMappings}</div>
+          <div className="text-sm text-text-secondary mt-1">Approved mappings</div>
+        </BentoCard>
 
-            <Card className="bg-background/60 backdrop-blur-xl border-primary/20">
-              <CardHeader>
-                <CardTitle>About the Visual Pipeline</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  The <strong className="text-foreground">Visual Data Flow Pipeline</strong> provides
-                  real-time transparency into your data journey. Each stage shows:
+        <BentoCard
+          title="Capabilities"
+          icon={<Zap className="w-5 h-5 text-signal-primary" />}
+          span="1"
+        >
+          <div className="text-4xl font-bold text-signal-primary">{unlockedCapabilities}</div>
+          <div className="text-sm text-text-secondary mt-1">Features unlocked</div>
+        </BentoCard>
+
+        <BentoCard
+          title="Total Parcels"
+          icon={<Database className="w-5 h-5" />}
+          span="1"
+        >
+          <div className="text-4xl font-bold text-text-primary">27,753</div>
+          <div className="text-sm text-text-secondary mt-1">Ready to ingest</div>
+        </BentoCard>
+      </BentoGrid>
+
+      {/* Pipeline Visualization */}
+      <LiquidPanel intensity={2} className="p-6">
+        <h3 className="text-lg font-semibold text-text-primary mb-4">Data Flow Pipeline</h3>
+        <VisualDataFlowPipeline stages={pipelineStages} />
+      </LiquidPanel>
+
+      {/* Tabs for Different Stages */}
+      <Tabs defaultValue="mapping" className="space-y-6">
+        <TabsList className="bg-glass-1 border border-glass-border">
+          <TabsTrigger value="mapping">Field Mapping</TabsTrigger>
+          <TabsTrigger value="capabilities">Capabilities</TabsTrigger>
+          <TabsTrigger value="loader">Parcel Loader</TabsTrigger>
+        </TabsList>
+
+        {/* Field Mapping Tab */}
+        <TabsContent value="mapping" className="space-y-4">
+          <LiquidPanel intensity={1} className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-text-primary">AI Field Mapping Co-Pilot</h3>
+                <p className="text-sm text-text-secondary mt-1">
+                  Review and approve AI-suggested field mappings
                 </p>
-                <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>Live progress indicators with estimated time remaining</li>
-                  <li>Data quality scores that update as validation runs</li>
-                  <li>Rollback timeline showing "undo to any point in the last 30 days"</li>
-                  <li>Animated transitions showing data flowing through the system</li>
-                </ul>
-                <p className="text-xs italic">
-                  Philosophy: "Counties are customers, not data engineers"
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="mapping" className="space-y-6">
+              </div>
+              <Badge variant="outline" className="text-signal-primary border-signal-primary">
+                {approvedCount}/{totalMappings} Confirmed
+              </Badge>
+            </div>
             <AIFieldMappingCoPilot
               mappings={fieldMappings}
-              targetFields={targetFields}
+              targetFields={[
+                { value: "parcel_id", label: "Parcel ID" },
+                { value: "situs_address", label: "Situs Address" },
+                { value: "land_value", label: "Land Value" },
+                { value: "improvement_value", label: "Improvement Value" },
+                { value: "total_value", label: "Total Value" },
+              ]}
               onConfirm={handleConfirmMapping}
               onSkip={handleSkipMapping}
-              onManualMap={handleManualMap}
-              countyName="Benton County"
+              onManualMap={handleManualMapping}
+              countyName="Washington County"
             />
+          </LiquidPanel>
+        </TabsContent>
 
-            <Card className="bg-background/60 backdrop-blur-xl border-primary/20">
-              <CardHeader>
-                <CardTitle>About AI Co-Pilot Mapping</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  The <strong className="text-foreground">AI Co-Pilot</strong> makes field mapping
-                  conversational and intelligent:
-                </p>
-                <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>
-                    <strong className="text-foreground">Auto-confidence scoring:</strong> "98% confident
-                    this is Land Value" (green checkmark)
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Learn from corrections:</strong> When a county
-                    fixes a mapping, save it for all future uploads
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Cross-county learning:</strong> "King County calls
-                    this 'SITUS_ADDR', Benton calls it 'PROP_ADDR' - they're the same field"
-                  </li>
-                </ul>
-                <p className="text-xs italic">Result: Zero-touch automation for repeat uploads</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="capabilities" className="space-y-6">
+        {/* Capabilities Tab */}
+        <TabsContent value="capabilities" className="space-y-4">
+          <LiquidPanel intensity={1} className="p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-4">Capability Unlock Dashboard</h3>
             <CapabilityUnlockDashboard
               capabilities={capabilities}
               dataLayers={dataLayers}
-              onAddData={handleAddData}
             />
+          </LiquidPanel>
+        </TabsContent>
 
-            <Card className="bg-background/60 backdrop-blur-xl border-primary/20">
-              <CardHeader>
-                <CardTitle>About Capability Unlocks</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  The <strong className="text-foreground">Capability Unlock Dashboard</strong> turns data
-                  ingestion into a progress quest:
-                </p>
-                <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>
-                    <strong className="text-foreground">Achievement badges:</strong> "🏆 First Parcel Roll
-                    Attached", "⚡ Sales Stream Connected"
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Capability preview cards:</strong> Show what
-                    features unlock with each data layer (grayed out until active)
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Progress bar:</strong> "You're 60% to Full
-                    TerraFusion Power"
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Next steps CTA:</strong> "Add Sales Data to Unlock
-                    Ratio Studies" (with time estimate)
-                  </li>
-                </ul>
-                <p className="text-xs italic">
-                  Gamification creates dopamine-driven onboarding that counties actually enjoy
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {/* Parcel Loader Tab */}
+        <TabsContent value="loader" className="space-y-4">
+          <LiquidPanel intensity={1} className="p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-4">Parcel Data Loader</h3>
+            <WAParcelLoader />
+          </LiquidPanel>
+        </TabsContent>
+      </Tabs>
 
-          <TabsContent value="parcels" className="space-y-6">
-            <WAParcelLoader
-              onParcelsLoaded={(result) => {
-                toast.success(`Loaded ${result.parcelCount} parcels - ready to visualize on map`);
-              }}
-            />
-
-            <Card className="bg-background/60 backdrop-blur-xl border-primary/20">
-              <CardHeader>
-                <CardTitle>About WA Parcel Fabric Integration</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  The <strong className="text-foreground">WA Parcel Fabric Loader</strong> connects directly to the Washington State Geospatial Portal:
-                </p>
-                <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>
-                    <strong className="text-foreground">One-click loading:</strong> Select any WA county and load real parcel geometries instantly
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Live data:</strong> Always current with the latest statewide parcel fabric (updated September 2025)
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Complete attributes:</strong> Includes geometry, ownership, assessment values, and property characteristics
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Map-ready:</strong> GeoJSON format with bounds calculation for instant visualization
-                  </li>
-                </ul>
-                <p className="text-xs italic">
-                  Eliminates manual parcel data downloads and shapefile conversions
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DashboardLayout>
+      {/* Activation CTA */}
+      {approvedCount === totalMappings && (
+        <div className="flex items-center justify-center py-8">
+          <TactileButton
+            variant="neon"
+            size="lg"
+            commitment
+            onClick={handleActivateData}
+          >
+            <Zap className="w-5 h-5 mr-2" />
+            Activate Washington County 2026 Roll
+          </TactileButton>
+        </div>
+      )}
+    </div>
   );
 }
