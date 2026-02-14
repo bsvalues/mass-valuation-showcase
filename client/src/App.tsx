@@ -1,5 +1,6 @@
 import { GodModeTerminal } from "@/components/GodModeTerminal";
 import { CommandPalette } from "@/components/CommandPalette";
+import { ControlCenter } from "@/components/ControlCenter";
 import { Dock } from "@/components/Dock";
 import { Stage } from "@/components/Stage";
 import { SystemBar } from "@/components/SystemBar";
@@ -145,6 +146,7 @@ function App() {
                 </Stage>
                 <Dock />
                 <CommandPalette />
+                <ControlCenter />
                 </TooltipProvider>
               </GodModeProvider>
             </JobProvider>
