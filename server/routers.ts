@@ -21,6 +21,8 @@ import { resolutionTemplatesRouter } from "./resolutionTemplatesRouter";
 import { analyticsRouter } from "./analyticsRouter";
 import { templatesRouter } from "./templatesRouter";
 import { clusterStatsRouter } from "./clusterStatsRouter";
+import { propertyComparisonRouter } from "./propertyComparisonRouter";
+import { assessmentReviewRouter } from "./assessmentReviewRouter";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -47,6 +49,8 @@ export const appRouter = router({
   analytics: analyticsRouter,
   templates: templatesRouter,
   clusterStats: clusterStatsRouter,
+  propertyComparison: propertyComparisonRouter,
+  assessmentReview: assessmentReviewRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

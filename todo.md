@@ -3510,3 +3510,42 @@
 - [ ] Create legend showing cluster colors and value ranges
 - [ ] Add zoom controls and cluster selection
 - [ ] Test map visualization with all 5 clusters
+
+
+## 🎯 Dashboard Integration & Navigation
+
+### Task 1: tRPC Procedures for Real Data ✅
+- [x] Create propertyComparison tRPC router
+- [x] Add searchProperties procedure (search by parcel ID or address)
+- [x] Add getPropertyById procedure (fetch full property details)
+- [x] Add getPropertiesByIds procedure (fetch multiple properties)
+- [x] Create assessmentReview tRPC router
+- [x] Add getHighVarianceProperties procedure (>15% variance from cluster median)
+- [x] Calculate variance using sales.assessedToSaleRatio and neighborhoodStats.medianRatio
+- [x] Add pagination and filtering support (limit, offset, severity, status)
+- [x] Register both routers in main appRouter
+- [ ] Test procedures with real database
+
+### Task 2: Wire Dashboards to Real Data
+- [ ] Update PropertyComparison to use trpc.propertyComparison.searchProperties
+- [ ] Update PropertyComparison to use trpc.propertyComparison.getPropertyById
+- [ ] Update AssessmentReview to use trpc.assessmentReview.getHighVarianceProperties
+- [ ] Add loading states for data fetching
+- [ ] Test with actual sales data (27,753 records)
+
+### Task 3: Sidebar Navigation
+- [ ] Read DashboardLayout sidebar structure
+- [ ] Add "Analytics" section if not exists
+- [ ] Add "Property Comparison" menu item with icon
+- [ ] Add "Assessment Review" menu item with icon
+- [ ] Test navigation from all pages
+
+### Task 4: Bulk Actions & Audit Logging
+- [ ] Add checkbox column to Assessment Review table
+- [ ] Add "Select All" checkbox in table header
+- [ ] Create bulk action toolbar (approve/flag/reassign buttons)
+- [ ] Add assessmentReviewActions table schema for audit trail
+- [ ] Create tRPC procedure for bulk status updates
+- [ ] Log all bulk actions with user, timestamp, and reason
+- [ ] Add confirmation dialog for bulk actions
+- [ ] Test bulk operations with multiple properties
