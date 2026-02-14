@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
-import { Plus, X, Download } from "lucide-react";
+import { Plus, X, Download, Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 interface Property {
   id: string;
@@ -27,40 +28,29 @@ interface Property {
 export default function PropertyComparison() {
   const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Search properties using tRPC
+  const { data: searchResults, isLoading: isSearching } = trpc.propertyComparison.searchProperties.useQuery(
+    { query: searchQuery, limit: 10 },
+    { enabled: searchQuery.length > 2 }
+  );
 
-  // Mock property data - replace with actual tRPC query
-  const mockProperties: Property[] = [
-    {
-      id: "1",
-      parcelId: "12345",
-      address: "123 Main St",
-      sqft: 2400,
-      yearBuilt: 2005,
-      bedrooms: 4,
-      bathrooms: 2.5,
-      assessedValue: 485000,
-      salePrice: 495000,
-      pricePerSqft: 206,
-      quality: "Good",
-      condition: "Average",
-      clusterId: 2
-    },
-    {
-      id: "2",
-      parcelId: "67890",
-      address: "456 Oak Ave",
-      sqft: 1800,
-      yearBuilt: 1995,
-      bedrooms: 3,
-      bathrooms: 2,
-      assessedValue: 375000,
-      salePrice: 385000,
-      pricePerSqft: 214,
-      quality: "Average",
-      condition: "Good",
-      clusterId: 1
-    }
-  ];
+  // Use real search results or empty array
+  const availableProperties: Property[] = (searchResults || []).map(r => ({
+    id: r.id.toString(),
+    parcelId: r.parcelId,
+    address: r.address || "Unknown",
+    sqft: r.sqft || 0,
+    yearBuilt: r.yearBuilt || 0,
+    bedrooms: r.bedrooms || 0,
+    bathrooms: r.bathrooms || 0,
+    assessedValue: r.assessedValue || 0,
+    salePrice: r.salePrice || 0,
+    pricePerSqft: r.sqft ? Math.round(r.salePrice / r.sqft) : 0,
+    quality: "Average",
+    condition: "Good",
+    clusterId: 1
+  })) as Property[];
 
   const addProperty = (property: Property) => {
     if (selectedProperties.length < 4 && !selectedProperties.find(p => p.id === property.id)) {
@@ -141,7 +131,7 @@ export default function PropertyComparison() {
 
             {/* Quick add mock properties for demo */}
             <div className="flex gap-2">
-              {mockProperties.map(prop => (
+              {availableProperties.map((prop: Property) => (
                 <Button
                   key={prop.id}
                   variant="outline"

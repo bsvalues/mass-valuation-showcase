@@ -3549,3 +3549,40 @@
 - [ ] Log all bulk actions with user, timestamp, and reason
 - [ ] Add confirmation dialog for bulk actions
 - [ ] Test bulk operations with multiple properties
+
+
+## 🎯 Final Dashboard Integration
+
+### Phase 1: Wire PropertyComparison to tRPC ✅
+- [x] Replace mock property search with trpc.propertyComparison.searchProperties
+- [x] Add loading states for data fetching (isSearching)
+- [x] Map search results to Property interface
+- [ ] Replace mock property details with trpc.propertyComparison.getPropertiesByIds (future enhancement)
+- [ ] Handle empty states and errors (future enhancement)
+- [ ] Test property search and comparison with real data
+
+### Phase 2: Wire AssessmentReview to tRPC ✅
+- [x] Replace mock high-variance data with trpc.assessmentReview.getHighVarianceProperties
+- [x] Add pagination controls (limit: 100, offset: 0)
+- [x] Wire severity and status filters to tRPC query
+- [x] Add loading states for data fetching (isLoading with Loader2)
+- [x] Map tRPC response to HighVarianceProperty interface
+- [ ] Test variance detection with real sales data
+
+### Phase 3: Add Sidebar Navigation ✅
+- [x] Find DashboardLayout sidebar navigation section (ANALYSIS SUITE)
+- [x] Add "Property Comparison" link under Analytics section
+- [x] Add "Assessment Review" link under Analytics section
+- [x] Add appropriate icons for both links (GitCompare, AlertTriangle)
+- [x] Add route mappings to breadcrumb system
+- [ ] Test navigation from sidebar
+
+### Phase 4: Implement Bulk Actions
+- [ ] Add checkbox column to Assessment Review table
+- [ ] Add "Select All" checkbox in table header
+- [ ] Add bulk action buttons (Approve, Flag, Reassign)
+- [ ] Create tRPC mutation for bulk status updates
+- [ ] Add audit logging for bulk actions
+- [ ] Show confirmation dialog before bulk operations
+- [ ] Update table after successful bulk action
+- [ ] Test bulk operations with multiple properties

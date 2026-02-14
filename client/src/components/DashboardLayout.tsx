@@ -28,6 +28,8 @@ import {
   Sliders,
   Zap,
   Sun,
+  GitCompare,
+  AlertTriangle,
   Moon,
   Upload,
   Users,
@@ -109,6 +111,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         { icon: Sliders, label: "Calibration Studio", href: "/calibration" },
         { icon: TrendingUp, label: "Regression Studio", href: "/regression" },
         { icon: ShieldCheck, label: "QA / Ratio Studies", href: "/qa-ratio-studies" },
+        { icon: GitCompare, label: "Property Comparison", href: "/property-comparison" },
+        { icon: AlertTriangle, label: "Assessment Review", href: "/assessment-review" },
       ]
     },
     {
@@ -153,6 +157,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       '/calibration': { suite: 'Analysis Suite', page: 'Calibration Studio' },
       '/regression': { suite: 'Analysis Suite', page: 'Regression Studio' },
       '/qa-ratio-studies': { suite: 'Analysis Suite', page: 'QA / Ratio Studies' },
+      '/property-comparison': { suite: 'Analysis Suite', page: 'Property Comparison' },
+      '/assessment-review': { suite: 'Analysis Suite', page: 'Assessment Review' },
       '/defense': { suite: 'Governance Suite', page: 'Defense Studio' },
       '/governance': { suite: 'Governance Suite', page: 'Governance & Audit' },
       '/model-management': { suite: 'Platform', page: 'Model Management' },
