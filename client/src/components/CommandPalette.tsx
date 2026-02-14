@@ -216,15 +216,7 @@ export function CommandPalette() {
       },
       keywords: ['export', 'pdf', 'report', 'download'],
     },
-    {
-      id: 'action-upload-data',
-      label: 'Upload Data',
-      description: 'Import CSV or Excel file',
-      icon: FileUp,
-      category: 'action',
-      action: () => setLocation('/wa-data-ingestion'),
-      keywords: ['upload', 'import', 'csv'],
-    },
+    // Removed duplicate - use nav-data-ingestion instead
     {
       id: 'action-generate-defense',
       label: 'Generate Defense Document',
@@ -266,15 +258,7 @@ export function CommandPalette() {
     },
 
     // Data Commands
-    {
-      id: 'data-search-parcels',
-      label: 'Search Parcels',
-      description: 'Find properties by parcel ID or address',
-      icon: Search,
-      category: 'data',
-      action: () => setLocation('/map-explorer'),
-      keywords: ['search', 'find', 'parcel'],
-    },
+    // Removed duplicate - use nav-map instead
   ];
 
   const filteredRecentCommands = commands.filter(cmd => recentCommands.includes(cmd.id));

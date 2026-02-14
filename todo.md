@@ -3617,3 +3617,11 @@
 - [x] Position card relative to cursor with offset
 - [x] Add hover highlight effect to table rows
 - [x] Smooth transition on hover enter/leave
+
+
+## 🐛 Bug Fixes
+
+### React Duplicate Key Errors
+- [x] Fixed Breadcrumb component using duplicate href keys (changed to index-based keys)
+- [x] Removed duplicate command entries in CommandPalette (wa-data-ingestion and map-explorer)
+- [x] Verified no duplicate route definitions in App.tsx or DashboardLayout
