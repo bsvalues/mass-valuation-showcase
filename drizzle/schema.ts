@@ -646,3 +646,26 @@ export const neighborhoodStats = mysqlTable("neighborhoodStats", {
 
 export type NeighborhoodStat = typeof neighborhoodStats.$inferSelect;
 export type InsertNeighborhoodStat = typeof neighborhoodStats.$inferInsert;
+
+
+/**
+ * Assessment Audit Log table - tracks all status changes for high-variance properties
+ */
+export const assessmentAuditLog = mysqlTable("assessmentAuditLog", {
+  id: int("id").autoincrement().primaryKey(),
+  propertyId: int("propertyId").notNull(), // References sales.id
+  action: varchar("action", { length: 64 }).notNull(), // 'approve', 'flag', 'reassign', 'review'
+  oldStatus: mysqlEnum("oldStatus", ["pending", "approved", "flagged"]),
+  newStatus: mysqlEnum("newStatus", ["pending", "approved", "flagged"]).notNull(),
+  userId: int("userId"), // References users.id
+  userName: varchar("userName", { length: 255 }), // Denormalized for audit trail
+  notes: text("notes"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+}, (table) => ({
+  propertyIdIdx: index("audit_propertyid_idx").on(table.propertyId),
+  userIdIdx: index("audit_userid_idx").on(table.userId),
+  timestampIdx: index("audit_timestamp_idx").on(table.timestamp),
+}));
+
+export type AssessmentAuditLog = typeof assessmentAuditLog.$inferSelect;
+export type InsertAssessmentAuditLog = typeof assessmentAuditLog.$inferInsert;

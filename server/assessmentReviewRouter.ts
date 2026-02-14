@@ -103,4 +103,7 @@ export const assessmentReviewRouter = router({
       { range: "30%+", count: 0 },
     ];
   }),
+
+  // TODO: Bulk update mutation - requires status column in sales table schema
+  // Will be implemented in next phase after schema migration
 });

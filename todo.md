@@ -3586,3 +3586,33 @@
 - [ ] Show confirmation dialog before bulk operations
 - [ ] Update table after successful bulk action
 - [ ] Test bulk operations with multiple properties
+
+
+## 🎯 Final Polish Features
+
+### Feature 1: Bulk Actions with Audit Logging
+- [x] Create assessmentAuditLog table schema (logId, propertyId, action, oldStatus, newStatus, userId, timestamp, notes)
+- [ ] Add status column to sales table schema (pending/approved/flagged)
+- [ ] Add bulkUpdateStatus tRPC mutation in assessmentReviewRouter
+- [ ] Add checkbox column to Assessment Review table
+- [ ] Add "Select All" checkbox in table header
+- [ ] Add bulk action buttons (Approve Selected, Flag Selected, Reassign Selected)
+- [ ] Implement audit logging for all status changes
+- [ ] Add success/error toast notifications
+- [ ] Test bulk operations with 5-10 properties
+
+### Feature 2: Empty State Handling
+- [ ] Add empty state component to PropertyComparison when no properties selected
+- [ ] Add empty state to AssessmentReview when no high-variance properties found
+- [ ] Include helpful suggestions (adjust filters, check variance thresholds)
+- [ ] Add visual illustrations or icons
+- [ ] Test with various filter combinations
+
+### Feature 3: Property Detail Quick View
+- [ ] Create PropertyPreviewCard component
+- [ ] Add hover state detection to Assessment Review table rows
+- [ ] Fetch property details on hover (with debounce)
+- [ ] Display preview card with photo, key metrics (sqft, beds, baths, year)
+- [ ] Position card relative to cursor/row
+- [ ] Add loading skeleton for preview card
+- [ ] Test hover interaction and performance
