@@ -6,7 +6,8 @@ import { Stage } from "@/components/Stage";
 import { SystemBar } from "@/components/SystemBar";
 import { IgnitionSequence } from "@/components/IgnitionSequence";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { GodModeProvider } from "@/contexts/GodModeContext";
 import { GlobalSimulationProvider } from "@/contexts/GlobalSimulationContext";
 import { Toaster } from "@/components/ui/sonner";
@@ -117,6 +118,37 @@ function Router() {
 
 function App() {
   const [ignited, setIgnited] = useState(true); // Skip ignition for now
+  const [, setLocation] = useLocation();
+
+  // Keyboard shortcuts for Dock suite navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // ⌘+1/2/3/4 for Dock suite switching
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+        switch (e.key) {
+          case '1':
+            e.preventDefault();
+            setLocation('/wa-data-ingestion'); // Data Suite
+            break;
+          case '2':
+            e.preventDefault();
+            setLocation('/property-comparison'); // Analysis Suite
+            break;
+          case '3':
+            e.preventDefault();
+            setLocation('/avm-studio'); // Valuation Suite
+            break;
+          case '4':
+            e.preventDefault();
+            setLocation('/appeals'); // Compliance Suite
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setLocation]);
 
   // Ignition sequence temporarily disabled for development
   // if (!ignited) {

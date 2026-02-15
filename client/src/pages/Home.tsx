@@ -1,6 +1,7 @@
 // Layout provided by App.tsx (SystemBar, Stage, Dock)
 import { BentoCard, BentoGrid } from "@/components/terra/BentoCard";
 import { TactileButton } from "@/components/terra/TactileButton";
+import { NeonBadge, NeonDot } from "@/components/terra/NeonSignal";
 import { 
   Database, 
   TrendingUp, 
@@ -63,7 +64,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-text-secondary">Last Sync</span>
               <span className="text-sm text-text-primary flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-chart-4" />
+                <NeonDot type="success" />
                 2 hours ago
               </span>
             </div>
@@ -96,7 +97,7 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-text-secondary" />
               <span className="text-sm text-text-secondary">Status:</span>
-              <span className="text-sm text-chart-4 font-medium">Ready</span>
+              <NeonBadge type="success">Ready</NeonBadge>
             </div>
             
             <div className="text-xs text-text-tertiary">
@@ -136,7 +137,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-signal-alert/10 border border-signal-alert/30">
+            <div className="p-3 rounded-lg bg-signal-alert/10 border border-signal-alert/30 flex items-start gap-2">
+              <NeonDot type="warning" animated />
               <p className="text-sm text-text-primary">
                 <strong>Action Required:</strong> Review properties with ratio variance &gt;15% before certification deadline (Feb 28).
               </p>

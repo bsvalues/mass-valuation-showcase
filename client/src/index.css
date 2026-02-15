@@ -614,4 +614,32 @@
   .scale-96 {
     transform: scale(0.96);
   }
+  
+  /* Mobile-Optimized Glass Materials */
+  @media (max-width: 768px) {
+    /* Reduce blur and simplify shadows for mobile performance */
+    .bg-glass-1 {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    
+    .bg-glass-2 {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .bg-glass-3 {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    
+    /* Simplify neon shadows on mobile */
+    .shadow-neon {
+      box-shadow: 0 0 10px rgba(0, 255, 238, 0.2);
+    }
+    
+    .shadow-neon-strong {
+      box-shadow: 0 0 15px rgba(0, 255, 238, 0.3);
+    }
+  }
 }
