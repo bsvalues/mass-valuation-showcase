@@ -3742,3 +3742,30 @@
 - [x] Optimize glass materials for mobile (reduce blur, simplify shadows)
 - [x] Mobile-optimized backdrop-filter and neon shadows
 - [x] Responsive card spans (col-span-1 → md:col-span-2 → lg:col-span-3)
+
+
+## 🎯 TerraFusion OS Final Touches
+
+### Keyboard Shortcut Hints
+- [x] Create KeyboardShortcutsOverlay component
+- [x] Add floating "?" button (bottom-right, glass material)
+- [x] Display all global shortcuts (⌘+K, ⌘+1-4)
+- [x] Display context-specific shortcuts (Assessment Review: A/F/Esc)
+- [x] Add elegant fade-in animation
+- [x] Add keyboard listener for ? key toggle
+- [x] Integrate into App.tsx
+
+### Scene Transitions
+- [x] Add fade transition to Stage component
+- [x] Implement slide animation for page changes (translateY)
+- [x] Add route change detection (useLocation hook)
+- [x] Ensure smooth 300ms transitions
+- [x] Two-phase transition (fade out → update content → fade in)
+
+### System Health Monitor
+- [x] Create SystemHealthMonitor component
+- [x] Add database connection status indicator
+- [x] Add background jobs queue status
+- [x] Add model calibration status
+- [x] Integrate into SystemBar
+- [x] Add neon pulse alerts for issues

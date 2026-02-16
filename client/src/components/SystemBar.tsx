@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/_core/hooks/useAuth';
-import { Bell, Settings, ChevronDown, LogOut, User, Zap, Wifi, Database } from 'lucide-react';
+import { Bell, Settings, ChevronDown, LogOut, User, Zap, Database, Wifi } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
+import { SystemHealthMonitor } from './SystemHealthMonitor';
 
 export function SystemBar() {
   const { user, logout } = useAuth();
@@ -42,18 +43,8 @@ export function SystemBar() {
 
       {/* Right: System Controls */}
       <div className="flex items-center gap-4">
-        {/* System Health Indicator */}
-        <button
-          onClick={() => setShowControlCenter(!showControlCenter)}
-          className="relative flex items-center gap-2 px-3 py-1.5 rounded-lg
-                     hover:bg-[var(--color-glass-2)] transition-colors duration-[var(--duration-fast)]"
-          title="System Health"
-        >
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[var(--color-signal-success)] shadow-[0_0_6px_rgba(0,255,136,0.6)]" />
-            <Wifi className="w-4 h-4 text-[var(--color-text-secondary)]" />
-          </div>
-        </button>
+        {/* System Health Monitor */}
+        <SystemHealthMonitor />
 
         {/* Notifications */}
         <button
