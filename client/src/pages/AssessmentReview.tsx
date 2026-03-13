@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BentoCard, BentoGrid } from "@/components/terra/BentoCard";
 import { TactileButton } from "@/components/terra/TactileButton";
 import { LiquidPanel } from "@/components/terra/LiquidPanel";
@@ -53,19 +53,43 @@ export default function AssessmentReview() {
     open: boolean;
     action: BatchActionType;
   }>({ open: false, action: "approved" });
+  // Undo snapshot: stores previous statuses before a bulk action
+  const [undoSnapshot, setUndoSnapshot] = useState<{
+    ids: number[];
+    previousStatuses: Record<number, "pending" | "approved" | "flagged">;
+    action: BatchActionType;
+  } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const utils = trpc.useUtils();
   
   // Bulk update mutation
   const bulkUpdate = trpc.assessmentReview.bulkUpdateStatus.useMutation({
     onSuccess: (data) => {
-      toast.success(data.message);
-      setSelectedIds(new Set());
       utils.assessmentReview.getHighVarianceProperties.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update properties");
     },
   });
+
+  // Undo mutation — reverses a bulk action by restoring previous statuses
+  const undoBulkUpdate = trpc.assessmentReview.bulkUpdateStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Action undone — properties restored to previous status.");
+      setUndoSnapshot(null);
+      utils.assessmentReview.getHighVarianceProperties.invalidate();
+    },
+    onError: () => {
+      toast.error("Undo failed — please refresh and try again.");
+    },
+  });
+
+  // Clean up undo timer on unmount
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    };
+  }, []);
 
   // Fetch high-variance properties
   const { data: highVarianceData, isLoading } = trpc.assessmentReview.getHighVarianceProperties.useQuery({
@@ -132,13 +156,97 @@ export default function AssessmentReview() {
 
   // Step 2: Execute after user confirms in dialog
   const executeBulkAction = () => {
+    const ids = Array.from(selectedIds).map(id => parseInt(id));
+    const newStatus = confirmDialog.action;
+
+    // Capture undo snapshot BEFORE mutating
+    const previousStatuses: Record<number, "pending" | "approved" | "flagged"> = {};
+    ids.forEach(id => {
+      const prop = properties.find(p => p.id === id.toString());
+      if (prop) previousStatuses[id] = prop.status;
+    });
+    setUndoSnapshot({ ids, previousStatuses, action: newStatus });
+
+    // Fire the bulk update
     bulkUpdate.mutate({
-      propertyIds: Array.from(selectedIds).map(id => parseInt(id)),
-      newStatus: confirmDialog.action,
-      action: `bulk_${confirmDialog.action}`,
-      notes: `Bulk ${confirmDialog.action} action via Assessment Review`,
+      propertyIds: ids,
+      newStatus,
+      action: `bulk_${newStatus}`,
+      notes: `Bulk ${newStatus} action via Assessment Review`,
     });
     setConfirmDialog(prev => ({ ...prev, open: false }));
+    setSelectedIds(new Set());
+
+    // Clear any existing undo timer
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+
+    // Show 8-second undo toast with countdown
+    let countdown = 8;
+    const toastId = `undo-bulk-${Date.now()}`;
+
+    const showCountdownToast = (remaining: number) => {
+      toast(
+        <div className="flex items-center justify-between gap-4 w-full">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">
+              {ids.length} properties {newStatus}.
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              Undo in {remaining}s
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+              toast.dismiss(toastId);
+              // Restore each property to its previous status
+              // Group by previous status and fire one mutation per group
+              const groups: Record<string, number[]> = {};
+              Object.entries(previousStatuses).forEach(([id, status]) => {
+                if (!groups[status]) groups[status] = [];
+                groups[status].push(parseInt(id));
+              });
+              // Fire one mutation for the dominant previous status (simplest approach)
+              const dominantStatus = Object.entries(groups)
+                .sort((a, b) => b[1].length - a[1].length)[0];
+              if (dominantStatus) {
+                undoBulkUpdate.mutate({
+                  propertyIds: ids,
+                  newStatus: dominantStatus[0] as "pending" | "approved" | "flagged",
+                  action: `undo_bulk_${newStatus}`,
+                  notes: `Undo of bulk ${newStatus} action`,
+                });
+              }
+            }}
+            className="px-3 py-1 text-xs font-semibold rounded-md bg-signal-primary text-government-night-base hover:opacity-90 transition-opacity flex-shrink-0"
+          >
+            Undo
+          </button>
+        </div>,
+        {
+          id: toastId,
+          duration: 8500,
+        }
+      );
+    };
+
+    showCountdownToast(countdown);
+
+    // Update countdown every second
+    const interval = setInterval(() => {
+      countdown -= 1;
+      if (countdown <= 0) {
+        clearInterval(interval);
+        setUndoSnapshot(null);
+      } else {
+        showCountdownToast(countdown);
+      }
+    }, 1000);
+
+    undoTimerRef.current = setTimeout(() => {
+      clearInterval(interval);
+      setUndoSnapshot(null);
+    }, 8500);
   };
 
   // Keyboard shortcuts

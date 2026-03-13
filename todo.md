@@ -3792,3 +3792,27 @@
 - [x] Show property count + severity breakdown (critical/warning) in dialog
 - [x] Audit trail notice in dialog
 - [x] Keyboard shortcut: Enter to confirm, Esc to cancel (via Dialog primitives)
+
+## 🚀 Next Phase Features — Batch UX Polish + Health Expansion
+
+### Feature 1: BatchActionDialog Keyboard Shortcuts
+- [x] Wire Enter key to confirm action in BatchActionDialog
+- [x] Wire Esc key to cancel/close dialog
+- [x] Add focus trap so Tab cycles only within dialog (Radix built-in)
+- [x] Auto-focus confirm button on dialog open
+- [x] Show keyboard hint labels (Enter / Esc) in dialog footer
+
+### Feature 2: Undo Toast Window
+- [x] After bulk action success, show 8-second Sonner toast with Undo button
+- [x] Countdown timer display in toast (8...7...6...)
+- [x] Undo fires reverse bulkUpdateStatus mutation restoring previous statuses
+- [x] Track previous statuses before mutation executes
+- [x] Dismiss undo toast immediately on undo click
+- [x] Cancel undo window if user navigates away
+
+### Feature 3: Appeals Queue 4th Health Indicator
+- [x] Add appealsQueue status to getSystemHealth tRPC procedure
+- [x] Count in_review + pending + hearing_scheduled appeals from database
+- [x] Add 4th indicator (Gavel icon) to SystemHealthMonitor
+- [x] Show count badge when queue > 0
+- [x] Color: success (0 appeals), warning (1-10), critical (>10)

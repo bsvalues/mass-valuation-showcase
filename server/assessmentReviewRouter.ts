@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { sales, neighborhoodStats, backgroundJobs, batchValuationJobs } from "../drizzle/schema";
+import { sales, neighborhoodStats, backgroundJobs, batchValuationJobs, appeals } from "../drizzle/schema";
 import { sql, eq, and, gte, or, desc } from "drizzle-orm";
 import { isModelTrained, getModelMetrics } from "./mlModel";
 
@@ -329,10 +329,45 @@ export const assessmentReviewRouter = router({
       modelDetail = "Status unavailable";
     }
 
+    // 4. Appeals queue: count in_review + pending appeals
+    let appealsStatus: "success" | "warning" | "critical" = "success";
+    let appealsDetail = "No pending appeals";
+    let appealsCount = 0;
+    try {
+      const db = await getDb();
+      if (db) {
+        const activeAppeals = await db
+          .select({ id: appeals.id })
+          .from(appeals)
+          .where(
+            or(
+              eq(appeals.status, "in_review"),
+              eq(appeals.status, "pending"),
+              eq(appeals.status, "hearing_scheduled")
+            )
+          );
+        appealsCount = activeAppeals.length;
+        if (appealsCount === 0) {
+          appealsStatus = "success";
+          appealsDetail = "Queue clear";
+        } else if (appealsCount <= 10) {
+          appealsStatus = "warning";
+          appealsDetail = `${appealsCount} appeal${appealsCount > 1 ? "s" : ""} pending`;
+        } else {
+          appealsStatus = "critical";
+          appealsDetail = `${appealsCount} appeals require attention`;
+        }
+      }
+    } catch {
+      appealsStatus = "warning";
+      appealsDetail = "Queue check failed";
+    }
+
     return {
       database: { status: databaseStatus, detail: databaseDetail },
       jobs: { status: jobsStatus, detail: jobsDetail, activeCount: activeJobCount },
       model: { status: modelStatus, detail: modelDetail },
+      appeals: { status: appealsStatus, detail: appealsDetail, count: appealsCount },
       checkedAt: new Date().toISOString(),
     };
   }),

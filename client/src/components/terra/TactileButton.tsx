@@ -32,7 +32,7 @@ interface TactileButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  * - Uses "stiff + bouncy" spring physics for psychological confirmation
  * - Respects prefers-reduced-motion user preference
  */
-export function TactileButton({
+export const TactileButton = React.forwardRef<HTMLButtonElement, TactileButtonProps>(function TactileButton({
   variant = "neon",
   size = "md",
   commitment = false,
@@ -40,7 +40,7 @@ export function TactileButton({
   children,
   disabled,
   ...props
-}: TactileButtonProps) {
+}, ref) {
   const [isPressed, setIsPressed] = React.useState(false);
   const [reduceMotion, setReduceMotion] = React.useState(false);
 
@@ -100,9 +100,10 @@ export function TactileButton({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
       disabled={disabled}
+      ref={ref}
       {...props}
     >
       {children}
     </button>
   );
-}
+});

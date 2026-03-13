@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Database, Zap, Activity } from "lucide-react";
+import { Database, Zap, Activity, Gavel } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NeonDot } from "./terra/NeonSignal";
 import { trpc } from "@/lib/trpc";
@@ -8,86 +8,101 @@ import { trpc } from "@/lib/trpc";
  * SystemHealthMonitor — TerraFusion OS SystemBar primitive
  *
  * LIVE polling via tRPC getSystemHealth every 30s.
- * Shows real DB connection, background job queue, and ML model status.
+ * Shows 4 real-time health indicators:
  *
- * States per indicator:
- *   Database:  healthy | degraded | down
- *   Jobs:      idle | processing | error
- *   Model:     ready | calibrating | stale
+ *   1. Database  — DB connection status (healthy / degraded / down)
+ *   2. Jobs      — Background job queue (idle / processing / error)
+ *   3. Model     — ML valuation model (ready / calibrating / stale)
+ *   4. Appeals   — Appeals queue depth (0 = green, 1-10 = amber, >10 = red)
  *
  * NeonDot colors:
- *   success  → green  (healthy / idle / ready)
- *   warning  → amber  (degraded / processing / calibrating)
- *   critical → red    (down / error / stale)
+ *   success  → green  (healthy / idle / ready / 0 appeals)
+ *   warning  → amber  (degraded / processing / calibrating / 1-10 appeals)
+ *   critical → red    (down / error / stale / >10 appeals)
  */
 
-type DatabaseStatus = "healthy" | "degraded" | "down";
-type JobsStatus = "idle" | "processing" | "error";
-type ModelStatus = "ready" | "calibrating" | "stale";
+type NeonColor = "success" | "warning" | "critical";
 
-function getDbColor(s: DatabaseStatus): "success" | "warning" | "critical" {
+function getDbColor(s: "healthy" | "degraded" | "down"): NeonColor {
   if (s === "healthy") return "success";
   if (s === "degraded") return "warning";
   return "critical";
 }
 
-function getJobColor(s: JobsStatus): "success" | "warning" | "critical" {
+function getJobColor(s: "idle" | "processing" | "error"): NeonColor {
   if (s === "idle") return "success";
   if (s === "processing") return "warning";
   return "critical";
 }
 
-function getModelColor(s: ModelStatus): "success" | "warning" | "critical" {
+function getModelColor(s: "ready" | "calibrating" | "stale"): NeonColor {
   if (s === "ready") return "success";
   if (s === "calibrating") return "warning";
   return "critical";
 }
 
 export function SystemHealthMonitor() {
-  // Poll the live health endpoint every 30 seconds
   const { data, isError } = trpc.assessmentReview.getSystemHealth.useQuery(undefined, {
-    refetchInterval: 30_000,        // live poll every 30s
-    staleTime: 25_000,              // consider stale after 25s
+    refetchInterval: 30_000,
+    staleTime: 25_000,
     retry: 2,
     refetchOnWindowFocus: true,
   });
 
-  // Fallback while loading or on error — show degraded
-  const dbStatus: DatabaseStatus = isError ? "down" : (data?.database.status ?? "degraded");
-  const jobStatus: JobsStatus = isError ? "error" : (data?.jobs.status ?? "idle");
-  const modelStatus: ModelStatus = isError ? "stale" : (data?.model.status ?? "stale");
+  // Fallback states while loading or on error
+  const dbStatus = isError ? "down" : (data?.database.status ?? "degraded");
+  const jobStatus = isError ? "error" : (data?.jobs.status ?? "idle");
+  const modelStatus = isError ? "stale" : (data?.model.status ?? "stale");
+  const appealsStatus: NeonColor = isError ? "warning" : (data?.appeals.status ?? "success");
 
   const dbDetail = data?.database.detail ?? (isError ? "Connection error" : "Checking...");
   const jobDetail = data?.jobs.detail ?? (isError ? "Queue error" : "Checking...");
   const modelDetail = data?.model.detail ?? (isError ? "Status unavailable" : "Checking...");
+  const appealsDetail = data?.appeals.detail ?? (isError ? "Queue unavailable" : "Checking...");
   const activeJobCount = data?.jobs.activeCount ?? 0;
+  const appealsCount = data?.appeals.count ?? 0;
 
-  const indicators = [
+  const indicators: Array<{
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    color: NeonColor;
+    tooltip: string;
+    animated: boolean;
+    badge?: number;
+  }> = [
     {
       icon: Database,
       label: "DB",
-      color: getDbColor(dbStatus),
+      color: getDbColor(dbStatus as "healthy" | "degraded" | "down"),
       tooltip: `Database: ${dbStatus} — ${dbDetail}`,
       animated: dbStatus !== "healthy",
     },
     {
       icon: Activity,
       label: activeJobCount > 0 ? `${activeJobCount}J` : "Jobs",
-      color: getJobColor(jobStatus),
+      color: getJobColor(jobStatus as "idle" | "processing" | "error"),
       tooltip: `Background Jobs: ${jobStatus} — ${jobDetail}`,
       animated: jobStatus !== "idle",
     },
     {
       icon: Zap,
       label: "Model",
-      color: getModelColor(modelStatus),
+      color: getModelColor(modelStatus as "ready" | "calibrating" | "stale"),
       tooltip: `Valuation Model: ${modelStatus} — ${modelDetail}`,
       animated: modelStatus !== "ready",
+    },
+    {
+      icon: Gavel,
+      label: appealsCount > 0 ? `${appealsCount}A` : "Appeals",
+      color: appealsStatus,
+      tooltip: `Appeals Queue: ${appealsDetail}`,
+      animated: appealsStatus !== "success",
+      badge: appealsCount > 0 ? appealsCount : undefined,
     },
   ];
 
   return (
-    <div className="flex items-center gap-2" role="status" aria-label="System health indicators">
+    <div className="flex items-center gap-1.5" role="status" aria-label="System health indicators">
       {indicators.map((indicator, idx) => {
         const Icon = indicator.icon;
 
@@ -95,14 +110,12 @@ export function SystemHealthMonitor() {
           <div
             key={idx}
             className={cn(
-              "flex items-center gap-1.5 px-2 py-1 rounded-lg",
+              "relative flex items-center gap-1.5 px-2 py-1 rounded-lg",
               "bg-glass-1 border border-glass-border",
               "transition-all duration-300",
               "hover:bg-glass-2 hover:scale-105",
               "cursor-help select-none",
-              // Subtle amber glow for warning states
               indicator.color === "warning" && "border-amber-500/30",
-              // Red glow for critical states
               indicator.color === "critical" && "border-red-500/40 shadow-[0_0_8px_rgba(255,0,0,0.2)]"
             )}
             title={indicator.tooltip}
@@ -120,6 +133,22 @@ export function SystemHealthMonitor() {
               type={indicator.color}
               animated={indicator.animated}
             />
+            {/* Count badge for appeals — shown when queue > 0 */}
+            {indicator.badge !== undefined && indicator.badge > 0 && (
+              <span
+                className={cn(
+                  "absolute -top-1.5 -right-1.5",
+                  "min-w-[16px] h-4 px-0.5",
+                  "flex items-center justify-center",
+                  "text-[9px] font-bold rounded-full",
+                  indicator.color === "warning" && "bg-amber-500 text-black",
+                  indicator.color === "critical" && "bg-red-500 text-white",
+                )}
+                aria-label={`${indicator.badge} appeals in queue`}
+              >
+                {indicator.badge > 99 ? "99+" : indicator.badge}
+              </span>
+            )}
           </div>
         );
       })}

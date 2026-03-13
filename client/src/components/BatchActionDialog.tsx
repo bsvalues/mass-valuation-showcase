@@ -15,13 +15,13 @@ import { cn } from "@/lib/utils";
 /**
  * BatchActionDialog — TerraFusion OS Commitment Confirmation Primitive
  *
- * Shown before any bulk approve / flag / reset operation.
- * Displays:
- *   - Action type with icon + color coding
- *   - Count summary ("You are about to approve 47 properties")
- *   - Severity breakdown (critical / warning counts)
- *   - Confirm / Cancel buttons
- *   - Post-action: 8-second undo toast window (via onUndo callback)
+ * Keyboard shortcuts:
+ *   Enter → confirm action (when dialog is open and not pending)
+ *   Esc   → cancel / close (handled natively by Radix Dialog)
+ *
+ * Focus management:
+ *   - Confirm button receives focus on dialog open (autoFocus)
+ *   - Tab cycles within dialog (Radix focus trap built-in)
  *
  * States:
  *   idle     → dialog open, confirm/cancel available
@@ -107,10 +107,39 @@ export function BatchActionDialog({
 }: BatchActionDialogProps) {
   const config = actionConfig[action];
   const Icon = config.icon;
+  const confirmRef = React.useRef<HTMLButtonElement>(null);
 
-  const handleConfirm = () => {
-    onConfirm();
-  };
+  // ── Keyboard shortcut: Enter = confirm ──────────────────────────────────────
+  // Esc is handled natively by Radix Dialog (onOpenChange(false))
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if modifier keys are held (avoid conflicts with OS shortcuts)
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "Enter" && !isPending) {
+        // Prevent form submission or other default Enter behaviors
+        e.preventDefault();
+        e.stopPropagation();
+        onConfirm();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
+  }, [open, isPending, onConfirm]);
+
+  // ── Auto-focus confirm button when dialog opens ──────────────────────────────
+  React.useEffect(() => {
+    if (open) {
+      // Small delay to let Radix finish its open animation before stealing focus
+      const timer = setTimeout(() => {
+        confirmRef.current?.focus();
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,6 +149,9 @@ export function BatchActionDialog({
           config.borderColor
         )}
         aria-describedby="batch-action-description"
+        // Prevent Radix from auto-focusing the first focusable element
+        // so our useEffect can focus the confirm button instead
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <div
@@ -179,13 +211,14 @@ export function BatchActionDialog({
           <div className="flex items-start gap-2 p-2.5 rounded-lg bg-glass-1 border border-glass-border">
             <RotateCcw className="w-3.5 h-3.5 text-text-secondary mt-0.5 flex-shrink-0" />
             <p className="text-xs text-text-secondary leading-relaxed">
-              This action will be recorded in the Assessment Audit Log. Status changes can be
-              reversed individually from the audit log.
+              This action will be recorded in the Assessment Audit Log. An 8-second undo
+              window will appear after confirmation.
             </p>
           </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-2">
+          {/* Cancel button — Esc also closes via Radix */}
           <TactileButton
             variant="glass"
             onClick={onCancel}
@@ -193,12 +226,18 @@ export function BatchActionDialog({
             className="flex-1"
             aria-label="Cancel bulk action"
           >
-            Cancel
+            <span>Cancel</span>
+            <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-glass-2 rounded font-mono opacity-60">
+              Esc
+            </kbd>
           </TactileButton>
+
+          {/* Confirm button — Enter also triggers via keydown listener */}
           <TactileButton
+            ref={confirmRef}
             variant={config.confirmVariant}
             commitment
-            onClick={handleConfirm}
+            onClick={onConfirm}
             disabled={isPending}
             className="flex-1"
             aria-label={`Confirm bulk ${config.verb} of ${selectedCount} properties`}
@@ -212,6 +251,9 @@ export function BatchActionDialog({
               <>
                 <Icon className="w-4 h-4 mr-2" />
                 {config.label} {selectedCount.toLocaleString()}
+                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-black/20 rounded font-mono opacity-70">
+                  ↵
+                </kbd>
               </>
             )}
           </TactileButton>

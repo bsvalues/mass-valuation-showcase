@@ -1,5 +1,8 @@
-// @ts-ignore - pdf-parse has complex module exports
-import pdfParse from 'pdf-parse';
+// pdf-parse is a CommonJS module — use createRequire to avoid ESM default export error
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string }>;
 
 export async function parsePDF(fileUrl: string): Promise<any[]> {
   const response = await fetch(fileUrl);
