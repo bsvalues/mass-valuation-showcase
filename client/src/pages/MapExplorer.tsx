@@ -21,6 +21,7 @@ import { KineticText } from "@/components/KineticText";
 import { SearchAutocomplete, type SearchSuggestion } from "@/components/ui/SearchAutocomplete";
 import { ClusterTooltip } from "@/components/ClusterTooltip";
 import { BatchPDFExportDialog } from "@/components/BatchPDFExportDialog";
+import { toast } from "sonner";
 
 // Property Image Preview Component
 function PropertyImagePreview({ 
@@ -131,6 +132,9 @@ export default function MapExplorer() {
     propertyIds: number[];
   } | null>(null);
   const [batchExportDialogOpen, setBatchExportDialogOpen] = useState(false);
+  const [polygonDrawingMode, setPolygonDrawingMode] = useState(false);
+  const polygonPoints = useRef<[number, number][]>([]);
+  const polygonMarkers = useRef<maplibregl.Marker[]>([]);
 
   // Fetch property data
   const { data: allProperties, isLoading } = trpc.parcels.list.useQuery();
@@ -1042,23 +1046,48 @@ export default function MapExplorer() {
     }
   }, [layers]);
 
-  // Handle layer visibility changes
+  // Handle layer visibility changes — uses MapLibre setLayoutProperty for instant toggle
   const handleLayerToggle = (layerId: string, visible: boolean) => {
-    setLayers(layers.map(layer => 
+    setLayers(layers.map(layer =>
       layer.id === layerId ? { ...layer, visible } : layer
     ));
-    
-    // TODO: Implement actual map layer visibility control
-    // For now, just update state
+
+    if (map.current) {
+      const renderLayerId = `layer-render-${layerId}`;
+      const outlineLayerId = `${renderLayerId}-outline`;
+      const visibility = visible ? 'visible' : 'none';
+      // Toggle visibility without removing/re-adding the layer (instant, no re-fetch)
+      if (map.current.getLayer(renderLayerId)) {
+        map.current.setLayoutProperty(renderLayerId, 'visibility', visibility);
+      }
+      if (map.current.getLayer(outlineLayerId)) {
+        map.current.setLayoutProperty(outlineLayerId, 'visibility', visibility);
+      }
+    }
   };
 
-  // Handle layer opacity changes
+  // Handle layer opacity changes — uses MapLibre setPaintProperty for live updates
   const handleLayerOpacityChange = (layerId: string, opacity: number) => {
-    setLayers(layers.map(layer => 
+    setLayers(layers.map(layer =>
       layer.id === layerId ? { ...layer, opacity } : layer
     ));
-    
-    // TODO: Implement actual map layer opacity control
+
+    if (map.current) {
+      const renderLayerId = `layer-render-${layerId}`;
+      const outlineLayerId = `${renderLayerId}-outline`;
+      const normalizedOpacity = opacity / 100;
+      if (map.current.getLayer(renderLayerId)) {
+        const layerType = map.current.getLayer(renderLayerId)?.type;
+        if (layerType === 'fill') {
+          map.current.setPaintProperty(renderLayerId, 'fill-opacity', normalizedOpacity);
+        } else if (layerType === 'line') {
+          map.current.setPaintProperty(renderLayerId, 'line-opacity', normalizedOpacity);
+        }
+      }
+      if (map.current.getLayer(outlineLayerId)) {
+        map.current.setPaintProperty(outlineLayerId, 'line-opacity', normalizedOpacity);
+      }
+    }
   };
 
   // GIS tool handlers
@@ -1072,16 +1101,112 @@ export default function MapExplorer() {
   };
 
   const handleDrawPolygon = () => {
-    console.log("Activating polygon drawing tool");
-    // TODO: Implement polygon drawing
+    if (!map.current) return;
+
+    if (polygonDrawingMode) {
+      // Finish drawing — close polygon if >= 3 points
+      if (polygonPoints.current.length >= 3) {
+        const coords = [...polygonPoints.current, polygonPoints.current[0]]; // close ring
+        if (map.current.getLayer('drawn-polygon')) map.current.removeLayer('drawn-polygon');
+        if (map.current.getLayer('drawn-polygon-outline')) map.current.removeLayer('drawn-polygon-outline');
+        if (map.current.getSource('drawn-polygon')) map.current.removeSource('drawn-polygon');
+
+        map.current.addSource('drawn-polygon', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: { type: 'Polygon', coordinates: [coords] },
+            properties: {}
+          }
+        });
+        map.current.addLayer({
+          id: 'drawn-polygon',
+          type: 'fill',
+          source: 'drawn-polygon',
+          paint: { 'fill-color': '#00FFEE', 'fill-opacity': 0.15 }
+        });
+        map.current.addLayer({
+          id: 'drawn-polygon-outline',
+          type: 'line',
+          source: 'drawn-polygon',
+          paint: { 'line-color': '#00FFEE', 'line-width': 2, 'line-dasharray': [4, 2] }
+        });
+      }
+      // Clean up markers and reset state
+      polygonMarkers.current.forEach(m => m.remove());
+      polygonMarkers.current = [];
+      polygonPoints.current = [];
+      setPolygonDrawingMode(false);
+      if (map.current) map.current.getCanvas().style.cursor = '';
+    } else {
+      // Start drawing mode — attach click handler
+      setPolygonDrawingMode(true);
+      if (map.current) map.current.getCanvas().style.cursor = 'crosshair';
+
+      const onMapClick = (e: maplibregl.MapMouseEvent) => {
+        if (!polygonDrawingMode && !map.current) return;
+        const lngLat: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+        polygonPoints.current.push(lngLat);
+
+        // Add a vertex marker
+        const el = document.createElement('div');
+        el.style.cssText = 'width:10px;height:10px;background:#00FFEE;border:2px solid #fff;border-radius:50%;cursor:pointer;';
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat(lngLat)
+          .addTo(map.current!);
+        polygonMarkers.current.push(marker);
+
+        // Draw preview line connecting points
+        if (polygonPoints.current.length >= 2) {
+          if (map.current!.getLayer('polygon-preview')) map.current!.removeLayer('polygon-preview');
+          if (map.current!.getSource('polygon-preview')) map.current!.removeSource('polygon-preview');
+          map.current!.addSource('polygon-preview', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              geometry: { type: 'LineString', coordinates: polygonPoints.current },
+              properties: {}
+            }
+          });
+          map.current!.addLayer({
+            id: 'polygon-preview',
+            type: 'line',
+            source: 'polygon-preview',
+            paint: { 'line-color': '#00FFEE', 'line-width': 2, 'line-dasharray': [4, 2] }
+          });
+        }
+      };
+
+      map.current.once('click', onMapClick);
+      // Re-attach on subsequent clicks until drawing is stopped
+      const reattach = () => { if (polygonDrawingMode) map.current?.on('click', onMapClick); };
+      map.current.on('click', onMapClick);
+
+      // Double-click to finish
+      map.current.once('dblclick', () => handleDrawPolygon());
+    }
   };
 
   const handleClearTools = () => {
-    console.log("Clearing all GIS tools");
     setBufferZoneVisible(false);
     setMeasurementMode(null);
     setSpatialQueryMode(false);
     setQueryResults(null);
+    // Clean up polygon drawing state
+    if (polygonDrawingMode) {
+      setPolygonDrawingMode(false);
+      polygonMarkers.current.forEach(m => m.remove());
+      polygonMarkers.current = [];
+      polygonPoints.current = [];
+      if (map.current) map.current.getCanvas().style.cursor = '';
+    }
+    // Remove drawn polygon layers from map
+    if (map.current) {
+      ['drawn-polygon', 'drawn-polygon-outline', 'polygon-preview'].forEach(id => {
+        if (map.current!.getLayer(id)) map.current!.removeLayer(id);
+        if (map.current!.getSource(id)) map.current!.removeSource(id);
+      });
+    }
   };
 
   // Helper function to get layer color for display
@@ -1430,7 +1555,9 @@ export default function MapExplorer() {
                           squareFeet: p.squareFeet || 0, yearBuilt: p.yearBuilt || 0, propertyType: p.propertyType || "N/A",
                           latitude: p.latitude || "0", longitude: p.longitude || "0"
                         }));
-                        import('@/lib/comparisonExport').then(({ exportComparisonPDF }) => exportComparisonPDF(data));
+                        import('@/lib/comparisonExport').then(({ exportComparisonPDF }) => {
+                          try { exportComparisonPDF(data); } catch (err: any) { toast.error(err.message ?? 'PDF export failed'); }
+                        });
                       }}><FileText className="h-4 w-4" />PDF</TactileButton>
                       <TactileButton 
                         variant="chrome" 

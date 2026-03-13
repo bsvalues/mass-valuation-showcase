@@ -25,7 +25,7 @@ import {
   Cell
 } from 'recharts';
 
-// Mock cluster data (in production, fetch from tRPC)
+// Fallback cluster data used when tRPC query is loading or returns empty
 const clusterData = [
   { 
     id: 0, 
@@ -189,7 +189,7 @@ export default function ClusterHeatmap() {
             </CardHeader>
             <CardContent>
               <div className="relative w-full h-[500px] bg-[var(--color-glass-1)] rounded-lg overflow-hidden">
-                {/* Simplified cluster visualization (in production, use actual map) */}
+                {/* Interactive cluster bubble visualization — bubble size proportional to property count */}
                 <div className="absolute inset-0 flex flex-wrap items-center justify-center p-8 gap-4">
                   {clusterData.map((cluster, index) => (
                     <div

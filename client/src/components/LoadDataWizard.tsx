@@ -50,14 +50,25 @@ export function LoadDataWizard({ open, onOpenChange, countyName }: LoadDataWizar
     }
   };
 
+  const createJobMutation = trpc.backgroundJobs.createParcelLoadJob.useMutation();
+
   const handleLoadData = async () => {
     setIsLoading(true);
     try {
       if (loadMethod === "background") {
-        // Queue background job
-        toast.info(`Queuing background job for ${countyName} County...`);
-        // TODO: Implement background job creation
-        toast.success(`Background job queued! You'll be notified when complete.`);
+        // Create real background job in the database
+        const result = await createJobMutation.mutateAsync({
+          countyName,
+          parcelLimit,
+        });
+        toast.success(`Background job queued!`, {
+          description: `Job ID: ${result.jobId} — You'll be notified when complete. Track progress in Background Jobs.`,
+          action: {
+            label: 'View Jobs',
+            onClick: () => setLocation('/background-jobs'),
+          },
+          duration: 8000,
+        });
       } else {
         // Direct load - redirect to WA Data Ingestion
         toast.info(`Redirecting to data ingestion for ${countyName} County...`);
@@ -65,7 +76,7 @@ export function LoadDataWizard({ open, onOpenChange, countyName }: LoadDataWizar
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error("Failed to start data loading");
+      toast.error("Failed to start data loading", { description: String(error) });
       console.error(error);
     } finally {
       setIsLoading(false);

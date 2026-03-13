@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,32 +11,75 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowLeft,
-  MapPin,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
   Download,
+  Loader2,
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
+import { trpc } from '@/lib/trpc';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 /**
  * MassAppraisalDashboard - Canonical Scene for Mass Appraisal Monitoring
- * 
+ *
  * Full-screen immersive dashboard for monitoring mass appraisal quality,
  * property value distributions, and statistical indicators.
+ * Features a real Recharts histogram (assessment ratio distribution from DB)
+ * and a MapLibre GL mini-map showing Benton County, WA.
  */
 export default function MassAppraisalDashboard() {
   const [, setLocation] = useLocation();
   const [selectedCounty, setSelectedCounty] = useState('all');
   const [selectedYear, setSelectedYear] = useState('2026');
+  const miniMapContainer = useRef<HTMLDivElement>(null);
+  const miniMap = useRef<maplibregl.Map | null>(null);
 
-  // Mock data - in production, fetch from tRPC
-  const qualityMetrics = {
-    medianRatio: 0.96,
-    cod: 8.4,
-    prd: 1.02,
-    totalProperties: 42850,
-    recentSales: 1247,
-  };
+  // Fetch real ratio distribution from database
+  const { data: ratioDistribution, isLoading: ratioLoading } =
+    trpc.analytics.getRatioDistribution.useQuery();
+
+  // Fetch real parcel count from database
+  const { data: parcelList } = trpc.parcels.list.useQuery();
+  const totalProperties = parcelList?.length ?? 27753;
+
+  // Derived quality metrics (computed from ratio distribution when available)
+  const qualityMetrics = (() => {
+    if (!ratioDistribution || ratioDistribution.length === 0) {
+      return { medianRatio: 0.96, cod: 8.4, prd: 1.02, totalProperties, recentSales: 1247 };
+    }
+    const totalCount = ratioDistribution.reduce((s, b) => s + b.count, 0);
+    let cumulative = 0;
+    let medianRatio = 0.96;
+    for (const bin of ratioDistribution) {
+      cumulative += bin.count;
+      if (cumulative >= totalCount / 2) {
+        medianRatio = bin.ratio + 0.025; // midpoint of bin
+        break;
+      }
+    }
+    const weightedMean = totalCount > 0
+      ? ratioDistribution.reduce((s, b) => s + (b.ratio + 0.025) * b.count, 0) / totalCount
+      : 0.96;
+    // COD approximation: mean absolute deviation / median * 100
+    const cod = totalCount > 0
+      ? (ratioDistribution.reduce((s, b) => s + Math.abs(b.ratio + 0.025 - medianRatio) * b.count, 0) / totalCount / medianRatio) * 100
+      : 8.4;
+    const prd = weightedMean > 0 ? medianRatio / weightedMean : 1.02;
+    return { medianRatio, cod, prd, totalProperties, recentSales: totalCount };
+  })();
 
   const countyData = [
     { name: 'King County', properties: 15420, avgValue: 425000, cod: 7.2, status: 'excellent' },
@@ -47,16 +90,11 @@ export default function MassAppraisalDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'excellent':
-        return 'text-[var(--color-signal-success)]';
-      case 'good':
-        return 'text-[var(--color-signal-primary)]';
-      case 'acceptable':
-        return 'text-[var(--color-signal-warning)]';
-      case 'review':
-        return 'text-[var(--color-signal-alert)]';
-      default:
-        return 'text-[var(--color-text-secondary)]';
+      case 'excellent': return 'text-[var(--color-signal-success)]';
+      case 'good': return 'text-[var(--color-signal-primary)]';
+      case 'acceptable': return 'text-[var(--color-signal-warning)]';
+      case 'review': return 'text-[var(--color-signal-alert)]';
+      default: return 'text-[var(--color-text-secondary)]';
     }
   };
 
@@ -71,6 +109,68 @@ export default function MassAppraisalDashboard() {
       default:
         return null;
     }
+  };
+
+  // Initialize MapLibre GL mini-map
+  useEffect(() => {
+    if (!miniMapContainer.current || miniMap.current) return;
+
+    miniMap.current = new maplibregl.Map({
+      container: miniMapContainer.current,
+      style: {
+        version: 8,
+        sources: {
+          osm: {
+            type: 'raster',
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors',
+          },
+        },
+        layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+      },
+      center: [-119.2, 46.2], // Benton County, WA
+      zoom: 9,
+      interactive: true,
+      attributionControl: false,
+    });
+
+    miniMap.current.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+    // Add a marker for Kennewick, WA (county seat)
+    new maplibregl.Marker({ color: '#00FFEE' })
+      .setLngLat([-119.1372, 46.2112])
+      .setPopup(new maplibregl.Popup({ offset: 25 }).setText('Kennewick, WA — Benton County Seat'))
+      .addTo(miniMap.current);
+
+    return () => {
+      miniMap.current?.remove();
+      miniMap.current = null;
+    };
+  }, []);
+
+  // Color bars: highlight the target range (0.90–1.10) in cyan, outliers in amber/red
+  const getBarColor = (ratio: number) => {
+    if (ratio >= 0.90 && ratio <= 1.10) return '#00FFEE';
+    if (ratio >= 0.80 && ratio < 0.90) return '#F59E0B';
+    if (ratio > 1.10 && ratio <= 1.20) return '#F59E0B';
+    return '#EF4444';
+  };
+
+  // Custom tooltip for the histogram
+  const RatioTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.length) return null;
+    const d = payload[0].payload;
+    return (
+      <div className="bg-[var(--color-glass-3)] border border-white/20 rounded-lg p-3 text-xs backdrop-blur-xl">
+        <div className="font-bold text-[var(--color-text-primary)] mb-1">
+          Ratio: {d.rangeLabel}
+        </div>
+        <div className="text-[var(--color-text-secondary)]">
+          Sales: <span className="text-[var(--color-signal-primary)] font-semibold">{d.count.toLocaleString()}</span>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -122,7 +222,7 @@ export default function MassAppraisalDashboard() {
 
           <Button
             size="sm"
-            className="bg-[var(--color-signal-primary)] hover:bg-[var(--color-signal-primary)]/90"
+            className="bg-[var(--color-signal-primary)] hover:bg-[var(--color-signal-primary)]/90 text-black"
           >
             <Download className="w-4 h-4 mr-2" />
             Export Report
@@ -135,9 +235,7 @@ export default function MassAppraisalDashboard() {
         {/* Quality Metrics Row */}
         <div className="grid grid-cols-5 gap-4">
           <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">
-              Median Ratio (A/S)
-            </div>
+            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">Median Ratio (A/S)</div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.medianRatio.toFixed(2)}
             </div>
@@ -148,9 +246,7 @@ export default function MassAppraisalDashboard() {
           </Card>
 
           <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">
-              COD (Uniformity)
-            </div>
+            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">COD (Uniformity)</div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.cod.toFixed(1)}%
             </div>
@@ -161,9 +257,7 @@ export default function MassAppraisalDashboard() {
           </Card>
 
           <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">
-              PRD (Progressivity)
-            </div>
+            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">PRD (Progressivity)</div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.prd.toFixed(2)}
             </div>
@@ -174,9 +268,7 @@ export default function MassAppraisalDashboard() {
           </Card>
 
           <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">
-              Total Properties
-            </div>
+            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">Total Properties</div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.totalProperties.toLocaleString()}
             </div>
@@ -187,65 +279,45 @@ export default function MassAppraisalDashboard() {
           </Card>
 
           <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">
-              Recent Sales
-            </div>
+            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">Sales in Study</div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.recentSales.toLocaleString()}
             </div>
             <div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]">
-              Last 90 days
+              Used for ratio analysis
             </div>
           </Card>
         </div>
 
         {/* Main Grid */}
         <div className="grid grid-cols-12 gap-6">
-          {/* Property Value Heatmap */}
+          {/* MapLibre GL Mini-Map */}
           <div className="col-span-8">
             <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-              <h2 className="text-lg font-bold text-[var(--color-text-primary)] mb-4">
-                Property Value Heatmap
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-[var(--color-text-primary)]">
+                  Benton County, WA — Assessment Area
+                </h2>
+                <span className="text-xs text-[var(--color-text-tertiary)] bg-[var(--color-glass-3)] px-2 py-1 rounded">
+                  MapLibre GL · OSM
+                </span>
+              </div>
               <div
-                className="relative w-full h-96 rounded-lg overflow-hidden
-                           bg-gradient-to-br from-[var(--color-government-night-elevated)] to-[var(--color-government-night-base)]
-                           border border-white/10"
-              >
-                {/* Placeholder for map - in production, integrate MapLibre GL */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="w-16 h-16 mx-auto mb-4 text-[var(--color-signal-primary)]" />
-                    <p className="text-[var(--color-text-secondary)]">
-                      Interactive property value heatmap
-                    </p>
-                    <p className="text-sm text-[var(--color-text-tertiary)] mt-1">
-                      Integrate MapLibre GL for production
-                    </p>
+                ref={miniMapContainer}
+                className="w-full h-96 rounded-lg overflow-hidden border border-white/10"
+                aria-label="Benton County property map"
+              />
+              {/* Legend */}
+              <div className="flex items-center gap-4 mt-3">
+                {['$0-200k', '$200k-400k', '$400k-600k', '$600k+'].map((range, i) => (
+                  <div key={range} className="flex items-center gap-1">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ background: `hsl(${180 + i * 30}, 70%, ${50 - i * 10}%)` }}
+                    />
+                    <span className="text-xs text-[var(--color-text-tertiary)]">{range}</span>
                   </div>
-                </div>
-
-                {/* Legend */}
-                <div className="absolute bottom-4 left-4 p-3 rounded-lg bg-[var(--color-glass-3)] backdrop-blur-xl border border-white/10">
-                  <div className="text-xs font-medium text-[var(--color-text-primary)] mb-2">
-                    Value Range
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {['$0-200k', '$200k-400k', '$400k-600k', '$600k+'].map((range, i) => (
-                      <div key={range} className="flex items-center gap-1">
-                        <div
-                          className="w-4 h-4 rounded"
-                          style={{
-                            background: `hsl(${180 + i * 30}, 70%, ${50 - i * 10}%)`,
-                          }}
-                        />
-                        <span className="text-xs text-[var(--color-text-tertiary)]">
-                          {range}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
             </Card>
           </div>
@@ -299,31 +371,89 @@ export default function MassAppraisalDashboard() {
           </div>
         </div>
 
-        {/* Statistical Distribution Chart */}
+        {/* Assessment Ratio Distribution — Real Recharts Histogram */}
         <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-          <h2 className="text-lg font-bold text-[var(--color-text-primary)] mb-4">
-            Assessment Ratio Distribution
-          </h2>
-          <div className="h-64 flex items-end justify-around gap-2 px-4">
-            {/* Placeholder histogram - in production, use Recharts */}
-            {[5, 12, 28, 45, 68, 85, 92, 78, 52, 35, 18, 8].map((height, i) => (
-              <div
-                key={i}
-                className="flex-1 rounded-t-lg bg-gradient-to-t from-[var(--color-signal-primary)] to-[var(--color-signal-secondary)]
-                           hover:opacity-80 transition-opacity cursor-pointer"
-                style={{ height: `${height}%` }}
-                title={`Ratio: ${0.85 + i * 0.05} - Count: ${Math.floor(height * 10)}`}
-              />
-            ))}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-[var(--color-text-primary)]">
+                Assessment Ratio Distribution
+              </h2>
+              <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
+                Distribution of assessed value ÷ sale price across all sales in study period.
+                Target range 0.90–1.10 shown in cyan.
+              </p>
+            </div>
+            {ratioLoading && (
+              <Loader2 className="w-4 h-4 animate-spin text-[var(--color-signal-primary)]" />
+            )}
           </div>
-          <div className="flex items-center justify-between mt-4 px-4 text-xs text-[var(--color-text-tertiary)]">
-            <span>0.85</span>
-            <span>0.90</span>
-            <span>0.95</span>
-            <span>1.00</span>
-            <span>1.05</span>
-            <span>1.10</span>
-            <span>1.15</span>
+
+          {ratioLoading ? (
+            <div className="h-64 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-[var(--color-signal-primary)]" />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={ratioDistribution ?? []}
+                margin={{ top: 8, right: 16, left: 0, bottom: 8 }}
+                barCategoryGap="8%"
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.06)"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                  tickLine={false}
+                  interval={1}
+                />
+                <YAxis
+                  tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={36}
+                />
+                <Tooltip content={<RatioTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                <ReferenceLine
+                  x="0.90"
+                  stroke="#00FFEE"
+                  strokeDasharray="4 2"
+                  strokeOpacity={0.5}
+                  label={{ value: 'Min', fill: '#00FFEE', fontSize: 10, position: 'top' }}
+                />
+                <ReferenceLine
+                  x="1.10"
+                  stroke="#00FFEE"
+                  strokeDasharray="4 2"
+                  strokeOpacity={0.5}
+                  label={{ value: 'Max', fill: '#00FFEE', fontSize: 10, position: 'top' }}
+                />
+                <Bar dataKey="count" radius={[3, 3, 0, 0]}>
+                  {(ratioDistribution ?? []).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={getBarColor(entry.ratio)} fillOpacity={0.85} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+
+          <div className="flex items-center gap-6 mt-3 text-xs text-[var(--color-text-tertiary)]">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-[#00FFEE]" />
+              Target range (0.90–1.10)
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-[#F59E0B]" />
+              Moderate deviation
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-[#EF4444]" />
+              High deviation
+            </div>
           </div>
         </Card>
       </div>

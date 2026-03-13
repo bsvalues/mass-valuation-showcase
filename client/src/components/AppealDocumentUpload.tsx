@@ -73,13 +73,8 @@ export function AppealDocumentUpload({ appealId }: AppealDocumentUploadProps) {
     const randomSuffix = Math.random().toString(36).substring(7);
     const fileKey = `appeals/${appealId}/documents/${timestamp}-${randomSuffix}-${file.name}`;
 
-    // In a real implementation, you would:
-    // 1. Call a backend endpoint to get a presigned URL
-    // 2. Upload directly to S3 using the presigned URL
-    // 3. Return the file key and public URL
-
-    // For now, we'll simulate the upload
-    // TODO: Implement actual S3 upload using storagePut from server
+    // POST file as multipart form data to /api/upload-document
+    // The server handler (uploadDocument.ts) calls storagePut and returns the S3 URL
     const formData = new FormData();
     formData.append("file", file);
     formData.append("fileKey", fileKey);

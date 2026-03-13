@@ -1,10 +1,11 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
+import JSZip from "jszip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { DndContext, DragEndEvent, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable, useDraggable } from "@dnd-kit/core";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { FileText, Calendar, DollarSign, MapPin, Plus, Download, ClipboardList, Scale } from "lucide-react";
 import { useLocation } from "wouter";
@@ -227,7 +228,7 @@ function DroppableColumn({ status, appeals, onAppealClick, selectable, selectedA
 }
 
 export default function AppealsManagement() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [activeId, setActiveId] = useState<number | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
@@ -241,6 +242,17 @@ export default function AppealsManagement() {
   const [filterCounty, setFilterCounty] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<AppealStatus | "">("");
   const [filterPriority, setFilterPriority] = useState<Priority | "">("");
+
+  const trpcUtils = trpc.useUtils();
+
+  // Read ?filter=in_review (or other status) URL param on mount — used by Gavel health indicator drill-down
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const filterParam = params.get("filter");
+    if (filterParam && ["pending", "in_review", "hearing_scheduled", "resolved", "withdrawn"].includes(filterParam)) {
+      setFilterStatus(filterParam as AppealStatus);
+    }
+  }, []);
   const [filterValueMin, setFilterValueMin] = useState<string>("");
   const [filterValueMax, setFilterValueMax] = useState<string>("");
   const [filterDateFrom, setFilterDateFrom] = useState<string>("");
@@ -462,7 +474,45 @@ export default function AppealsManagement() {
                 <Button
                   variant="outline"
                   onClick={async () => {
-                    toast.info("Bulk document download coming soon - requires ZIP library integration");
+                    const appealIds = Array.from(selectedAppeals);
+                    toast.loading("Fetching documents...", { id: "zip-download" });
+                    try {
+                      // Fetch all documents for selected appeals via tRPC
+                      const docs = await trpcUtils.appeals.getBulkDocuments.fetch({ appealIds });
+                      if (!docs || docs.length === 0) {
+                        toast.dismiss("zip-download");
+                        toast.info("No documents found for selected appeals");
+                        return;
+                      }
+                      // Build ZIP file with one folder per appeal
+                      const zip = new JSZip();
+                      await Promise.all(
+                        docs.map(async (doc: { id: number; appealId: number; fileName: string; fileUrl: string }) => {
+                          try {
+                            const response = await fetch(doc.fileUrl);
+                            if (!response.ok) return;
+                            const blob = await response.blob();
+                            const ext = doc.fileName?.split('.').pop() ?? 'pdf';
+                            const safeName = (doc.fileName ?? `document_${doc.id}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+                            zip.folder(`appeal_${doc.appealId}`)?.file(safeName, blob);
+                          } catch {
+                            // Skip unreachable documents silently
+                          }
+                        })
+                      );
+                      const zipBlob = await zip.generateAsync({ type: "blob" });
+                      const url = URL.createObjectURL(zipBlob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `appeal_documents_${new Date().toISOString().split('T')[0]}.zip`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast.dismiss("zip-download");
+                      toast.success(`Downloaded ${docs.length} document${docs.length !== 1 ? 's' : ''} as ZIP`);
+                    } catch (err) {
+                      toast.dismiss("zip-download");
+                      toast.error("Failed to download documents");
+                    }
                   }}
                 >
                   <Download className="w-4 h-4 mr-2" />

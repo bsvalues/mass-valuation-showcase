@@ -296,6 +296,7 @@ export function exportComparisonPDF(properties: PropertyComparisonData[]): void 
       }, 250);
     };
   } else {
-    alert('Please allow pop-ups to export PDF');
+    // Caller should catch this and show a toast notification
+    throw new Error('Pop-ups are blocked. Please allow pop-ups for this site to export PDF.');
   }
 }

@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { appeals } from "../drizzle/schema";
+import { appeals, parcels, sales } from "../drizzle/schema";
 import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
 
 export const analyticsRouter = router({
@@ -217,5 +217,125 @@ export const analyticsRouter = router({
         .where(whereClause);
 
       return stats;
+    }),
+
+  /**
+   * Get property heatmap data for PropertyHeatmapWithFilters
+   * Returns parcels with lat/lng and value for map rendering
+   */
+  getPropertyHeatmapData: publicProcedure
+    .input(z.object({
+      propertyType: z.string().optional(),
+      neighborhood: z.string().optional(),
+      minValue: z.number().optional(),
+      maxValue: z.number().optional(),
+      limit: z.number().default(500),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      const conditions = [
+        sql`${parcels.latitude} IS NOT NULL`,
+        sql`${parcels.longitude} IS NOT NULL`,
+        sql`${parcels.totalValue} > 0`,
+      ];
+
+      if (input.propertyType) {
+        conditions.push(eq(parcels.propertyType, input.propertyType));
+      }
+      if (input.neighborhood) {
+        conditions.push(eq(parcels.neighborhood, input.neighborhood));
+      }
+      if (input.minValue !== undefined) {
+        conditions.push(sql`${parcels.totalValue} >= ${input.minValue}`);
+      }
+      if (input.maxValue !== undefined) {
+        conditions.push(sql`${parcels.totalValue} <= ${input.maxValue}`);
+      }
+
+      const rows = await db
+        .select({
+          id: parcels.id,
+          parcelId: parcels.parcelId,
+          latitude: parcels.latitude,
+          longitude: parcels.longitude,
+          totalValue: parcels.totalValue,
+          propertyType: parcels.propertyType,
+          neighborhood: parcels.neighborhood,
+          address: parcels.address,
+        })
+        .from(parcels)
+        .where(and(...conditions))
+        .limit(input.limit);
+
+      return rows.map(r => ({
+        ...r,
+        lat: parseFloat(r.latitude ?? '0'),
+        lng: parseFloat(r.longitude ?? '0'),
+      }));
+    }),
+
+  /**
+   * Get assessment ratio distribution histogram data
+   * Buckets sales ratios (assessedValue / salePrice) into 0.05-wide bins from 0.50 to 1.50
+   */
+  getRatioDistribution: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      const salesData = await db
+        .select({
+          assessedValue: sales.assessedValue,
+          salePrice: sales.salePrice,
+        })
+        .from(sales)
+        .where(sql`${sales.salePrice} > 0 AND ${sales.assessedValue} > 0`)
+        .limit(5000);
+
+      const binEdges = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30];
+      const bins = binEdges.slice(0, -1).map((edge, i) => ({
+        ratio: edge,
+        label: edge.toFixed(2),
+        rangeLabel: `${edge.toFixed(2)}-${binEdges[i + 1].toFixed(2)}`,
+        count: 0,
+      }));
+
+      for (const row of salesData) {
+        const ratio = row.assessedValue / row.salePrice;
+        const binIdx = Math.floor((ratio - 0.50) / 0.05);
+        if (binIdx >= 0 && binIdx < bins.length) {
+          bins[binIdx].count++;
+        }
+      }
+
+      return bins;
+    }),
+
+  /**
+   * Get filter options for PropertyHeatmapWithFilters dropdowns
+   */
+  getPropertyFilterOptions: publicProcedure
+    .query(async () => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      const [propertyTypes, neighborhoods] = await Promise.all([
+        db.selectDistinct({ value: parcels.propertyType })
+          .from(parcels)
+          .where(sql`${parcels.propertyType} IS NOT NULL`)
+          .limit(50),
+        db.selectDistinct({ value: parcels.neighborhood })
+          .from(parcels)
+          .where(sql`${parcels.neighborhood} IS NOT NULL`)
+          .orderBy(parcels.neighborhood)
+          .limit(100),
+      ]);
+
+      return {
+        propertyTypes: propertyTypes.map(r => r.value).filter(Boolean) as string[],
+        neighborhoods: neighborhoods.map(r => r.value).filter(Boolean) as string[],
+      };
     }),
 });

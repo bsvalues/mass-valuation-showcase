@@ -10,70 +10,60 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X, Filter } from "lucide-react";
 
 export function PropertyHeatmapWithFilters() {
-  // Fetch filter options
-  // TODO: Re-enable when property analytics router is implemented
-  const filterOptions = { valueRange: { min: 0, max: 1000000 }, yearRange: { min: 1900, max: new Date().getFullYear() }, propertyTypes: [] as string[] };
-  const optionsLoading = false;
-  // const { data: filterOptions, isLoading: optionsLoading } = trpc.analytics.getPropertyFilterOptions.useQuery();
-  
+  // Fetch filter options from real database
+  const { data: filterOptions, isLoading: optionsLoading } = trpc.analytics.getPropertyFilterOptions.useQuery();
+
   // Filter state
-  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([]);
-  const [valueRange, setValueRange] = useState<[number, number]>([0, 1000000]);
-  const [yearRange, setYearRange] = useState<[number, number]>([1900, new Date().getFullYear()]);
+  const [selectedPropertyType, setSelectedPropertyType] = useState<string>("all");
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("all");
+  const [valueRange, setValueRange] = useState<[number, number]>([0, 2000000]);
   const [filtersActive, setFiltersActive] = useState(false);
-  
-  // Initialize ranges when options load
-  useEffect(() => {
-    if (filterOptions) {
-      setValueRange([filterOptions.valueRange.min, filterOptions.valueRange.max]);
-      setYearRange([filterOptions.yearRange.min, filterOptions.yearRange.max]);
-    }
-  }, [filterOptions]);
-  
-  // Fetch heatmap data with filters
-  // TODO: Re-enable when property analytics router is implemented
-  const properties: any[] = [];
-  const dataLoading = false;
-  /* const { data: properties, isLoading: dataLoading } = trpc.analytics.getPropertyHeatmapData.useQuery(
-    filtersActive ? {
-      propertyTypes: selectedPropertyTypes.length > 0 ? selectedPropertyTypes : undefined,
-      minValue: valueRange[0],
-      maxValue: valueRange[1],
-      minYear: yearRange[0],
-      maxYear: yearRange[1],
-    } : undefined,
+
+  // Fetch heatmap data with applied filters
+  const { data: rawProperties, isLoading: dataLoading } = trpc.analytics.getPropertyHeatmapData.useQuery(
     {
-      enabled: !optionsLoading,
-    }
-  ); */
-  
+      propertyType: filtersActive && selectedPropertyType !== "all" ? selectedPropertyType : undefined,
+      neighborhood: filtersActive && selectedNeighborhood !== "all" ? selectedNeighborhood : undefined,
+      minValue: filtersActive ? valueRange[0] : undefined,
+      maxValue: filtersActive ? valueRange[1] : undefined,
+      limit: 500,
+    },
+    { enabled: !optionsLoading }
+  );
+
+  // Map raw data to PropertyHeatmap's expected format
+  const properties = (rawProperties ?? []).map(p => ({
+    id: p.id,
+    parcelNumber: p.parcelId,
+    latitude: p.lat,
+    longitude: p.lng,
+    value: p.totalValue ?? 0,
+  }));
+
   const handleResetFilters = () => {
-    setSelectedPropertyTypes([]);
-    if (filterOptions) {
-      setValueRange([filterOptions.valueRange.min, filterOptions.valueRange.max]);
-      setYearRange([filterOptions.yearRange.min, filterOptions.yearRange.max]);
-    }
+    setSelectedPropertyType("all");
+    setSelectedNeighborhood("all");
+    setValueRange([0, 2000000]);
     setFiltersActive(false);
   };
-  
+
   const handleApplyFilters = () => {
     setFiltersActive(true);
   };
-  
-  const activeFilterCount = 
-    selectedPropertyTypes.length + 
-    (filtersActive && (valueRange[0] !== filterOptions?.valueRange.min || valueRange[1] !== filterOptions?.valueRange.max) ? 1 : 0) +
-    (filtersActive && (yearRange[0] !== filterOptions?.yearRange.min || yearRange[1] !== filterOptions?.yearRange.max) ? 1 : 0);
-  
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+
+  const activeFilterCount =
+    (filtersActive && selectedPropertyType !== "all" ? 1 : 0) +
+    (filtersActive && selectedNeighborhood !== "all" ? 1 : 0) +
+    (filtersActive && (valueRange[0] > 0 || valueRange[1] < 2000000) ? 1 : 0);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
-  };
-  
+
   return (
     <div className="space-y-4">
       {/* Filters Card */}
@@ -101,28 +91,28 @@ export function PropertyHeatmapWithFilters() {
               </Button>
             )}
           </div>
+          <CardDescription className="text-slate-400">
+            Filter {properties.length.toLocaleString()} properties displayed on the heatmap
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Property Type Filter */}
             <div className="space-y-2">
-              <Label htmlFor="property-type" className="text-sm text-slate-300">Property Type</Label>
+              <Label htmlFor="property-type" className="text-sm text-slate-300">
+                Property Type
+              </Label>
               <Select
-                value={selectedPropertyTypes[0] || "all"}
-                onValueChange={(value) => {
-                  if (value === "all") {
-                    setSelectedPropertyTypes([]);
-                  } else {
-                    setSelectedPropertyTypes([value]);
-                  }
-                }}
+                value={selectedPropertyType}
+                onValueChange={setSelectedPropertyType}
+                disabled={optionsLoading}
               >
                 <SelectTrigger id="property-type" className="bg-slate-800 border-slate-700">
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  {filterOptions?.propertyTypes.map((type) => (
+                  {(filterOptions?.propertyTypes ?? []).map((type) => (
                     <SelectItem key={type} value={type}>
                       {type}
                     </SelectItem>
@@ -130,44 +120,48 @@ export function PropertyHeatmapWithFilters() {
                 </SelectContent>
               </Select>
             </div>
-            
+
+            {/* Neighborhood Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="neighborhood" className="text-sm text-slate-300">
+                Neighborhood
+              </Label>
+              <Select
+                value={selectedNeighborhood}
+                onValueChange={setSelectedNeighborhood}
+                disabled={optionsLoading}
+              >
+                <SelectTrigger id="neighborhood" className="bg-slate-800 border-slate-700">
+                  <SelectValue placeholder="All Neighborhoods" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Neighborhoods</SelectItem>
+                  {(filterOptions?.neighborhoods ?? []).map((n) => (
+                    <SelectItem key={n} value={n}>
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Value Range Filter */}
             <div className="space-y-2">
-              <Label className="text-sm text-slate-300">
-                Building Value Range
-              </Label>
+              <Label className="text-sm text-slate-300">Total Value Range</Label>
               <div className="text-xs text-cyan-400 mb-2">
-                {formatCurrency(valueRange[0])} - {formatCurrency(valueRange[1])}
+                {formatCurrency(valueRange[0])} – {formatCurrency(valueRange[1])}
               </div>
               <Slider
                 value={valueRange}
                 onValueChange={(value) => setValueRange(value as [number, number])}
-                min={filterOptions?.valueRange.min || 0}
-                max={filterOptions?.valueRange.max || 1000000}
+                min={0}
+                max={2000000}
                 step={10000}
                 className="w-full"
               />
             </div>
-            
-            {/* Year Built Filter */}
-            <div className="space-y-2">
-              <Label className="text-sm text-slate-300">
-                Year Built Range
-              </Label>
-              <div className="text-xs text-cyan-400 mb-2">
-                {yearRange[0]} - {yearRange[1]}
-              </div>
-              <Slider
-                value={yearRange}
-                onValueChange={(value) => setYearRange(value as [number, number])}
-                min={filterOptions?.yearRange.min || 1900}
-                max={filterOptions?.yearRange.max || new Date().getFullYear()}
-                step={1}
-                className="w-full"
-              />
-            </div>
           </div>
-          
+
           <div className="flex justify-end">
             <Button
               onClick={handleApplyFilters}
@@ -179,10 +173,10 @@ export function PropertyHeatmapWithFilters() {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Heatmap */}
       <PropertyHeatmap
-        properties={properties || []}
+        properties={properties}
         isLoading={dataLoading || optionsLoading}
       />
     </div>

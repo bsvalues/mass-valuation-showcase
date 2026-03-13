@@ -32,30 +32,31 @@ export default function AppealAnalytics() {
     {
       title: "Average Resolution Time",
       value: `${kpiData.avgResolutionDays} days`,
-      change: "-12%", // TODO: Calculate actual change from previous period
+      change: kpiData.changes?.avgResolutionDays ?? "N/A",
       icon: Clock,
-      trend: "down" as const,
+      // Lower resolution time is better — negative change is a good trend
+      trend: (kpiData.changes?.avgResolutionDays ?? "+0%").startsWith("-") ? "down" as const : "up" as const,
     },
     {
       title: "Overall Success Rate",
       value: `${kpiData.successRate}%`,
-      change: "+5%", // TODO: Calculate actual change
+      change: kpiData.changes?.successRate ?? "N/A",
       icon: CheckCircle2,
-      trend: "up" as const,
+      trend: (kpiData.changes?.successRate ?? "+0%").startsWith("+") ? "up" as const : "down" as const,
     },
     {
       title: "Total Value Adjusted",
       value: formatCurrency(kpiData.totalValueAdjusted),
-      change: "+18%", // TODO: Calculate actual change
+      change: kpiData.changes?.totalValueAdjusted ?? "N/A",
       icon: DollarSign,
-      trend: "up" as const,
+      trend: (kpiData.changes?.totalValueAdjusted ?? "+0%").startsWith("+") ? "up" as const : "down" as const,
     },
     {
       title: "Appeals This Month",
       value: kpiData.appealsThisMonth.toString(),
-      change: "+8%", // TODO: Calculate actual change
+      change: kpiData.changes?.appealsThisMonth ?? "N/A",
       icon: TrendingUp,
-      trend: "up" as const,
+      trend: (kpiData.changes?.appealsThisMonth ?? "+0%").startsWith("+") ? "up" as const : "down" as const,
     },
   ] : [];
 

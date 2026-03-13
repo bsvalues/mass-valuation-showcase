@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, LineChart, ReferenceLine } from "recharts";
+import { toast } from "sonner";
 
 export default function RegressionStudio() {
   const [selectedVariables, setSelectedVariables] = useState<string[]>(["squareFeet", "yearBuilt"]);
@@ -30,18 +31,32 @@ export default function RegressionStudio() {
   const { data: savedModels, refetch: refetchModels } = trpc.regressionModels.list.useQuery();
   const deleteModelMutation = trpc.regressionModels.delete.useMutation();
 
-  // Mock data for demonstration
-  const mockData = {
-    totalValue: [450000, 520000, 380000, 610000, 490000, 550000, 420000, 580000, 470000, 530000,
-      460000, 510000, 490000, 540000, 480000, 520000, 500000, 560000, 490000, 530000],
-    squareFeet: [2000, 2400, 1800, 2800, 2200, 2600, 1900, 2700, 2100, 2500,
-      2050, 2450, 2200, 2550, 2150, 2400, 2250, 2650, 2200, 2500],
-    yearBuilt: [2010, 2015, 2005, 2018, 2012, 2016, 2008, 2017, 2011, 2014,
-      2009, 2013, 2011, 2015, 2010, 2014, 2012, 2016, 2011, 2014],
-    landValue: [150000, 180000, 120000, 210000, 160000, 190000, 130000, 200000, 155000, 185000,
-      145000, 175000, 160000, 188000, 152000, 178000, 165000, 195000, 158000, 182000],
-    neighborhood: [1, 2, 1, 3, 2, 3, 1, 3, 2, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 2]
-  };
+  // Real property data from tRPC — use up to 500 records with all required fields
+  const { data: allParcels, isLoading: parcelsLoading } = trpc.parcels.list.useQuery();
+
+  // Build regression dataset from real parcels — filter to rows with all required numeric fields
+  const regressionData = (() => {
+    if (!allParcels || allParcels.length === 0) return null;
+    const valid = allParcels
+      .filter((p: any) =>
+        p.totalValue != null && p.totalValue > 0 &&
+        p.squareFeet != null && p.squareFeet > 0 &&
+        p.yearBuilt != null && p.yearBuilt > 1800 &&
+        p.landValue != null && p.landValue >= 0
+      )
+      .slice(0, 500); // cap at 500 for regression performance
+    if (valid.length < 5) return null;
+    // Map neighborhood string to numeric code for regression
+    const neighborhoodCodes = Array.from(new Set(valid.map((p: any) => p.neighborhood || 'Unknown')));
+    return {
+      totalValue: valid.map((p: any) => Number(p.totalValue)),
+      squareFeet: valid.map((p: any) => Number(p.squareFeet)),
+      yearBuilt: valid.map((p: any) => Number(p.yearBuilt)),
+      landValue: valid.map((p: any) => Number(p.landValue)),
+      neighborhood: valid.map((p: any) => neighborhoodCodes.indexOf(p.neighborhood || 'Unknown') + 1),
+      _count: valid.length,
+    };
+  })();
 
   const availableVariables = [
     { name: "squareFeet", label: "Square Feet", description: "Living area in sq ft" },
@@ -59,14 +74,14 @@ export default function RegressionStudio() {
   };
 
   const runRegression = () => {
-    if (selectedVariables.length === 0) return;
+    if (selectedVariables.length === 0 || !regressionData) return;
 
     const X: { [key: string]: number[] } = {};
     selectedVariables.forEach(varName => {
-      X[varName] = mockData[varName as keyof typeof mockData] as number[];
+      X[varName] = regressionData[varName as keyof typeof regressionData] as number[];
     });
 
-    const result = multipleRegression(mockData.totalValue, X);
+    const result = multipleRegression(regressionData.totalValue, X);
     setRegressionResult(result);
     setDiagnosticPlots(generateDiagnosticPlots(result));
     
@@ -184,11 +199,11 @@ export default function RegressionStudio() {
                       };
                       saveModelMutation.mutate(modelData, {
                         onSuccess: () => {
-                          alert('Model saved successfully!');
+                          toast.success('Model saved successfully!');
                           refetchModels();
                         },
                         onError: (error) => {
-                          alert(`Failed to save model: ${error.message}`);
+                          toast.error('Failed to save model', { description: error.message });
                         },
                       });
                     }}
@@ -213,7 +228,7 @@ export default function RegressionStudio() {
                           residualStandardError: Math.sqrt(regressionResult.residuals.reduce((sum, r) => sum + r * r, 0) / regressionResult.residuals.length),
                           observations: regressionResult.residuals.length,
                         });
-                        alert('PDF report generated successfully!');
+                        toast.success('PDF report generated successfully!');
                       }
                     }}
                     variant="outline"

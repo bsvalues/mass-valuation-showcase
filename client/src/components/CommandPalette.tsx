@@ -207,14 +207,33 @@ export function CommandPalette() {
     {
       id: 'action-export-report',
       label: 'Export Report',
-      description: 'Generate and download PDF report',
+      description: 'Generate and download system summary CSV',
       icon: FileText,
       category: 'action',
       action: () => {
-        // Trigger export dialog
-        alert('Export functionality coming soon');
+        // Generate a system summary report as CSV and trigger browser download
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const rows = [
+          ['TerraFusion Mass Valuation Appraisal Suite — System Report'],
+          ['Generated', new Date().toLocaleString()],
+          [''],
+          ['Section', 'Metric', 'Value'],
+          ['System', 'Report Type', 'Summary Export'],
+          ['System', 'Export Timestamp', new Date().toISOString()],
+          ['Navigation', 'Current Page', window.location.pathname],
+          ['System', 'User Agent', navigator.userAgent.split(' ').slice(-2).join(' ')],
+        ];
+        const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `terraforge-report-${timestamp}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setOpen(false);
       },
-      keywords: ['export', 'pdf', 'report', 'download'],
+      keywords: ['export', 'csv', 'report', 'download'],
     },
     // Removed duplicate - use nav-data-ingestion instead
     {
@@ -241,11 +260,8 @@ export function CommandPalette() {
       description: 'View system status and performance',
       icon: Workflow,
       category: 'action',
-      action: () => {
-        // Open system health modal
-        alert('System health: All systems operational');
-      },
-      keywords: ['health', 'status', 'performance', 'system'],
+      action: () => setLocation('/background-jobs'),
+      keywords: ['health', 'status', 'performance', 'system', 'jobs'],
     },
     {
       id: 'action-train-model',

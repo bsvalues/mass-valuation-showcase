@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Brain, TreeDeciduous, TrendingUp, Play, Download, Sparkles, History, BarChart, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 import { exportAVMPredictionToPDF } from '../lib/pdfExport';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { trpc } from '../lib/trpc';
@@ -49,7 +50,7 @@ export default function AVMStudio() {
 
   const handleTrain = async () => {
     if (!parcels || parcels.length < 10) {
-      alert('Need at least 10 parcels to train model');
+      toast.error('Need at least 10 parcels to train model');
       return;
     }
 
@@ -151,7 +152,7 @@ export default function AVMStudio() {
       }
     } catch (error) {
       console.error('Training error:', error);
-      alert('Training failed: ' + (error as Error).message);
+      toast.error('Training failed', { description: (error as Error).message });
     } finally {
       setIsTraining(false);
     }
@@ -160,12 +161,12 @@ export default function AVMStudio() {
   const handlePredict = () => {
     if (comparisonMode) {
       if (!trainedRFModel || !trainedNNModel || !featureStats || !targetStats) {
-        alert('Please train both models first');
+        toast.warning('Please train both models first');
         return;
       }
     } else {
       if (!trainedModel || !featureStats || !targetStats) {
-        alert('Please train a model first');
+        toast.warning('Please train a model first');
         return;
       }
     }
@@ -176,7 +177,7 @@ export default function AVMStudio() {
     const building = parseFloat(predictionInput.buildingValue);
 
     if (isNaN(sqft) || isNaN(year) || isNaN(land) || isNaN(building)) {
-      alert('Please fill in all fields with valid numbers');
+      toast.error('Please fill in all fields with valid numbers');
       return;
     }
 
@@ -639,7 +640,7 @@ export default function AVMStudio() {
                             ? [predictionHistory[0].confidenceInterval.lower, predictionHistory[0].confidenceInterval.upper]
                             : undefined,
                         });
-                        alert('PDF report generated successfully!');
+                        toast.success('PDF report generated successfully!');
                       }
                     }}
                     className="w-full px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 rounded-lg text-cyan-400 text-sm font-medium transition-colors flex items-center justify-center gap-2"

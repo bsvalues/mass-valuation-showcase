@@ -3,6 +3,7 @@ import { DashboardLayout } from '../components/DashboardLayout';
 import { trpc } from '../lib/trpc';
 import { Trash2, Download, Brain, TreeDeciduous, Calendar, TrendingUp, Edit, X, Tag, Search, FileText } from 'lucide-react';
 import { exportAVMModelToPDF, exportModelComparisonToPDF } from '../lib/pdfExport';
+import { toast } from 'sonner';
 
 export default function ModelManagement() {
   const { data: savedModels, refetch } = trpc.avmModels.list.useQuery();
@@ -197,7 +198,7 @@ export default function ModelManagement() {
                                 trainingDataSize: model.trainingDataSize ?? 0,
                                 createdAt: model.createdAt.toISOString(),
                               });
-                              alert('PDF report generated successfully!');
+                              toast.success('PDF report generated successfully!');
                             }}
                             className="p-2 text-green-400 hover:text-green-300 hover:bg-green-900/20 rounded transition-colors"
                             title="Export to PDF"
@@ -315,7 +316,7 @@ export default function ModelManagement() {
                         createdAt: model.createdAt.toISOString(),
                       }))
                     );
-                    alert('Comparison PDF generated successfully!');
+                    toast.success('Comparison PDF generated successfully!');
                   }}
                   className="mt-3 w-full px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 rounded-lg text-cyan-400 text-sm font-medium transition-colors flex items-center justify-center gap-2"
                 >

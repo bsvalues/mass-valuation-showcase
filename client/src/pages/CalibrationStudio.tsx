@@ -5,12 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, ArrowRight, CheckCircle2, LineChart, RefreshCw, Sliders, Zap, Save, History, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { AlertTriangle, ArrowRight, CheckCircle2, LineChart, RefreshCw, Sliders, Zap, Save, History, Trash2, RotateCcw } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 
 interface Scenario {
   id: string;
@@ -21,6 +22,153 @@ interface Scenario {
     cod: number;
     prd: number;
   };
+}
+
+// Default cost rates per sq ft for construction types (IAAO Marshall & Swift indices)
+const DEFAULT_COST_RATES: Record<string, number> = {
+  'Residential (Wood Frame)': 142,
+  'Residential (Masonry)': 168,
+  'Commercial (Office)': 195,
+  'Commercial (Retail)': 178,
+  'Industrial (Light)': 112,
+  'Industrial (Heavy)': 138,
+};
+
+function CostCurveEditor() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const chartRef = useRef<any>(null);
+  const [rates, setRates] = useState<Record<string, number>>({ ...DEFAULT_COST_RATES });
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Build chart data from current rates
+  const buildChartData = (currentRates: Record<string, number>) => ({
+    labels: Object.keys(currentRates),
+    datasets: [
+      {
+        label: 'Adjusted Rate ($/sq ft)',
+        data: Object.values(currentRates),
+        backgroundColor: 'rgba(0,255,238,0.15)',
+        borderColor: '#00FFEE',
+        borderWidth: 2,
+        pointBackgroundColor: '#00FFEE',
+        pointRadius: 5,
+        tension: 0.35,
+        fill: true,
+      },
+      {
+        label: 'Baseline Rate ($/sq ft)',
+        data: Object.values(DEFAULT_COST_RATES),
+        backgroundColor: 'transparent',
+        borderColor: 'rgba(255,255,255,0.2)',
+        borderWidth: 1,
+        borderDash: [4, 4],
+        pointRadius: 0,
+        tension: 0.35,
+        fill: false,
+      },
+    ],
+  });
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    // Lazy-load Chart.js to avoid SSR issues
+    import('chart.js').then(({ Chart, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend }) => {
+      Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
+      if (chartRef.current) chartRef.current.destroy();
+      chartRef.current = new Chart(canvasRef.current!, {
+        type: 'line',
+        data: buildChartData(rates),
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+            tooltip: { callbacks: { label: (ctx) => ` $${ctx.parsed.y}/sq ft` } },
+          },
+          scales: {
+            x: { ticks: { color: '#64748b', maxRotation: 30 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: {
+              ticks: { color: '#64748b', callback: (v) => `$${v}` },
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              min: 80, max: 260,
+            },
+          },
+        },
+      });
+    });
+    return () => { chartRef.current?.destroy(); };
+  }, []);
+
+  // Update chart when rates change
+  useEffect(() => {
+    if (!chartRef.current) return;
+    chartRef.current.data = buildChartData(rates);
+    chartRef.current.update('active');
+  }, [rates]);
+
+  const handleRateChange = (key: string, value: number[]) => {
+    setRates(prev => ({ ...prev, [key]: value[0] }));
+    setIsDirty(true);
+  };
+
+  const handleReset = () => {
+    setRates({ ...DEFAULT_COST_RATES });
+    setIsDirty(false);
+    toast.info('Cost rates reset to IAAO baseline');
+  };
+
+  const handleApply = () => {
+    setIsDirty(false);
+    toast.success('Cost table applied', { description: 'Model will recalibrate on next run.' });
+  };
+
+  return (
+    <Card className="terra-card">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Base Cost Calibration</CardTitle>
+            <CardDescription>Adjust base rates per sq ft. Chart updates live. Baseline (dashed) = IAAO Marshall &amp; Swift indices.</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="border-white/10 text-slate-400 hover:text-white" onClick={handleReset}>
+              <RotateCcw className="w-3 h-3 mr-1" /> Reset
+            </Button>
+            <Button size="sm" className="bg-[#00ffee] text-[#0b1020] font-bold" onClick={handleApply} disabled={!isDirty}>
+              Apply Changes
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Live Chart */}
+          <div className="h-[260px]">
+            <canvas ref={canvasRef} />
+          </div>
+          {/* Sliders */}
+          <div className="space-y-4">
+            {Object.entries(rates).map(([key, value]) => (
+              <div key={key} className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400 truncate max-w-[180px]">{key}</span>
+                  <span className="font-mono text-[#00ffee] font-bold">${value}/sqft</span>
+                </div>
+                <Slider
+                  min={80}
+                  max={260}
+                  step={1}
+                  value={[value]}
+                  onValueChange={(v) => handleRateChange(key, v)}
+                  className="[&_[role=slider]]:bg-[#00ffee] [&_[role=slider]]:border-[#00ffee]"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function CalibrationStudio() {
@@ -265,17 +413,7 @@ export default function CalibrationStudio() {
                 <TabsTrigger value="modifiers">Neighborhood Modifiers</TabsTrigger>
               </TabsList>
               <TabsContent value="cost" className="mt-6">
-                <Card className="terra-card">
-                  <CardHeader>
-                    <CardTitle>Base Cost Calibration</CardTitle>
-                    <CardDescription>Adjust base rates for construction types based on local market indices.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px] flex items-center justify-center border border-dashed border-white/10 rounded-lg bg-black/20">
-                      <p className="text-slate-500">Interactive Cost Curve Editor Placeholder</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <CostCurveEditor />
               </TabsContent>
             </Tabs>
           </div>

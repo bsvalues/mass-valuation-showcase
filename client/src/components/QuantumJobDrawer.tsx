@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Download, Clock, CheckCircle2, AlertCircle, Loader2, Pause } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -220,7 +221,7 @@ export function QuantumJobDrawer() {
                   link.click();
                 } catch (error) {
                   console.error('Failed to download errors:', error);
-                  alert('Failed to download error CSV');
+                  toast.error('Failed to download error CSV');
                 }
               }}
             >

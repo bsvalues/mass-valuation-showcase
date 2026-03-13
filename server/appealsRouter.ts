@@ -391,11 +391,44 @@ export const appealsRouter = router({
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error('Database not available');
-      
-      // Query appealTimeline table with filters
-      // For now, return empty array since table may not exist yet
-      // Once migration is run, implement full query with filters
-      return [];
+
+      const conditions = [];
+
+      if (input.startDate) {
+        conditions.push(gte(appealTimeline.createdAt, new Date(input.startDate)));
+      }
+      if (input.endDate) {
+        const end = new Date(input.endDate);
+        end.setHours(23, 59, 59, 999);
+        conditions.push(sql`${appealTimeline.createdAt} <= ${end}`);
+      }
+      if (input.status) {
+        conditions.push(eq(appealTimeline.newStatus, input.status as any));
+      }
+      if (input.transitionType) {
+        conditions.push(sql`${appealTimeline.action} LIKE ${`%${input.transitionType}%`}`);
+      }
+
+      const rows = await db
+        .select({
+          id: appealTimeline.id,
+          appealId: appealTimeline.appealId,
+          previousStatus: appealTimeline.previousStatus,
+          newStatus: appealTimeline.newStatus,
+          action: appealTimeline.action,
+          notes: appealTimeline.notes,
+          performedBy: appealTimeline.performedBy,
+          createdAt: appealTimeline.createdAt,
+          parcelId: appeals.parcelId,
+          countyName: appeals.countyName,
+        })
+        .from(appealTimeline)
+        .leftJoin(appeals, eq(appealTimeline.appealId, appeals.id))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(appealTimeline.createdAt))
+        .limit(500);
+
+      return rows;
     }),
 
   /**
@@ -408,10 +441,14 @@ export const appealsRouter = router({
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error('Database not available');
-      
-      // For now, return empty array since appealTimeline table doesn't exist yet
-      // Once migration is run, this will query the appealTimeline table
-      return [];
+
+      const rows = await db
+        .select()
+        .from(appealTimeline)
+        .where(eq(appealTimeline.appealId, input.appealId))
+        .orderBy(desc(appealTimeline.createdAt));
+
+      return rows;
     }),
 
   /**
@@ -703,18 +740,81 @@ export const appealsRouter = router({
       })
       .from(appeals)
       .where(gte(appeals.createdAt, sql`DATE_SUB(NOW(), INTERVAL 1 MONTH)`));
-      
+
+      // Previous period (1-2 months ago) for period-over-period change calculations
+      const prevMonthResolutionResult = await db.select({
+        avgDays: sql<number>`AVG(DATEDIFF(${appeals.resolutionDate}, ${appeals.appealDate}))`
+      })
+      .from(appeals)
+      .where(and(
+        sql`${appeals.resolutionDate} IS NOT NULL`,
+        sql`${appeals.createdAt} >= DATE_SUB(NOW(), INTERVAL 2 MONTH)`,
+        sql`${appeals.createdAt} < DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+      ));
+
+      const prevSuccessRateResult = await db.select({
+        total: sql<number>`COUNT(*)`,
+        successful: sql<number>`SUM(CASE WHEN ${appeals.status} = 'resolved' AND ${appeals.finalValue} < ${appeals.currentAssessedValue} THEN 1 ELSE 0 END)`
+      })
+      .from(appeals)
+      .where(and(
+        eq(appeals.status, 'resolved'),
+        sql`${appeals.createdAt} >= DATE_SUB(NOW(), INTERVAL 2 MONTH)`,
+        sql`${appeals.createdAt} < DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+      ));
+
+      const prevValueAdjustedResult = await db.select({
+        totalAdjusted: sql<number>`SUM(${appeals.currentAssessedValue} - ${appeals.finalValue})`
+      })
+      .from(appeals)
+      .where(and(
+        sql`${appeals.finalValue} IS NOT NULL`,
+        sql`${appeals.finalValue} < ${appeals.currentAssessedValue}`,
+        sql`${appeals.createdAt} >= DATE_SUB(NOW(), INTERVAL 2 MONTH)`,
+        sql`${appeals.createdAt} < DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+      ));
+
+      const prevMonthResult = await db.select({
+        count: sql<number>`COUNT(*)`
+      })
+      .from(appeals)
+      .where(and(
+        sql`${appeals.createdAt} >= DATE_SUB(NOW(), INTERVAL 2 MONTH)`,
+        sql`${appeals.createdAt} < DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+      ));
+
       const avgDays = Math.round(Number(avgResolutionResult[0]?.avgDays) || 0);
-      const successRate = successRateResult[0] ? 
+      const successRate = successRateResult[0] ?
         Math.round((Number(successRateResult[0].successful) / Number(successRateResult[0].total)) * 100) : 0;
       const totalAdjusted = Number(valueAdjustedResult[0]?.totalAdjusted) || 0;
       const thisMonthCount = Number(thisMonthResult[0]?.count) || 0;
-      
+
+      // Previous period values
+      const prevAvgDays = Math.round(Number(prevMonthResolutionResult[0]?.avgDays) || 0);
+      const prevSuccessRate = prevSuccessRateResult[0] ?
+        Math.round((Number(prevSuccessRateResult[0].successful) / Number(prevSuccessRateResult[0].total)) * 100) : 0;
+      const prevTotalAdjusted = Number(prevValueAdjustedResult[0]?.totalAdjusted) || 0;
+      const prevMonthCount = Number(prevMonthResult[0]?.count) || 0;
+
+      // Calculate period-over-period percentage changes
+      const calcChange = (current: number, prev: number): string => {
+        if (prev === 0) return current > 0 ? '+∞%' : '0%';
+        const pct = Math.round(((current - prev) / prev) * 100);
+        return pct >= 0 ? `+${pct}%` : `${pct}%`;
+      };
+
       return {
         avgResolutionDays: avgDays,
         successRate,
         totalValueAdjusted: totalAdjusted,
-        appealsThisMonth: thisMonthCount
+        appealsThisMonth: thisMonthCount,
+        // Period-over-period changes (current month vs previous month)
+        changes: {
+          avgResolutionDays: calcChange(avgDays, prevAvgDays),
+          successRate: calcChange(successRate, prevSuccessRate),
+          totalValueAdjusted: calcChange(totalAdjusted, prevTotalAdjusted),
+          appealsThisMonth: calcChange(thisMonthCount, prevMonthCount),
+        }
       };
     }),
 
