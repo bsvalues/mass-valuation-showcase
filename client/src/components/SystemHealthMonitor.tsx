@@ -3,6 +3,7 @@ import { Database, Zap, Activity, Gavel } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NeonDot } from "./terra/NeonSignal";
 import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
 
 /**
  * SystemHealthMonitor — TerraFusion OS SystemBar primitive
@@ -42,6 +43,7 @@ function getModelColor(s: "ready" | "calibrating" | "stale"): NeonColor {
 }
 
 export function SystemHealthMonitor() {
+  const [, setLocation] = useLocation();
   const { data, isError } = trpc.assessmentReview.getSystemHealth.useQuery(undefined, {
     refetchInterval: 30_000,
     staleTime: 25_000,
@@ -69,6 +71,7 @@ export function SystemHealthMonitor() {
     tooltip: string;
     animated: boolean;
     badge?: number;
+    onClick?: () => void;
   }> = [
     {
       icon: Database,
@@ -95,9 +98,10 @@ export function SystemHealthMonitor() {
       icon: Gavel,
       label: appealsCount > 0 ? `${appealsCount}A` : "Appeals",
       color: appealsStatus,
-      tooltip: `Appeals Queue: ${appealsDetail}`,
+      tooltip: `Appeals Queue: ${appealsDetail} — Click to review`,
       animated: appealsStatus !== "success",
       badge: appealsCount > 0 ? appealsCount : undefined,
+      onClick: () => setLocation("/appeals?filter=in_review"),
     },
   ];
 
@@ -109,12 +113,17 @@ export function SystemHealthMonitor() {
         return (
           <div
             key={idx}
+            role={indicator.onClick ? "button" : undefined}
+            tabIndex={indicator.onClick ? 0 : undefined}
+            onClick={indicator.onClick}
+            onKeyDown={indicator.onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); indicator.onClick!(); } } : undefined}
             className={cn(
               "relative flex items-center gap-1.5 px-2 py-1 rounded-lg",
               "bg-glass-1 border border-glass-border",
               "transition-all duration-300",
               "hover:bg-glass-2 hover:scale-105",
-              "cursor-help select-none",
+              indicator.onClick ? "cursor-pointer select-none" : "cursor-help select-none",
+              indicator.onClick && "hover:border-signal-primary/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-signal-primary",
               indicator.color === "warning" && "border-amber-500/30",
               indicator.color === "critical" && "border-red-500/40 shadow-[0_0_8px_rgba(255,0,0,0.2)]"
             )}

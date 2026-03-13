@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { BentoCard, BentoGrid } from "@/components/terra/BentoCard";
 import { TactileButton } from "@/components/terra/TactileButton";
 import { LiquidPanel } from "@/components/terra/LiquidPanel";
@@ -60,6 +60,9 @@ export default function AssessmentReview() {
     action: BatchActionType;
   } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // J/K keyboard navigation state
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
+  const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
   const utils = trpc.useUtils();
   
   // Bulk update mutation
@@ -199,24 +202,22 @@ export default function AssessmentReview() {
             onClick={() => {
               if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
               toast.dismiss(toastId);
-              // Restore each property to its previous status
-              // Group by previous status and fire one mutation per group
+              // Per-property granularity: group IDs by their individual previous status
+              // and fire one mutation per unique previous status group
               const groups: Record<string, number[]> = {};
-              Object.entries(previousStatuses).forEach(([id, status]) => {
-                if (!groups[status]) groups[status] = [];
-                groups[status].push(parseInt(id));
+              Object.entries(previousStatuses).forEach(([id, prevStatus]) => {
+                if (!groups[prevStatus]) groups[prevStatus] = [];
+                groups[prevStatus].push(parseInt(id));
               });
-              // Fire one mutation for the dominant previous status (simplest approach)
-              const dominantStatus = Object.entries(groups)
-                .sort((a, b) => b[1].length - a[1].length)[0];
-              if (dominantStatus) {
+              // Fire one mutation per unique previous status (perfect per-property restoration)
+              Object.entries(groups).forEach(([prevStatus, groupIds]) => {
                 undoBulkUpdate.mutate({
-                  propertyIds: ids,
-                  newStatus: dominantStatus[0] as "pending" | "approved" | "flagged",
+                  propertyIds: groupIds,
+                  newStatus: prevStatus as "pending" | "approved" | "flagged",
                   action: `undo_bulk_${newStatus}`,
-                  notes: `Undo of bulk ${newStatus} action`,
+                  notes: `Undo of bulk ${newStatus} — restoring ${groupIds.length} properties to '${prevStatus}'`,
                 });
-              }
+              });
             }}
             className="px-3 py-1 text-xs font-semibold rounded-md bg-signal-primary text-government-night-base hover:opacity-90 transition-opacity flex-shrink-0"
           >
@@ -249,10 +250,12 @@ export default function AssessmentReview() {
     }, 8500);
   };
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (A/F/Esc bulk actions + J/K row navigation + Space selection)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // Ignore if a dialog or modal is open
+      if (document.querySelector('[role="dialog"]')) return;
 
       if (e.key.toLowerCase() === "a" && selectedIds.size > 0) {
         e.preventDefault();
@@ -263,12 +266,45 @@ export default function AssessmentReview() {
       } else if (e.key === "Escape") {
         e.preventDefault();
         setSelectedIds(new Set());
+        setFocusedRowIndex(-1);
+      } else if (e.key.toLowerCase() === "j") {
+        // Move focus down
+        e.preventDefault();
+        setFocusedRowIndex(prev => {
+          const next = Math.min(prev + 1, sortedProperties.length - 1);
+          // Scroll into view
+          const el = rowRefs.current.get(next);
+          if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          return next;
+        });
+      } else if (e.key.toLowerCase() === "k") {
+        // Move focus up
+        e.preventDefault();
+        setFocusedRowIndex(prev => {
+          const next = Math.max(prev - 1, 0);
+          const el = rowRefs.current.get(next);
+          if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          return next;
+        });
+      } else if (e.key === " " && focusedRowIndex >= 0) {
+        // Space toggles selection of focused row
+        e.preventDefault();
+        const prop = sortedProperties[focusedRowIndex];
+        if (prop) {
+          const newSelected = new Set(selectedIds);
+          if (newSelected.has(prop.id)) {
+            newSelected.delete(prop.id);
+          } else {
+            newSelected.add(prop.id);
+          }
+          setSelectedIds(newSelected);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [selectedIds]);
+  }, [selectedIds, focusedRowIndex, sortedProperties]);
 
   if (isLoading) {
     return (
@@ -284,13 +320,38 @@ export default function AssessmentReview() {
   return (
     <div className="space-y-6">
       {/* Hero Section */}
-      <div>
-        <h1 className="text-4xl font-bold text-text-primary mb-2">
-          Assessment Review
-        </h1>
-        <p className="text-lg text-text-secondary">
-          High-variance properties requiring attention. {totalProperties} properties flagged with ratio variance &gt;15%.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-4xl font-bold text-text-primary mb-2">
+            Assessment Review
+          </h1>
+          <p className="text-lg text-text-secondary">
+            High-variance properties requiring attention. {totalProperties} properties flagged with ratio variance &gt;15%.
+          </p>
+        </div>
+        {/* Keyboard navigation hints */}
+        <div className="flex items-center gap-2 mt-1 text-xs text-text-secondary shrink-0">
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-glass-2 border border-glass-border rounded font-mono">J</kbd>
+            <kbd className="px-1.5 py-0.5 bg-glass-2 border border-glass-border rounded font-mono">K</kbd>
+            navigate
+          </span>
+          <span className="text-glass-border">·</span>
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-glass-2 border border-glass-border rounded font-mono">Space</kbd>
+            select
+          </span>
+          <span className="text-glass-border">·</span>
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-glass-2 border border-glass-border rounded font-mono">A</kbd>
+            approve
+          </span>
+          <span className="text-glass-border">·</span>
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-glass-2 border border-glass-border rounded font-mono">F</kbd>
+            flag
+          </span>
+        </div>
       </div>
 
       {/* KPI Bento Grid */}
@@ -455,10 +516,19 @@ export default function AssessmentReview() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedProperties.map((property) => (
+                sortedProperties.map((property, rowIdx) => (
                   <TableRow
                     key={property.id}
-                    className="border-glass-border hover:bg-glass-1 transition-colors cursor-pointer"
+                    ref={(el) => {
+                      if (el) rowRefs.current.set(rowIdx, el);
+                      else rowRefs.current.delete(rowIdx);
+                    }}
+                    className={`border-glass-border hover:bg-glass-1 transition-colors cursor-pointer ${
+                      focusedRowIndex === rowIdx
+                        ? "ring-1 ring-inset ring-signal-primary bg-glass-1"
+                        : ""
+                    }`}
+                    onClick={() => setFocusedRowIndex(rowIdx)}
                     onMouseEnter={(e) => {
                       setHoveredProperty(property);
                       setMousePosition({ x: e.clientX, y: e.clientY });

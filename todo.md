@@ -3816,3 +3816,25 @@
 - [x] Add 4th indicator (Gavel icon) to SystemHealthMonitor
 - [x] Show count badge when queue > 0
 - [x] Color: success (0 appeals), warning (1-10), critical (>10)
+
+## 🚀 Next Phase Features — Power UX + Navigation Precision
+
+### Feature 1: Per-Property Undo Granularity
+- [x] Replace dominant-status undo with Map<id, previousStatus> snapshot
+- [x] Capture individual status for each selected property before bulk mutation
+- [x] Restore each property to its exact previous status on undo
+- [x] Pass snapshot through toast closure for correct reverse mutation
+
+### Feature 2: Appeals Queue Drill-Down Navigation
+- [x] Make Gavel health indicator in SystemHealthMonitor clickable
+- [x] Navigate to /appeals route with in_review filter pre-applied on click
+- [x] Add cursor-pointer + hover highlight to Gavel indicator
+- [x] Pass filter state via URL search params (?filter=in_review)
+
+### Feature 3: J/K Keyboard Row Navigation in Assessment Review
+- [x] Add useEffect keydown listener for J (next row) and K (prev row) keys
+- [x] Track focusedRowIndex state in AssessmentReview
+- [x] Apply visual focus ring (neon cyan ring-1 ring-inset) to focused row
+- [x] Scroll focused row into view automatically (scrollIntoView smooth)
+- [x] Space bar toggles selection of focused row
+- [x] Show keyboard hint bar in page header (J/K navigate, Space select, A approve, F flag)
