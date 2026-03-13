@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { sales, neighborhoodStats } from "../drizzle/schema";
-import { sql, eq, and, gte, or } from "drizzle-orm";
+import { sales, neighborhoodStats, backgroundJobs, batchValuationJobs } from "../drizzle/schema";
+import { sql, eq, and, gte, or, desc } from "drizzle-orm";
+import { isModelTrained, getModelMetrics } from "./mlModel";
 
 export const assessmentReviewRouter = router({
   getHighVarianceProperties: publicProcedure
@@ -204,4 +205,136 @@ export const assessmentReviewRouter = router({
 
       return logs;
     }),
+
+  // ─── FEATURE 1: Export all filtered audit logs as CSV data ───────────────────
+  exportAuditLogs: publicProcedure
+    .input(
+      z.object({
+        action: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const { action, startDate, endDate } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      const { assessmentAuditLog } = await import("../drizzle/schema");
+
+      const conditions = [];
+      if (action && action !== "all") {
+        conditions.push(eq(assessmentAuditLog.action, action));
+      }
+      if (startDate) {
+        conditions.push(gte(assessmentAuditLog.timestamp, new Date(startDate)));
+      }
+      if (endDate) {
+        conditions.push(sql`${assessmentAuditLog.timestamp} <= ${new Date(endDate)}`);
+      }
+
+      // No limit — export all matching records
+      const logs = await db
+        .select()
+        .from(assessmentAuditLog)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(assessmentAuditLog.timestamp));
+
+      return logs;
+    }),
+
+  // ─── FEATURE 2: System health check for SystemHealthMonitor ──────────────────
+  getSystemHealth: publicProcedure.query(async () => {
+    // 1. Database health: attempt a lightweight query
+    let databaseStatus: "healthy" | "degraded" | "down" = "down";
+    let databaseDetail = "Connection failed";
+    try {
+      const db = await getDb();
+      if (db) {
+        // Ping with a cheap count query
+        const result = await db.execute(sql`SELECT 1 AS ping`);
+        if (result) {
+          databaseStatus = "healthy";
+          databaseDetail = "Connected";
+        }
+      } else {
+        databaseStatus = "degraded";
+        databaseDetail = "No connection pool";
+      }
+    } catch {
+      databaseStatus = "down";
+      databaseDetail = "Query failed";
+    }
+
+    // 2. Background jobs: count running jobs
+    let jobsStatus: "idle" | "processing" | "error" = "idle";
+    let jobsDetail = "No active jobs";
+    let activeJobCount = 0;
+    try {
+      const db = await getDb();
+      if (db) {
+        const runningJobs = await db
+          .select({ id: backgroundJobs.id, status: backgroundJobs.status })
+          .from(backgroundJobs)
+          .where(eq(backgroundJobs.status, "running"))
+          .limit(10);
+        activeJobCount = runningJobs.length;
+        if (activeJobCount > 0) {
+          jobsStatus = "processing";
+          jobsDetail = `${activeJobCount} job${activeJobCount > 1 ? "s" : ""} running`;
+        } else {
+          // Check for failed jobs in last hour
+          const recentFailed = await db
+            .select({ id: backgroundJobs.id })
+            .from(backgroundJobs)
+            .where(
+              and(
+                eq(backgroundJobs.status, "failed"),
+                gte(backgroundJobs.createdAt, new Date(Date.now() - 60 * 60 * 1000))
+              )
+            )
+            .limit(1);
+          if (recentFailed.length > 0) {
+            jobsStatus = "error";
+            jobsDetail = "Recent job failures detected";
+          } else {
+            jobsStatus = "idle";
+            jobsDetail = "All jobs complete";
+          }
+        }
+      }
+    } catch {
+      jobsStatus = "error";
+      jobsDetail = "Queue check failed";
+    }
+
+    // 3. ML Model status
+    let modelStatus: "ready" | "calibrating" | "stale" = "stale";
+    let modelDetail = "Model not trained";
+    try {
+      const trained = isModelTrained();
+      const metrics = getModelMetrics();
+      if (trained && metrics) {
+        modelStatus = "ready";
+        modelDetail = `R²=${metrics.r2?.toFixed(3) ?? "N/A"}`;
+      } else if (trained) {
+        modelStatus = "ready";
+        modelDetail = "Trained, no metrics";
+      } else {
+        modelStatus = "stale";
+        modelDetail = "Not yet calibrated";
+      }
+    } catch {
+      modelStatus = "stale";
+      modelDetail = "Status unavailable";
+    }
+
+    return {
+      database: { status: databaseStatus, detail: databaseDetail },
+      jobs: { status: jobsStatus, detail: jobsDetail, activeCount: activeJobCount },
+      model: { status: modelStatus, detail: modelDetail },
+      checkedAt: new Date().toISOString(),
+    };
+  }),
 });
+

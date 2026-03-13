@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Download, Loader2, RefreshCw, FileText, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 /**
  * Assessment Audit Log - TerraFusion Canonical Scene
@@ -26,6 +27,7 @@ export default function AssessmentAuditLog() {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [page, setPage] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
   const pageSize = 50;
 
   // Fetch audit logs with filters
@@ -37,6 +39,9 @@ export default function AssessmentAuditLog() {
     endDate: endDate ? endDate.toISOString() : undefined,
   });
 
+  // Export query — lazy, triggered manually
+  const utils = trpc.useUtils();
+
   const handleClearFilters = () => {
     setFilterAction("all");
     setStartDate(undefined);
@@ -44,8 +49,58 @@ export default function AssessmentAuditLog() {
     setPage(0);
   };
 
-  const handleExport = () => {
-    alert("CSV export functionality coming soon");
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      // Fetch ALL matching records (no pagination limit)
+      const allLogs = await utils.assessmentReview.exportAuditLogs.fetch({
+        action: filterAction === "all" ? undefined : filterAction,
+        startDate: startDate ? startDate.toISOString() : undefined,
+        endDate: endDate ? endDate.toISOString() : undefined,
+      });
+
+      if (!allLogs || allLogs.length === 0) {
+        toast.warning("No records to export with current filters");
+        return;
+      }
+
+      // Build CSV string
+      const headers = ["ID", "Timestamp", "Property ID", "Action", "Old Status", "New Status", "User", "Notes"];
+      const rows = allLogs.map(log => [
+        log.id,
+        new Date(log.timestamp).toISOString(),
+        log.propertyId,
+        log.action,
+        log.oldStatus ?? "",
+        log.newStatus,
+        log.userName ?? (log.userId ? `User ${log.userId}` : "System"),
+        (log.notes ?? "").replace(/,/g, ";").replace(/\n/g, " "),
+      ]);
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
+      ].join("\n");
+
+      // Trigger browser download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const dateStr = format(new Date(), "yyyy-MM-dd");
+      link.href = url;
+      link.download = `assessment-audit-log-${dateStr}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${allLogs.length} audit record${allLogs.length !== 1 ? "s" : ""} to CSV`);
+    } catch (err) {
+      console.error("Export failed:", err);
+      toast.error("Export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const getActionBadgeVariant = (action: string): "default" | "destructive" | "secondary" | "outline" => {
@@ -100,9 +155,20 @@ export default function AssessmentAuditLog() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </TactileButton>
-          <TactileButton variant="neon" size="sm" commitment onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
+          <TactileButton
+            variant="neon"
+            size="sm"
+            commitment
+            onClick={handleExport}
+            disabled={isExporting}
+            aria-label="Export audit log as CSV"
+          >
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            {isExporting ? "Exporting..." : "Export CSV"}
           </TactileButton>
         </div>
       </div>

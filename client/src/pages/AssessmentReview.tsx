@@ -13,6 +13,7 @@ import { useLocation } from "wouter";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { PropertyPreviewCard } from "@/components/PropertyPreviewCard";
+import { BatchActionDialog, type BatchActionType } from "@/components/BatchActionDialog";
 
 interface HighVarianceProperty {
   id: string;
@@ -47,6 +48,11 @@ export default function AssessmentReview() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [hoveredProperty, setHoveredProperty] = useState<HighVarianceProperty | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // Batch confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    action: BatchActionType;
+  }>({ open: false, action: "approved" });
   const utils = trpc.useUtils();
   
   // Bulk update mutation
@@ -115,18 +121,24 @@ export default function AssessmentReview() {
     }
   };
 
-  const handleBulkAction = (status: "approved" | "flagged" | "pending") => {
+  // Step 1: Open confirmation dialog
+  const handleBulkAction = (status: BatchActionType) => {
     if (selectedIds.size === 0) {
       toast.error("No properties selected");
       return;
     }
+    setConfirmDialog({ open: true, action: status });
+  };
 
+  // Step 2: Execute after user confirms in dialog
+  const executeBulkAction = () => {
     bulkUpdate.mutate({
       propertyIds: Array.from(selectedIds).map(id => parseInt(id)),
-      newStatus: status,
-      action: `bulk_${status}`,
-      notes: `Bulk ${status} action via Assessment Review`,
+      newStatus: confirmDialog.action,
+      action: `bulk_${confirmDialog.action}`,
+      notes: `Bulk ${confirmDialog.action} action via Assessment Review`,
     });
+    setConfirmDialog(prev => ({ ...prev, open: false }));
   };
 
   // Keyboard shortcuts
@@ -431,6 +443,27 @@ export default function AssessmentReview() {
           position={mousePosition}
         />
       )}
+
+      {/* Batch Action Confirmation Dialog */}
+      <BatchActionDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        action={confirmDialog.action}
+        selectedCount={selectedIds.size}
+        severity={{
+          critical: Array.from(selectedIds).filter(id => {
+            const p = properties.find(p => p.id === id);
+            return p?.severity === "critical";
+          }).length,
+          warning: Array.from(selectedIds).filter(id => {
+            const p = properties.find(p => p.id === id);
+            return p?.severity === "warning";
+          }).length,
+        }}
+        isPending={bulkUpdate.isPending}
+        onConfirm={executeBulkAction}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }

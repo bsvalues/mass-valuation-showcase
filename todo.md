@@ -3769,3 +3769,26 @@
 - [x] Add model calibration status
 - [x] Integrate into SystemBar
 - [x] Add neon pulse alerts for issues
+
+
+## 🚀 Next Phase Features (In Progress)
+
+### Feature 1: CSV Export in Audit Log
+- [x] Add exportAuditLog tRPC procedure to assessmentReviewRouter (filtered CSV generation)
+- [x] Add CSV download button to AssessmentAuditLog page header
+- [x] Respect active filters (action type, date range) in export
+- [x] Show loading spinner during export
+- [x] Toast notification on success/error
+
+### Feature 2: Live SystemHealthMonitor
+- [x] Add systemHealth tRPC procedure to server routers (DB ping, job queue depth, model status)
+- [x] Update SystemHealthMonitor to poll real endpoint every 30s
+- [x] Show degraded/error states with amber/red NeonDot pulse
+- [x] Add tooltip with detailed status text
+
+### Feature 3: Batch Action Confirmation Dialogs
+- [x] Create BatchActionDialog component (glass modal, count summary, severity breakdown)
+- [x] Integrate into AssessmentReview bulk action buttons (Approve/Flag/Reset)
+- [x] Show property count + severity breakdown (critical/warning) in dialog
+- [x] Audit trail notice in dialog
+- [x] Keyboard shortcut: Enter to confirm, Esc to cancel (via Dialog primitives)
