@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { appeals, parcels, sales } from "../drizzle/schema";
+import { appeals, parcels, sales, propertyHistory } from "../drizzle/schema";
 import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
 
 export const analyticsRouter = router({
@@ -344,6 +344,179 @@ export const analyticsRouter = router({
       return {
         propertyTypes: propertyTypes.map(r => r.value).filter(Boolean) as string[],
         neighborhoods: neighborhoods.map(r => r.value).filter(Boolean) as string[],
+      };
+    }),
+
+  /**
+   * Monthly median A/S ratio trend for MarketAnalysis page
+   */
+  getSalesRatioTrend: publicProcedure
+    .input(z.object({
+      countyName: z.string().optional(),
+      months: z.number().default(12),
+    }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      const monthsBack = input?.months ?? 12;
+      const conditions: ReturnType<typeof sql>[] = [
+        sql`${sales.salePrice} > 0 AND ${sales.assessedValue} > 0`,
+        sql`${sales.saleDate} >= DATE_SUB(CURDATE(), INTERVAL ${monthsBack} MONTH)`,
+      ];
+      if (input?.countyName && input.countyName !== 'all') {
+        conditions.push(sql`${sales.countyName} = ${input.countyName}`);
+      }
+
+      const rows = await db
+        .select({
+          month: sql<string>`DATE_FORMAT(${sales.saleDate}, '%Y-%m')`.as('month'),
+          assessedValue: sales.assessedValue,
+          salePrice: sales.salePrice,
+        })
+        .from(sales)
+        .where(and(...conditions));
+
+      // Group by month and compute median ratio in JS
+      const byMonth = new Map<string, number[]>();
+      for (const row of rows) {
+        const ratio = row.assessedValue / row.salePrice;
+        if (!byMonth.has(row.month)) byMonth.set(row.month, []);
+        byMonth.get(row.month)!.push(ratio);
+      }
+
+      const result: { month: string; ratio: number; count: number }[] = Array.from(byMonth.entries()).map(([month, ratios]) => {
+        const sorted = [...ratios].sort((a, b) => a - b);
+        const n = sorted.length;
+        const median = n % 2 === 1
+          ? sorted[Math.floor(n / 2)]
+          : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+        return { month, ratio: Math.round(median * 10000) / 10000, count: n };
+      });
+      return result.sort((a, b) => a.month.localeCompare(b.month));
+    }),
+
+  /**
+   * Parcel count by property type for MarketAnalysis donut chart
+   */
+  getParcelTypeDistribution: publicProcedure
+    .input(z.object({ countyName: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      const conditions: ReturnType<typeof sql>[] = [
+        sql`${parcels.propertyType} IS NOT NULL`,
+      ];
+      if (input?.countyName && input.countyName !== 'all') {
+        conditions.push(eq(parcels.county, input.countyName));
+      }
+
+      const rows = await db
+        .select({
+          propertyType: parcels.propertyType,
+          count: sql<number>`COUNT(*)`.as('count'),
+        })
+        .from(parcels)
+        .where(and(...conditions))
+        .groupBy(parcels.propertyType)
+        .orderBy(sql`COUNT(*) DESC`);
+
+      const COLORS: Record<string, string> = {
+        residential: '#00FFEE', commercial: '#A855F7',
+        industrial: '#22C55E', agricultural: '#EAB308',
+        exempt: '#64748B', other: '#94A3B8',
+      };
+
+      return rows
+        .filter(r => r.propertyType)
+        .map(r => ({
+          name: r.propertyType!.charAt(0).toUpperCase() + r.propertyType!.slice(1),
+          value: Number(r.count),
+          color: COLORS[r.propertyType!.toLowerCase()] ?? '#94A3B8',
+        }));
+    }),
+
+  /**
+   * Valuation change histogram comparing current vs prior assessment year
+   */
+  getValuationChangeDistribution: publicProcedure
+    .input(z.object({ countyName: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      const currentYear = new Date().getFullYear();
+      const priorYear = currentYear - 1;
+
+      const [currentRows, priorRows] = await Promise.all([
+        db.select({ parcelId: propertyHistory.parcelId, totalValue: propertyHistory.totalValue })
+          .from(propertyHistory).where(eq(propertyHistory.assessmentYear, currentYear)).limit(5000),
+        db.select({ parcelId: propertyHistory.parcelId, totalValue: propertyHistory.totalValue })
+          .from(propertyHistory).where(eq(propertyHistory.assessmentYear, priorYear)).limit(5000),
+      ]);
+
+      const priorMap = new Map(priorRows.map(r => [r.parcelId, r.totalValue ?? 0]));
+      const bins = [
+        { range: '< -10%',      min: -Infinity, max: -10,       count: 0 },
+        { range: '-10% to -5%', min: -10,        max: -5,        count: 0 },
+        { range: '-5% to 0%',   min: -5,         max: 0,         count: 0 },
+        { range: '0% to 5%',    min: 0,          max: 5,         count: 0 },
+        { range: '5% to 10%',   min: 5,          max: 10,        count: 0 },
+        { range: '> 10%',       min: 10,         max: Infinity,  count: 0 },
+      ];
+
+      let matched = 0;
+      for (const cur of currentRows) {
+        const prior = priorMap.get(cur.parcelId);
+        if (!prior || prior === 0 || !cur.totalValue) continue;
+        const pct = ((cur.totalValue - prior) / prior) * 100;
+        matched++;
+        for (const bin of bins) {
+          if (pct >= bin.min && pct < bin.max) { bin.count++; break; }
+        }
+      }
+
+      if (matched === 0) return [];
+      return bins.map(({ range, count }) => ({ range, count }));
+    }),
+
+  /**
+   * Market KPI summary cards for MarketAnalysis header
+   */
+  getMarketKPIs: publicProcedure
+    .input(z.object({ countyName: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      const parcelConditions: ReturnType<typeof sql>[] = [];
+      if (input?.countyName && input.countyName !== 'all') {
+        parcelConditions.push(eq(parcels.county, input.countyName));
+      }
+
+      const [[kpiRow], [salesRow]] = await Promise.all([
+        db.select({
+          totalParcels:       sql<number>`COUNT(*)`.as('totalParcels'),
+          totalAssessedValue: sql<number>`SUM(COALESCE(${parcels.totalAssessedValue}, 0))`.as('totalAssessedValue'),
+          avgAssessedValue:   sql<number>`AVG(COALESCE(${parcels.totalAssessedValue}, 0))`.as('avgAssessedValue'),
+          totalLandValue:     sql<number>`SUM(COALESCE(${parcels.landValue}, 0))`.as('totalLandValue'),
+          totalBuildingValue: sql<number>`SUM(COALESCE(${parcels.buildingValue}, 0))`.as('totalBuildingValue'),
+        }).from(parcels).where(parcelConditions.length > 0 ? and(...parcelConditions) : undefined),
+        db.select({
+          qualifiedSales: sql<number>`COUNT(*)`.as('qualifiedSales'),
+          avgSalePrice:   sql<number>`AVG(${sales.salePrice})`.as('avgSalePrice'),
+        }).from(sales),
+      ]);
+
+      return {
+        totalParcels:       Number(kpiRow?.totalParcels ?? 0),
+        totalAssessedValue: Number(kpiRow?.totalAssessedValue ?? 0),
+        avgAssessedValue:   Number(kpiRow?.avgAssessedValue ?? 0),
+        totalLandValue:     Number(kpiRow?.totalLandValue ?? 0),
+        totalBuildingValue: Number(kpiRow?.totalBuildingValue ?? 0),
+        qualifiedSales:     Number(salesRow?.qualifiedSales ?? 0),
+        avgSalePrice:       Number(salesRow?.avgSalePrice ?? 0),
       };
     }),
 });

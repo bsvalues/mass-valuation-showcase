@@ -4077,3 +4077,18 @@
 - [x] Add loading skeletons for KPI cards, calculator inputs, and compliance rows
 - [x] Add empty state with navigation to Data Ingestion when no sales data found
 - [x] TypeScript: 0 errors
+
+## 📊 Phase W: MarketAnalysis Live Data (Completed)
+
+- [x] Add getSalesRatioTrend procedure to analyticsRouter (monthly median ratio from sales table)
+- [x] Add getParcelTypeDistribution procedure to analyticsRouter (count by propertyType from parcels)
+- [x] Add getValuationChangeDistribution procedure to analyticsRouter (histogram of value change %)
+- [x] Add getMarketKPIs procedure to analyticsRouter (total parcels, total assessed value, avg value, qualified sales)
+- [x] Wire MarketAnalysis page to trpc.analytics.getSalesRatioTrend
+- [x] Wire MarketAnalysis page to trpc.analytics.getParcelTypeDistribution
+- [x] Wire MarketAnalysis page to trpc.analytics.getValuationChangeDistribution
+- [x] Wire MarketAnalysis page to trpc.analytics.getMarketKPIs
+- [x] Add loading skeletons for all charts and KPI cards
+- [x] Add empty state for each chart when no data exists
+- [x] Add county filter Select to toolbar (all/King/Pierce/Snohomish/Spokane/Clark)
+- [x] TypeScript: 0 errors
