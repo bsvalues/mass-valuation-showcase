@@ -1,3 +1,4 @@
+import { CorrelationMatrixHeatmap } from "@/components/CorrelationMatrixHeatmap";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ModelComparisonPanel } from "@/components/ModelComparisonPanel";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { multipleRegression, generateDiagnosticPlots, calculateCorrelationMatrix, type RegressionResult } from "@/lib/regression";
-import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText, GitCompare } from "lucide-react";
+import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText, GitCompare, Network } from "lucide-react";
 import { exportRegressionToPDF } from "@/lib/pdfExport";
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
@@ -773,71 +774,30 @@ export default function RegressionStudio() {
                 {correlationMatrix && (
                   <Card className="col-span-full">
                     <CardHeader>
-                      <CardTitle>Correlation Matrix</CardTitle>
-                      <CardDescription>Pearson correlation coefficients between variables</CardDescription>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <Network className="w-4 h-4 text-primary" />
+                            Correlation Matrix
+                          </CardTitle>
+                          <CardDescription>
+                            Pearson r coefficients — run regression to compute. Hover cells for details.
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {correlationMatrix.variables.length} variables · {correlationMatrix.variables.length * correlationMatrix.variables.length} pairs
+                        </Badge>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr>
-                              <th className="border border-white/10 p-2"></th>
-                              {correlationMatrix.variables.map((varName) => (
-                                <th key={varName} className="border border-white/10 p-2 text-sm font-medium">
-                                  {availableVariables.find(v => v.name === varName)?.label || varName}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {correlationMatrix.variables.map((rowVar, i) => (
-                              <tr key={rowVar}>
-                                <td className="border border-white/10 p-2 text-sm font-medium">
-                                  {availableVariables.find(v => v.name === rowVar)?.label || rowVar}
-                                </td>
-                                {correlationMatrix.variables.map((colVar, j) => {
-                                  const corr = correlationMatrix.matrix[i][j];
-                                  const absCorr = Math.abs(corr);
-                                  
-                                  // Color intensity based on correlation strength
-                                  const getColor = (value: number) => {
-                                    if (value > 0) {
-                                      // Positive correlation: cyan
-                                      const intensity = Math.round(value * 255);
-                                      return `rgba(0, 255, 238, ${value * 0.8})`;
-                                    } else {
-                                      // Negative correlation: red
-                                      const intensity = Math.round(Math.abs(value) * 255);
-                                      return `rgba(255, 100, 100, ${Math.abs(value) * 0.8})`;
-                                    }
-                                  };
-
-                                  return (
-                                    <td
-                                      key={colVar}
-                                      className="border border-white/10 p-2 text-center font-mono text-sm"
-                                      style={{ backgroundColor: getColor(corr) }}
-                                    >
-                                      {corr.toFixed(3)}
-                                    </td>
-                                  );
-                                })}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="mt-4 flex items-center gap-6 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(0, 255, 238, 0.8)' }}></div>
-                          <span>Positive correlation</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(255, 100, 100, 0.8)' }}></div>
-                          <span>Negative correlation</span>
-                        </div>
-                        <p>|r| &gt; 0.7 indicates strong correlation</p>
-                      </div>
+                      <CorrelationMatrixHeatmap
+                        variables={correlationMatrix.variables}
+                        matrix={correlationMatrix.matrix}
+                        labels={Object.fromEntries(
+                          availableVariables.map(v => [v.name, v.label])
+                        )}
+                        vif={regressionResult?.vif}
+                      />
                     </CardContent>
                   </Card>
                 )}

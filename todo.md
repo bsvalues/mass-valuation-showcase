@@ -3985,4 +3985,17 @@
 - [x] Add Promote to Production toggle button per model in comparison panel
 - [x] Show production model name + R00b2 on Mission Control Valuation Model card
 - [x] Show production model name in Dock Home button tooltip
-- [ ] TypeScript: 0 errors
+- [x] TypeScript: 0 errors
+
+## 🏁 Phase Q: Correlation Matrix Heatmap for RegressionStudio
+
+- [x] Audit RegressionStudio variable data flow and parcel data structure
+- [x] Build CorrelationMatrixHeatmap component with SVG color scale
+- [x] Compute pairwise Pearson correlations client-side from parcel sample
+- [x] Color cells from deep red (-1) through near-dark (0) to deep cyan (+1)
+- [x] Display numeric correlation values in each cell
+- [x] Highlight high-correlation pairs (|r| > 0.7) with amber warning border
+- [x] Add VIF annotations per variable from existing regression results
+- [x] Add gradient color legend bar (red → dark → cyan)
+- [x] Integrated as full-width card below diagnostic plots in RegressionStudio
+- [x] TypeScript: 0 errors
