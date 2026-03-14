@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, Download, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 interface CorrelationMatrixHeatmapProps {
   /** Variable names in order */
@@ -11,6 +12,85 @@ interface CorrelationMatrixHeatmapProps {
   labels?: Record<string, string>;
   /** VIF values per variable from the last regression run (optional) */
   vif?: Record<string, number>;
+  /** Called when the user clicks the Download CSV button */
+  onExportCSV?: () => void;
+}
+
+/**
+ * Generate an IAAO-format CSV string for the correlation matrix.
+ * Columns: Variable A, Variable B, Pearson r, |r|, Strength, VIF (A), VIF (B)
+ */
+export function buildCorrelationMatrixCSV(
+  variables: string[],
+  matrix: number[][],
+  labels: Record<string, string> = {},
+  vif: Record<string, number> = {}
+): string {
+  const now = new Date().toISOString().slice(0, 10);
+  const n = variables.length;
+
+  const getLabel = (v: string) => labels[v] || v;
+
+  function strengthLabel(r: number): string {
+    const abs = Math.abs(r);
+    if (abs >= 0.9) return "Very Strong";
+    if (abs >= 0.7) return "Strong";
+    if (abs >= 0.5) return "Moderate";
+    if (abs >= 0.3) return "Weak";
+    return "Negligible";
+  }
+
+  const lines: string[] = [
+    `# TerraFusion Correlation Matrix Export`,
+    `# Generated: ${now}`,
+    `# Variables: ${n}`,
+    `# Source: IAAO Standard on Ratio Studies (2023) § 8.2 — Multicollinearity Diagnostics`,
+    ``,
+    `Variable A,Variable B,Pearson r,|r|,Strength,VIF (A),VIF (B)`,
+  ];
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const r = matrix[i][j];
+      const vifA = vif[variables[i]] != null ? vif[variables[i]].toFixed(3) : "N/A";
+      const vifB = vif[variables[j]] != null ? vif[variables[j]].toFixed(3) : "N/A";
+      lines.push(
+        [
+          `"${getLabel(variables[i])}"`,
+          `"${getLabel(variables[j])}"`,
+          r.toFixed(6),
+          Math.abs(r).toFixed(6),
+          `"${strengthLabel(r)}"`,
+          vifA,
+          vifB,
+        ].join(",")
+      );
+    }
+  }
+
+  // Diagonal (self-correlations) as a separate section
+  lines.push(``);
+  lines.push(`# Diagonal (self-correlations = 1.000)`);
+  lines.push(`Variable,VIF`);
+  for (let i = 0; i < n; i++) {
+    const vifVal = vif[variables[i]] != null ? vif[variables[i]].toFixed(3) : "N/A";
+    lines.push(`"${getLabel(variables[i])}",${vifVal}`);
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Trigger a browser download of a text string as a file.
+ */
+function downloadTextFile(content: string, filename: string, mimeType = "text/csv") {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 /**
@@ -64,7 +144,19 @@ export function CorrelationMatrixHeatmap({
   matrix,
   labels = {},
   vif,
+  onExportCSV,
 }: CorrelationMatrixHeatmapProps) {
+
+  const handleDownload = () => {
+    if (onExportCSV) {
+      onExportCSV();
+      return;
+    }
+    // Fallback: generate and download directly from component
+    const csv = buildCorrelationMatrixCSV(variables, matrix, labels, vif ?? {});
+    const now = new Date().toISOString().slice(0, 10);
+    downloadTextFile(csv, `correlation-matrix-${now}.csv`);
+  };
   const n = variables.length;
 
   /** Find all high-correlation pairs (|r| > 0.7, off-diagonal) */
@@ -270,6 +362,19 @@ export function CorrelationMatrixHeatmap({
             </div>
           </div>
         )}
+
+        {/* Download button */}
+        <div className="flex justify-end pt-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            className="gap-2 text-xs border-[#1e2a3a] text-slate-300 hover:text-white hover:border-[#00FFEE]/40 hover:bg-[rgba(0,255,238,0.06)]"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </Button>
+        </div>
 
         {/* Color legend */}
         <div className="flex items-center gap-3 pt-1">

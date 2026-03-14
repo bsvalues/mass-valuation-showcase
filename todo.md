@@ -4056,3 +4056,12 @@
 - [x] Add interpretation guide panel
 - [x] Replace simplified Residuals vs Leverage card in RegressionStudio with CooksDistancePlot
 - [x] TypeScript: 0 errors
+
+## 📊 Phase U: Correlation Matrix CSV Export (Completed)
+
+- [x] Add buildCorrelationMatrixCSV() utility to CorrelationMatrixHeatmap (exported)
+- [x] Add onExportCSV prop to CorrelationMatrixHeatmap (optional, component also has built-in fallback)
+- [x] Add Download button to CorrelationMatrixHeatmap card header in RegressionStudio
+- [x] CSV includes: variable pair, Pearson r, |r|, correlation strength label, VIF A, VIF B
+- [x] CSV includes IAAO-format header metadata (date, variable count, IAAO standard reference)
+- [x] TypeScript: 0 errors

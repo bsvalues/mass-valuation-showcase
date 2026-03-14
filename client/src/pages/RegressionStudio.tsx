@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { multipleRegression, generateDiagnosticPlots, calculateCorrelationMatrix, type RegressionResult } from "@/lib/regression";
+import { buildCorrelationMatrixCSV } from "@/components/CorrelationMatrixHeatmap";
 import { Activity, AlertCircle, BarChart3, BarChart2, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText, GitCompare, Network } from "lucide-react";
 import { exportRegressionToPDF } from "@/lib/pdfExport";
 import { useState, useEffect, useRef } from "react";
@@ -786,9 +787,36 @@ export default function RegressionStudio() {
                             Pearson r coefficients — run regression to compute. Hover cells for details.
                           </CardDescription>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          {correlationMatrix.variables.length} variables · {correlationMatrix.variables.length * correlationMatrix.variables.length} pairs
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {correlationMatrix.variables.length} variables · {correlationMatrix.variables.length * correlationMatrix.variables.length} pairs
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const csv = buildCorrelationMatrixCSV(
+                                correlationMatrix.variables,
+                                correlationMatrix.matrix,
+                                Object.fromEntries(availableVariables.map(v => [v.name, v.label])),
+                                regressionResult?.vif ?? {}
+                              );
+                              const now = new Date().toISOString().slice(0, 10);
+                              const blob = new Blob([csv], { type: "text/csv" });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `correlation-matrix-${now}.csv`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                              toast.success("Correlation matrix exported", { description: `correlation-matrix-${now}.csv` });
+                            }}
+                            className="gap-1.5 text-xs border-[#1e2a3a] text-slate-300 hover:text-white hover:border-[#00FFEE]/40 hover:bg-[rgba(0,255,238,0.06)]"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Export CSV
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
