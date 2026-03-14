@@ -394,6 +394,11 @@ export const countyStatistics = mysqlTable("countyStatistics", {
   maxLandValue: int("maxLandValue"),
   minBuildingValue: int("minBuildingValue"),
   maxBuildingValue: int("maxBuildingValue"),
+  // Ratio study quality metrics (computed from sales table)
+  medianRatio: float("medianRatio"),
+  cod: float("cod"),
+  prd: float("prd"),
+  qualifiedSalesCount: int("qualifiedSalesCount").default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

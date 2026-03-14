@@ -3933,3 +3933,15 @@
 - [x] Added Clear History button to TerraFusionLayout palette footer (visible only when recentPages.length > 0)
 - [x] clearHistory from useCommandHistory hook wired to button click
 - [x] TypeScript: 0 errors. alert(): 0. TODO/FIXME: 0. Seed script cleaned up.
+
+## 🏁 Phase M: COD/PRD Schema, CSV Export, Run Model Button
+
+- [x] Added medianRatio, cod, prd, qualifiedSalesCount columns (float) to countyStatistics schema
+- [x] Schema migration applied via pnpm db:push
+- [x] computeRatioStats() helper added to countyStatisticsRouter (IAAO-standard COD/PRD)
+- [x] recalculateCountyStats mutation now queries qualified sales, computes COD/PRD, stores in DB
+- [x] Added "Download CSV" button to histogram card header (visible only when data exists)
+- [x] CSV export includes bin distribution + IAAO summary section (Total Sales, Median Ratio, COD%, PRD)
+- [x] Filename format: ratio-study-{county}-{date}.csv
+- [x] Wired Run Model button on Mission Control home page to navigate to /avm-studio
+- [x] TypeScript: 0 errors. alert(): 0. TODO/FIXME: 0.

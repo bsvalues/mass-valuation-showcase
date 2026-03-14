@@ -8,6 +8,13 @@
       "when": 1771041097835,
       "tag": "0000_mean_kitty_pryde",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1773460124777,
+      "tag": "0001_giant_jubilee",
+      "breakpoints": true
     }
   ]
 }

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
 
 /**
  * Home - "Mission Control" Canonical Scene
@@ -28,6 +29,7 @@ import { trpc } from "@/lib/trpc";
  */
 export default function Home() {
   const { user, loading } = useAuth();
+  const [, setLocation] = useLocation();
   
   // System health metrics would be fetched here in production
 
@@ -109,6 +111,7 @@ export default function Home() {
               size="sm"
               commitment
               className="w-full mt-4"
+              onClick={() => setLocation('/avm-studio')}
             >
               <Zap className="w-4 h-4 mr-2" />
               Run Model

@@ -445,9 +445,39 @@ export default function MassAppraisalDashboard() {
                 Target range 0.90–1.10 shown in cyan.
               </p>
             </div>
-            {ratioLoading && (
-              <Loader2 className="w-4 h-4 animate-spin text-[var(--color-signal-primary)]" />
-            )}
+            <div className="flex items-center gap-2">
+              {!ratioLoading && ratioDistribution && ratioDistribution.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-white/10 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-glass-2)] text-xs h-7 px-2"
+                  onClick={() => {
+                    const totalSales = ratioDistribution.reduce((s, b) => s + b.count, 0);
+                    const header = 'Ratio Range,Lower Bound,Upper Bound,Count,Percentage\n';
+                    const rows = ratioDistribution.map(b => {
+                      const pct = totalSales > 0 ? ((b.count / totalSales) * 100).toFixed(2) : '0.00';
+                      return `"${b.rangeLabel}",${b.ratio.toFixed(2)},${(b.ratio + 0.05).toFixed(2)},${b.count},${pct}%`;
+                    });
+                    const countyLabel = selectedCounty !== 'all' ? selectedCounty : 'All Counties';
+                    const summary = `\n\nRatio Study Summary — ${countyLabel}\nTotal Qualified Sales,${totalSales}\nMedian Ratio,${qualityMetrics.medianRatio.toFixed(4)}\nCOD,${qualityMetrics.cod.toFixed(2)}%\nPRD,${qualityMetrics.prd.toFixed(4)}`;
+                    const csv = header + rows.join('\n') + summary;
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ratio-study-${countyLabel.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Download CSV
+                </Button>
+              )}
+              {ratioLoading && (
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--color-signal-primary)]" />
+              )}
+            </div>
           </div>
 
           {ratioLoading ? (
