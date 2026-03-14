@@ -4118,3 +4118,16 @@
 - [x] Add error handling with toast on LLM failure
 - [x] Add completeness score based on narrative length and IAAO section presence (4-section check)
 - [x] TypeScript: 0 errors
+
+## 📊 Phase AA: NeuralCore LLM Chat (Completed)
+
+- [x] Create neuralCoreRouter.ts with chat mutation using invokeLLM() and IAAO system prompt
+- [x] Add getSystemStats query (parcel count, sales count, appeal count, production model)
+- [x] Register neuralCore router in routers.ts
+- [x] Rewrite NeuralCore page with AIChatBox component wired to trpc.neuralCore.chat
+- [x] Add 8 IAAO-specific suggested prompts to AIChatBox
+- [x] Preserve agent topology visualization and neural stream log panel
+- [x] Add live system stats bar (4 KPI cards with Skeleton loading)
+- [x] Add AI capability reference panel (4 topic areas)
+- [x] Add loading/error states (Skeleton for stats, toast on chat error)
+- [x] TypeScript: 0 errors

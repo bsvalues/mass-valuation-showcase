@@ -1,118 +1,151 @@
-import { AgentPersonalityTuner } from "@/components/AgentPersonalityTuner";
+import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Activity, Bot, BrainCircuit, Cpu, FileText, Gavel, Globe, MessageSquare, Shield, Terminal, Zap, Send, User } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
-import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/lib/trpc";
+import {
+  Activity,
+  Bot,
+  BrainCircuit,
+  Building2,
+  FileText,
+  Gavel,
+  Globe,
+  Shield,
+  Terminal,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface AgentLog {
   id: string;
   agent: string;
   message: string;
   timestamp: string;
-  type: 'info' | 'warning' | 'success' | 'error';
+  type: "info" | "warning" | "success" | "error";
 }
 
-interface ChatMessage {
-  id: string;
-  sender: 'user' | 'system';
-  text: string;
-  timestamp: string;
-}
+const SUGGESTED_PROMPTS = [
+  "What is the IAAO target range for COD on residential properties?",
+  "How do I interpret a PRD greater than 1.03?",
+  "Explain the difference between PRD and PRB for equity analysis.",
+  "What are the steps to qualify a sale for ratio study inclusion?",
+  "How should I handle outliers in a mass appraisal regression model?",
+  "What Cook's Distance threshold indicates high influence on a regression?",
+  "Summarize the current state of my assessment data.",
+  "What is the recommended approach for time-adjusting sale prices?",
+];
+
+const AGENT_MESSAGES = [
+  "Optimizing valuation model parameters...",
+  "Cross-referencing zoning data with GIS layer...",
+  "Detected new building permit in database.",
+  "Calibrating cost tables for Q1 2026.",
+  "Running regression analysis on sub-market B.",
+  "Validating outlier removal logic.",
+  "Synchronizing with Rust Core Engine.",
+  "Updating resonance score metrics.",
+  "Scanning for ratio study anomalies...",
+  "Verifying IAAO compliance thresholds.",
+  "Analyzing comparable sales in Sector 7.",
+  "Recalculating neighborhood adjustment factors.",
+];
 
 export default function NeuralCore() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "system",
+      content:
+        "You are TerraFusion AI — an IAAO-certified mass appraisal specialist embedded in the TerraFusion platform.",
+    },
+  ]);
+
   const [logs, setLogs] = useState<AgentLog[]>([
-    { id: '1', agent: 'Swarm Commander', message: 'Detected anomaly in Neighborhood 42: Land value deviation > 5%', timestamp: '10:42:01', type: 'warning' },
-    { id: '2', agent: 'Market Analyst', message: 'Analyzing recent sales in Sector 7. Found 3 comparable properties.', timestamp: '10:42:05', type: 'info' },
-    { id: '3', agent: 'Risk Sentinel', message: 'Verifying compliance with IAAO Standard 6. PRD is within range (1.02).', timestamp: '10:42:08', type: 'success' },
-    { id: '4', agent: 'Legal Defense', message: 'Drafting defense packet for Appeal #2026-042. Evidence strength: High.', timestamp: '10:42:12', type: 'info' },
+    {
+      id: "1",
+      agent: "Swarm Commander",
+      message: "Detected anomaly in Neighborhood 42: Land value deviation > 5%",
+      timestamp: new Date().toLocaleTimeString(),
+      type: "warning",
+    },
+    {
+      id: "2",
+      agent: "Market Analyst",
+      message: "Analyzing recent sales in Sector 7. Found 3 comparable properties.",
+      timestamp: new Date().toLocaleTimeString(),
+      type: "info",
+    },
+    {
+      id: "3",
+      agent: "Risk Sentinel",
+      message: "Verifying compliance with IAAO Standard 6. PRD is within range (1.02).",
+      timestamp: new Date().toLocaleTimeString(),
+      type: "success",
+    },
+    {
+      id: "4",
+      agent: "Legal Defense",
+      message: "Drafting defense packet for Appeal #2026-042. Evidence strength: High.",
+      timestamp: new Date().toLocaleTimeString(),
+      type: "info",
+    },
   ]);
 
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { id: '1', sender: 'system', text: 'Valuation Assistant initialized. I can query the parcel database, analyze outliers, or summarize market trends. How can I help?', timestamp: new Date().toLocaleTimeString() }
-  ]);
-  const [inputMessage, setInputMessage] = useState("");
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  // Live system stats from server
+  const { data: systemStats, isLoading: statsLoading } = trpc.neuralCore.getSystemStats.useQuery(
+    {},
+    { refetchInterval: 30_000 }
+  );
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
+  // Chat mutation
+  const chatMutation = trpc.neuralCore.chat.useMutation({
+    onSuccess: (response) => {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: response.message },
+      ]);
+    },
+    onError: (error) => {
+      toast.error("AI response failed", {
+        description: error.message || "Please try again.",
+      });
+    },
+  });
 
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'user',
-      text: inputMessage,
-      timestamp: new Date().toLocaleTimeString()
-    };
-
-    setChatMessages(prev => [...prev, userMsg]);
-    setInputMessage("");
-
-    // Simulate AI response
-    setTimeout(() => {
-      let responseText = "I'm processing that request...";
-      const lowerInput = userMsg.text.toLowerCase();
-
-      if (lowerInput.includes("outlier") || lowerInput.includes("anomaly")) {
-        responseText = "I've scanned the dataset. Found 24 parcels with valuation deviations > 3 standard deviations from the neighborhood mean. High concentration in Sector 4.";
-      } else if (lowerInput.includes("commercial") || lowerInput.includes("business")) {
-        responseText = "Filtering for Commercial properties... Found 1,204 records. Average price per sq.ft is $245.00, trending up 4.2% year-over-year.";
-      } else if (lowerInput.includes("value") || lowerInput.includes("worth")) {
-        responseText = "Based on the current calibration (Base Rate: $145.50), the total assessed value of the jurisdiction is projected at $42.5 Billion.";
-      } else {
-        responseText = "I can help you analyze valuation data. Try asking about 'outliers', 'commercial trends', or 'total value'.";
-      }
-
-      const systemMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'system',
-        text: responseText,
-        timestamp: new Date().toLocaleTimeString()
-      };
-      setChatMessages(prev => [...prev, systemMsg]);
-    }, 1000);
+  const handleSendMessage = (content: string) => {
+    const newMessages: Message[] = [
+      ...messages,
+      { role: "user", content },
+    ];
+    setMessages(newMessages);
+    chatMutation.mutate({ messages: newMessages });
   };
 
+  // Simulate live agent activity in the neural stream
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+    const agents = ["Swarm Commander", "Market Analyst", "Risk Sentinel", "Legal Defense"];
+    const types: ("info" | "warning" | "success")[] = ["info", "info", "success", "info", "success"];
 
-  // Simulate live agent activity
-  useEffect(() => {
     const interval = setInterval(() => {
-      const agents = ['Swarm Commander', 'Market Analyst', 'Risk Sentinel', 'Legal Defense'];
-      const messages = [
-        'Optimizing valuation model parameters...',
-        'Cross-referencing zoning data with GIS layer...',
-        'Detected new building permit in database.',
-        'Calibrating cost tables for Q1 2026.',
-        'Running regression analysis on sub-market B.',
-        'Validating outlier removal logic.',
-        'Synchronizing with Rust Core Engine.',
-        'Updating resonance score metrics.'
-      ];
-      const types: ('info' | 'warning' | 'success')[] = ['info', 'info', 'success', 'info', 'success'];
-      
       const newLog: AgentLog = {
         id: Date.now().toString(),
         agent: agents[Math.floor(Math.random() * agents.length)],
-        message: messages[Math.floor(Math.random() * messages.length)],
+        message: AGENT_MESSAGES[Math.floor(Math.random() * AGENT_MESSAGES.length)],
         timestamp: new Date().toLocaleTimeString(),
-        type: types[Math.floor(Math.random() * types.length)]
+        type: types[Math.floor(Math.random() * types.length)],
       };
-
-      setLogs(prev => [newLog, ...prev].slice(0, 20));
-    }, 3000);
+      setLogs((prev) => [newLog, ...prev].slice(0, 20));
+    }, 4000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -121,188 +154,284 @@ export default function NeuralCore() {
               The Neural Core
             </h1>
             <p className="text-slate-400 mt-1">
-              Agent Council Command Center. Monitor the collective intelligence of the OS.
+              IAAO AI Assistant &amp; Agent Council Command Center
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="bg-[#00ffee]/10 text-[#00ffee] border-[#00ffee]/20 px-3 py-1 animate-pulse">
-              <Activity className="w-3 h-3 mr-1" />
-              System Consciousness: High
-            </Badge>
-          </div>
+          <Badge
+            variant="outline"
+            className="bg-[#00ffee]/10 text-[#00ffee] border-[#00ffee]/20 px-3 py-1 animate-pulse"
+          >
+            <Activity className="w-3 h-3 mr-1" />
+            System Consciousness: High
+          </Badge>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Agent Nodes Visualization */}
-          <Card className="lg:col-span-2 terra-card relative overflow-hidden min-h-[400px] flex flex-col">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-            <CardHeader className="relative z-10">
-              <CardTitle className="text-[#00ffee] flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                Active Agent Topology
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10 flex-1 flex items-center justify-center">
-              {/* Central Core */}
-              <div className="relative">
-                {/* Connecting Lines (CSS drawn for simplicity in this view) */}
-                <div className="absolute top-1/2 left-1/2 w-[200px] h-[1px] bg-gradient-to-r from-[#00ffee]/50 to-transparent -translate-x-1/2 -translate-y-1/2 rotate-0" />
-                <div className="absolute top-1/2 left-1/2 w-[200px] h-[1px] bg-gradient-to-r from-[#00ffee]/50 to-transparent -translate-x-1/2 -translate-y-1/2 rotate-45" />
-                <div className="absolute top-1/2 left-1/2 w-[200px] h-[1px] bg-gradient-to-r from-[#00ffee]/50 to-transparent -translate-x-1/2 -translate-y-1/2 rotate-90" />
-                <div className="absolute top-1/2 left-1/2 w-[200px] h-[1px] bg-gradient-to-r from-[#00ffee]/50 to-transparent -translate-x-1/2 -translate-y-1/2 rotate-135" />
-
-                {/* The Brain */}
-                <div className="w-24 h-24 rounded-full bg-[#00ffee]/10 border border-[#00ffee] shadow-[0_0_30px_rgba(0,255,238,0.3)] flex items-center justify-center relative z-20 animate-pulse">
-                  <BrainCircuit className="w-10 h-10 text-[#00ffee]" />
-                </div>
-
-                {/* Orbiting Agents */}
-                <div className="absolute top-[-80px] left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-[bounce_3s_infinite]">
-                  <div className="w-12 h-12 rounded-full bg-blue-500/20 border border-blue-500 flex items-center justify-center backdrop-blur-md">
-                    <Bot className="w-6 h-6 text-blue-400" />
-                  </div>
-                  <span className="text-[10px] font-bold text-blue-400 bg-black/50 px-2 py-0.5 rounded-full">Market Analyst</span>
-                </div>
-
-                <div className="absolute bottom-[-80px] left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-[bounce_3s_infinite_1s]">
-                  <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500 flex items-center justify-center backdrop-blur-md">
-                    <Gavel className="w-6 h-6 text-purple-400" />
-                  </div>
-                  <span className="text-[10px] font-bold text-purple-400 bg-black/50 px-2 py-0.5 rounded-full">Legal Defense</span>
-                </div>
-
-                <div className="absolute left-[-100px] top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 animate-[bounce_3s_infinite_0.5s]">
-                  <div className="w-12 h-12 rounded-full bg-green-500/20 border border-green-500 flex items-center justify-center backdrop-blur-md">
-                    <Shield className="w-6 h-6 text-green-400" />
-                  </div>
-                  <span className="text-[10px] font-bold text-green-400 bg-black/50 px-2 py-0.5 rounded-full">Risk Sentinel</span>
-                </div>
-
-                <div className="absolute right-[-100px] top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 animate-[bounce_3s_infinite_1.5s]">
-                  <div className="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500 flex items-center justify-center backdrop-blur-md">
-                    <Zap className="w-6 h-6 text-amber-400" />
-                  </div>
-                  <span className="text-[10px] font-bold text-amber-400 bg-black/50 px-2 py-0.5 rounded-full">Swarm Cmdr</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Live Neural Stream */}
-          <Card className="terra-card flex flex-col h-full">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Terminal className="w-5 h-5 text-[#00ffee]" />
-                Neural Stream
-              </CardTitle>
-              <CardDescription>Real-time inter-agent communication.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0">
-              <ScrollArea className="h-full px-6 pb-4">
-                <div className="space-y-4">
-                  {logs.map((log) => (
-                    <div key={log.id} className="flex gap-3 items-start animate-in fade-in slide-in-from-left-2 duration-300">
-                      <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
-                        log.type === 'warning' ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 
-                        log.type === 'success' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 
-                        log.type === 'error' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
-                        'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'
-                      }`} />
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-bold ${
-                            log.agent === 'Swarm Commander' ? 'text-amber-400' :
-                            log.agent === 'Market Analyst' ? 'text-blue-400' :
-                            log.agent === 'Risk Sentinel' ? 'text-green-400' :
-                            'text-purple-400'
-                          }`}>{log.agent}</span>
-                          <span className="text-[10px] text-slate-500">{log.timestamp}</span>
-                        </div>
-                        <p className="text-sm text-slate-300 font-mono leading-relaxed">
-                          {log.message}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-             <AgentPersonalityTuner />
-          </div>
-          
-          {/* Valuation Assistant Chat */}
-          <Card className="terra-card flex flex-col h-[500px]">
-            <CardHeader>
-              <CardTitle className="text-[#00ffee] flex items-center gap-2">
-                <Bot className="w-5 h-5" />
-                Valuation Assistant
-              </CardTitle>
-              <CardDescription>Ask questions about your data.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
-              <ScrollArea className="flex-1 pr-4">
-                <div className="space-y-4">
-                  {chatMessages.map((msg) => (
-                    <div key={msg.id} className={`flex gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                        msg.sender === 'user' ? 'bg-primary/20 text-primary' : 'bg-[#00ffee]/10 text-[#00ffee]'
-                      }`}>
-                        {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                      </div>
-                      <div className={`rounded-lg p-3 max-w-[80%] text-sm ${
-                        msg.sender === 'user' ? 'bg-primary/10 text-white' : 'bg-white/5 text-slate-300'
-                      }`}>
-                        <p>{msg.text}</p>
-                        <span className="text-[10px] opacity-50 mt-1 block">{msg.timestamp}</span>
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={chatEndRef} />
-                </div>
-              </ScrollArea>
-              <div className="flex gap-2 mt-auto pt-2 border-t border-white/10">
-                <Input 
-                  placeholder="Ask about outliers, trends..." 
-                  className="bg-black/20 border-white/10"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                />
-                <Button size="icon" className="bg-[#00ffee] text-black hover:bg-[#00ffee]/80" onClick={handleSendMessage}>
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* System Directives */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Live System Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Autonomy Level", value: "Level 4", sub: "High Supervision", icon: Cpu, color: "text-[#00ffee]" },
-            { label: "Active Threads", value: "1,024", sub: "Parallel Processes", icon: Activity, color: "text-green-400" },
-            { label: "Knowledge Base", value: "Updated", sub: "2ms ago", icon: FileText, color: "text-blue-400" },
-            { label: "Agent Consensus", value: "99.9%", sub: "Unified Vision", icon: MessageSquare, color: "text-purple-400" },
-          ].map((stat, i) => (
-            <Card key={i} className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className={`p-3 rounded-lg bg-black/30 ${stat.color}`}>
-                  <stat.icon className="w-6 h-6" />
+            {
+              label: "Total Parcels",
+              value: systemStats?.parcelCount,
+              icon: Building2,
+              color: "text-[#00ffee]",
+              format: (v: number) => v.toLocaleString(),
+            },
+            {
+              label: "Sales Records",
+              value: systemStats?.salesCount,
+              icon: TrendingUp,
+              color: "text-blue-400",
+              format: (v: number) => v.toLocaleString(),
+            },
+            {
+              label: "Pending Appeals",
+              value: systemStats?.appealCount,
+              icon: Gavel,
+              color: "text-amber-400",
+              format: (v: number) => v.toLocaleString(),
+            },
+            {
+              label: "Production Model",
+              value: systemStats?.productionModel ? 1 : 0,
+              icon: Zap,
+              color: systemStats?.productionModel ? "text-green-400" : "text-slate-500",
+              format: () =>
+                systemStats?.productionModel
+                  ? `R² ${systemStats.productionModel.rSquared ?? "N/A"}`
+                  : "None",
+            },
+          ].map(({ label, value, icon: Icon, color, format }) => (
+            <Card key={label} className="terra-card">
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">
+                    {label}
+                  </span>
+                  <Icon className={`w-4 h-4 ${color}`} />
                 </div>
-                <div>
-                  <p className="text-sm text-slate-400">{stat.label}</p>
-                  <h4 className="text-xl font-bold text-white">{stat.value}</h4>
-                  <p className="text-xs text-slate-500">{stat.sub}</p>
-                </div>
+                {statsLoading ? (
+                  <Skeleton className="h-7 w-24 bg-slate-700" />
+                ) : (
+                  <div className={`text-2xl font-bold ${color}`}>
+                    {value !== undefined ? format(value) : "—"}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Main Grid: Chat + Agent Topology + Neural Stream */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* AI Chat — takes 2 columns */}
+          <div className="lg:col-span-2">
+            <Card className="terra-card h-full flex flex-col">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-[#00ffee] flex items-center gap-2">
+                    <Bot className="w-5 h-5" />
+                    TerraFusion AI Assistant
+                  </CardTitle>
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-green-500/10 text-green-400 border-green-500/20"
+                  >
+                    IAAO Specialist
+                  </Badge>
+                </div>
+                <CardDescription className="text-slate-400">
+                  Ask about IAAO standards, mass appraisal methodology, your live data, or appeal
+                  defense strategy.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 p-0">
+                <AIChatBox
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isLoading={chatMutation.isPending}
+                  placeholder="Ask about IAAO standards, ratio studies, regression diagnostics..."
+                  height={520}
+                  emptyStateMessage="TerraFusion AI is ready. Ask me anything about mass appraisal."
+                  suggestedPrompts={SUGGESTED_PROMPTS}
+                  className="border-0 rounded-none"
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right column: Agent Topology + Neural Stream */}
+          <div className="flex flex-col gap-6">
+            {/* Agent Topology */}
+            <Card className="terra-card relative overflow-hidden" style={{ minHeight: 280 }}>
+              <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+              <CardHeader className="relative z-10 pb-2">
+                <CardTitle className="text-[#00ffee] flex items-center gap-2 text-sm">
+                  <Globe className="w-4 h-4" />
+                  Active Agent Topology
+                </CardTitle>
+              </CardHeader>
+              <CardContent
+                className="relative z-10 flex items-center justify-center"
+                style={{ minHeight: 200 }}
+              >
+                <div className="relative">
+                  {[0, 45, 90, 135].map((deg) => (
+                    <div
+                      key={deg}
+                      className="absolute top-1/2 left-1/2 w-[160px] h-[1px] bg-gradient-to-r from-[#00ffee]/50 to-transparent"
+                      style={{ transform: `translate(-50%, -50%) rotate(${deg}deg)` }}
+                    />
+                  ))}
+                  {/* Brain core */}
+                  <div className="w-16 h-16 rounded-full bg-[#00ffee]/10 border border-[#00ffee] shadow-[0_0_20px_rgba(0,255,238,0.3)] flex items-center justify-center relative z-20 animate-pulse">
+                    <BrainCircuit className="w-8 h-8 text-[#00ffee]" />
+                  </div>
+                  {/* Orbiting agents */}
+                  {[
+                    {
+                      label: "Market Analyst",
+                      icon: Bot,
+                      colorClass: "bg-blue-500/20 border-blue-500",
+                      textClass: "text-blue-400",
+                      pos: "top-[-70px] left-1/2 -translate-x-1/2",
+                    },
+                    {
+                      label: "Legal Defense",
+                      icon: Gavel,
+                      colorClass: "bg-purple-500/20 border-purple-500",
+                      textClass: "text-purple-400",
+                      pos: "bottom-[-70px] left-1/2 -translate-x-1/2",
+                    },
+                    {
+                      label: "Risk Sentinel",
+                      icon: Shield,
+                      colorClass: "bg-green-500/20 border-green-500",
+                      textClass: "text-green-400",
+                      pos: "left-[-85px] top-1/2 -translate-y-1/2",
+                    },
+                    {
+                      label: "Swarm Cmdr",
+                      icon: Zap,
+                      colorClass: "bg-amber-500/20 border-amber-500",
+                      textClass: "text-amber-400",
+                      pos: "right-[-85px] top-1/2 -translate-y-1/2",
+                    },
+                  ].map(({ label, icon: Icon, colorClass, textClass, pos }) => (
+                    <div key={label} className={`absolute ${pos} flex flex-col items-center gap-1`}>
+                      <div
+                        className={`w-9 h-9 rounded-full ${colorClass} border flex items-center justify-center`}
+                      >
+                        <Icon className={`w-4 h-4 ${textClass}`} />
+                      </div>
+                      <span
+                        className={`text-[9px] font-bold ${textClass} bg-black/50 px-1.5 py-0.5 rounded-full whitespace-nowrap`}
+                      >
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Neural Stream */}
+            <Card className="terra-card flex flex-col flex-1">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white flex items-center gap-2 text-sm">
+                  <Terminal className="w-4 h-4 text-[#00ffee]" />
+                  Neural Stream
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Real-time inter-agent communication
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-y-auto max-h-64 space-y-3 pr-1">
+                {logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="flex gap-2 items-start animate-in fade-in slide-in-from-left-2 duration-300"
+                  >
+                    <div
+                      className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${
+                        log.type === "warning"
+                          ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]"
+                          : log.type === "success"
+                          ? "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]"
+                          : log.type === "error"
+                          ? "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]"
+                          : "bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]"
+                      }`}
+                    />
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`text-[10px] font-bold ${
+                            log.agent === "Swarm Commander"
+                              ? "text-amber-400"
+                              : log.agent === "Market Analyst"
+                              ? "text-blue-400"
+                              : log.agent === "Risk Sentinel"
+                              ? "text-green-400"
+                              : "text-purple-400"
+                          }`}
+                        >
+                          {log.agent}
+                        </span>
+                        <span className="text-[9px] text-slate-500">{log.timestamp}</span>
+                      </div>
+                      <p className="text-xs text-slate-300 font-mono leading-relaxed break-words">
+                        {log.message}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Capability Reference */}
+        <Card className="terra-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white flex items-center gap-2 text-sm">
+              <FileText className="w-4 h-4 text-[#00ffee]" />
+              AI Capability Reference
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Topics the TerraFusion AI Assistant is trained to answer
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                {
+                  label: "IAAO Standards",
+                  desc: "Ratio study targets, COD/PRD/PRB interpretation, certification requirements",
+                },
+                {
+                  label: "Regression Analysis",
+                  desc: "OLS, MRA, Cook's Distance, VIF, heteroscedasticity, model diagnostics",
+                },
+                {
+                  label: "Mass Appraisal",
+                  desc: "Cost approach, sales comparison, income approach, time adjustments",
+                },
+                {
+                  label: "Appeal Defense",
+                  desc: "Hearing preparation, comparable selection, burden of proof, IAAO evidence standards",
+                },
+              ].map(({ label, desc }) => (
+                <div
+                  key={label}
+                  className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50"
+                >
+                  <div className="text-xs font-semibold text-[#00ffee] mb-1">{label}</div>
+                  <div className="text-xs text-slate-400 leading-relaxed">{desc}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

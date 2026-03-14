@@ -23,6 +23,7 @@ import { templatesRouter } from "./templatesRouter";
 import { clusterStatsRouter } from "./clusterStatsRouter";
 import { propertyComparisonRouter } from "./propertyComparisonRouter";
 import { assessmentReviewRouter } from "./assessmentReviewRouter";
+import { neuralCoreRouter } from "./neuralCoreRouter";
 
 // Admin-only procedure
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -51,6 +52,7 @@ export const appRouter = router({
   clusterStats: clusterStatsRouter,
   propertyComparison: propertyComparisonRouter,
   assessmentReview: assessmentReviewRouter,
+  neuralCore: neuralCoreRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
