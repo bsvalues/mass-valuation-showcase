@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   TrendingUp,
@@ -16,6 +17,7 @@ import {
   CheckCircle2,
   Download,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import {
   BarChart,
@@ -59,7 +61,24 @@ export default function MassAppraisalDashboard() {
   const totalProperties = parcelList?.length ?? 27753;
 
   // Fetch real county statistics from database
+  const utils = trpc.useUtils();
   const { data: countyStatsData = [] } = trpc.countyStats.getAllCountyStats.useQuery();
+
+  // Recalculate county stats from live parcel data
+  const recalculateMutation = trpc.countyStats.recalculateCountyStats.useMutation({
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(`Stats recalculated for ${selectedCounty} County`);
+      } else {
+        toast.info(result.message ?? 'No parcel data found for this county');
+      }
+      utils.countyStats.getAllCountyStats.invalidate();
+      utils.analytics.getRatioDistribution.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`Recalculation failed: ${err.message}`);
+    },
+  });
 
   // Derived quality metrics (computed from ratio distribution when available)
   const qualityMetrics = (() => {
@@ -247,6 +266,22 @@ export default function MassAppraisalDashboard() {
             </SelectContent>
           </Select>
 
+          {selectedCounty !== 'all' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-white/10 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-glass-2)]"
+              onClick={() => recalculateMutation.mutate({ countyName: selectedCounty })}
+              disabled={recalculateMutation.isPending}
+            >
+              {recalculateMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              Recalculate Stats
+            </Button>
+          )}
           <Button
             size="sm"
             className="bg-[var(--color-signal-primary)] hover:bg-[var(--color-signal-primary)]/90 text-black"

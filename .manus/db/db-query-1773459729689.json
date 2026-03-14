@@ -1,0 +1,97 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "appealComments"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "appealDocuments"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "appealTemplates"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "appealTimeline"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "appeals"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "assessmentAuditLog"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "auditLogs"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "avmModels"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "backgroundJobs"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "batchJobs"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "batchResults"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "batchValuationJobs"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "batchValuationResults"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "countyStatistics"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "importErrors"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "importJobs"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "importTemplates"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "jobErrors"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "jobEvents"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "neighborhoodStats"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "parcels"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "predictions"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "propertyHistory"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "regressionModels"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "resolutionTemplates"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "sales"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "users"
+    },
+    {
+      "Tables_in_KxciJFHZo62ThWBBp8dHpL": "waCountyParcels"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_KxciJFHZo62ThWBBp8dHpL\n__drizzle_migrations\nappealComments\nappealDocuments\nappealTemplates\nappealTimeline\nappeals\nassessmentAuditLog\nauditLogs\navmModels\nbackgroundJobs\nbatchJobs\nbatchResults\nbatchValuationJobs\nbatchValuationResults\ncountyStatistics\nimportErrors\nimportJobs\nimportTemplates\njobErrors\njobEvents\nneighborhoodStats\nparcels\npredictions\npropertyHistory\nregressionModels\nresolutionTemplates\nsales\nusers\nwaCountyParcels\n",
+  "stderr": "",
+  "execution_time_ms": 356
+}

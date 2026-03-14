@@ -3921,3 +3921,15 @@
 - [x] CommandPalette.tsx calls recordNavigation for all nav commands, sharing history with TerraFusionLayout palette
 - [x] Removed stale backup files (MapExplorer.backup.tsx, MapExplorer_old.tsx, MapExplorer_with_sidebar.tsx)
 - [x] TypeScript: 0 errors. alert(): 0. TODO/FIXME: 0.
+
+## 🏁 Phase L: Recalculate Stats, Sales Seed, Clear History
+
+- [x] Wired Recalculate Stats button in MassAppraisalDashboard to trpc.countyStats.recalculateCountyStats mutation
+- [x] Button appears only when a specific county is selected (hidden for "All Counties")
+- [x] On success: toast.success + invalidates getAllCountyStats + getRatioDistribution queries
+- [x] On error: toast.error with server message
+- [x] Seeded sales table with 500 realistic WA county records (Box-Muller bell curve, mean ratio 0.96, std dev 0.08)
+- [x] Sales distributed across 8 WA counties with realistic neighborhoods, property types, sale prices, and quality flags
+- [x] Added Clear History button to TerraFusionLayout palette footer (visible only when recentPages.length > 0)
+- [x] clearHistory from useCommandHistory hook wired to button click
+- [x] TypeScript: 0 errors. alert(): 0. TODO/FIXME: 0. Seed script cleaned up.

@@ -1,0 +1,18 @@
+{
+  "query": "SELECT 'sales' as tbl, COUNT(*) as cnt FROM sales UNION ALL SELECT 'countyStatistics', COUNT(*) FROM countyStatistics;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT 'sales' as tbl, COUNT(*) as cnt FROM sales UNION ALL SELECT 'countyStatistics', COUNT(*) FROM countyStatistics;",
+  "rows": [
+    {
+      "tbl": "countyStatistics",
+      "cnt": "8"
+    },
+    {
+      "tbl": "sales",
+      "cnt": "70959"
+    }
+  ],
+  "messages": [],
+  "stdout": "tbl\tcnt\ncountyStatistics\t8\nsales\t70959\n",
+  "stderr": "",
+  "execution_time_ms": 411
+}

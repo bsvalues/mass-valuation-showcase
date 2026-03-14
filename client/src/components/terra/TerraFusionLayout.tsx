@@ -137,7 +137,7 @@ export function TerraFusionLayout({
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const { recentPages, recordNavigation } = useCommandHistory();
+  const { recentPages, recordNavigation, clearHistory } = useCommandHistory();
 
   // Command Palette keyboard shortcut (⌘K or Ctrl+K)
   React.useEffect(() => {
@@ -477,10 +477,20 @@ export function TerraFusionLayout({
               )}
 
               {/* Footer hint */}
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-glass-border text-xs text-text-tertiary">
-                <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">↑↓</kbd> navigate</span>
-                <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">↵</kbd> open</span>
-                <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">ESC</kbd> close</span>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-glass-border text-xs text-text-tertiary">
+                <div className="flex items-center gap-4">
+                  <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">↑↓</kbd> navigate</span>
+                  <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">↵</kbd> open</span>
+                  <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">ESC</kbd> close</span>
+                </div>
+                {recentPages.length > 0 && (
+                  <button
+                    onClick={clearHistory}
+                    className="text-text-tertiary hover:text-signal-primary transition-colors duration-fast underline underline-offset-2"
+                  >
+                    Clear recent
+                  </button>
+                )}
               </div>
             </div>
           </LiquidPanel>

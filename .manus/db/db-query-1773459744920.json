@@ -1,0 +1,19 @@
+{
+  "query": "SELECT COUNT(*) as sales_count FROM sales; SELECT COUNT(*) as county_stats_count FROM countyStatistics;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT COUNT(*) as sales_count FROM sales; SELECT COUNT(*) as county_stats_count FROM countyStatistics;",
+  "rows": [
+    {
+      "sales_count": "70959"
+    },
+    {
+      "sales_count": "county_stats_count"
+    },
+    {
+      "sales_count": "8"
+    }
+  ],
+  "messages": [],
+  "stdout": "sales_count\n70959\ncounty_stats_count\n8\n",
+  "stderr": "",
+  "execution_time_ms": 447
+}

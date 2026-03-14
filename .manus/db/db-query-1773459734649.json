@@ -1,0 +1,97 @@
+{
+  "query": "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name;",
+  "rows": [
+    {
+      "table_name": "__drizzle_migrations"
+    },
+    {
+      "table_name": "appealComments"
+    },
+    {
+      "table_name": "appealDocuments"
+    },
+    {
+      "table_name": "appealTemplates"
+    },
+    {
+      "table_name": "appealTimeline"
+    },
+    {
+      "table_name": "appeals"
+    },
+    {
+      "table_name": "assessmentAuditLog"
+    },
+    {
+      "table_name": "auditLogs"
+    },
+    {
+      "table_name": "avmModels"
+    },
+    {
+      "table_name": "backgroundJobs"
+    },
+    {
+      "table_name": "batchJobs"
+    },
+    {
+      "table_name": "batchResults"
+    },
+    {
+      "table_name": "batchValuationJobs"
+    },
+    {
+      "table_name": "batchValuationResults"
+    },
+    {
+      "table_name": "countyStatistics"
+    },
+    {
+      "table_name": "importErrors"
+    },
+    {
+      "table_name": "importJobs"
+    },
+    {
+      "table_name": "importTemplates"
+    },
+    {
+      "table_name": "jobErrors"
+    },
+    {
+      "table_name": "jobEvents"
+    },
+    {
+      "table_name": "neighborhoodStats"
+    },
+    {
+      "table_name": "parcels"
+    },
+    {
+      "table_name": "predictions"
+    },
+    {
+      "table_name": "propertyHistory"
+    },
+    {
+      "table_name": "regressionModels"
+    },
+    {
+      "table_name": "resolutionTemplates"
+    },
+    {
+      "table_name": "sales"
+    },
+    {
+      "table_name": "users"
+    },
+    {
+      "table_name": "waCountyParcels"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_name\n__drizzle_migrations\nappealComments\nappealDocuments\nappealTemplates\nappealTimeline\nappeals\nassessmentAuditLog\nauditLogs\navmModels\nbackgroundJobs\nbatchJobs\nbatchResults\nbatchValuationJobs\nbatchValuationResults\ncountyStatistics\nimportErrors\nimportJobs\nimportTemplates\njobErrors\njobEvents\nneighborhoodStats\nparcels\npredictions\npropertyHistory\nregressionModels\nresolutionTemplates\nsales\nusers\nwaCountyParcels\n",
+  "stderr": "",
+  "execution_time_ms": 362
+}

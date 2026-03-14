@@ -1,0 +1,66 @@
+{
+  "query": "SELECT countyName, COUNT(*) as cnt, ROUND(AVG(CAST(assessedToSaleRatio AS DECIMAL(10,4))), 4) as avg_ratio, ROUND(MIN(CAST(assessedToSaleRatio AS DECIMAL(10,4))), 4) as min_ratio, ROUND(MAX(CAST(assessedToSaleRatio AS DECIMAL(10,4))), 4) as max_ratio FROM sales GROUP BY countyName ORDER BY countyName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT countyName, COUNT(*) as cnt, ROUND(AVG(CAST(assessedToSaleRatio AS DECIMAL(10,4))), 4) as avg_ratio, ROUND(MIN(CAST(assessedToSaleRatio AS DECIMAL(10,4))), 4) as min_ratio, ROUND(MAX(CAST(assessedToSaleRatio AS DECIMAL(10,4))), 4) as max_ratio FROM sales GROUP BY countyName ORDER BY countyName;",
+  "rows": [
+    {
+      "countyName": "Adams",
+      "cnt": "52",
+      "avg_ratio": "0.9563",
+      "min_ratio": "0.7557",
+      "max_ratio": "1.1733"
+    },
+    {
+      "countyName": "Benton",
+      "cnt": "71026",
+      "avg_ratio": "105.4385",
+      "min_ratio": "0.0000",
+      "max_ratio": "999999.9999"
+    },
+    {
+      "countyName": "Franklin",
+      "cnt": "63",
+      "avg_ratio": "0.9684",
+      "min_ratio": "0.7729",
+      "max_ratio": "1.1421"
+    },
+    {
+      "countyName": "Grant",
+      "cnt": "65",
+      "avg_ratio": "0.9486",
+      "min_ratio": "0.7733",
+      "max_ratio": "1.2473"
+    },
+    {
+      "countyName": "Kittitas",
+      "cnt": "60",
+      "avg_ratio": "0.9545",
+      "min_ratio": "0.7534",
+      "max_ratio": "1.1042"
+    },
+    {
+      "countyName": "Klickitat",
+      "cnt": "62",
+      "avg_ratio": "0.9598",
+      "min_ratio": "0.7934",
+      "max_ratio": "1.1642"
+    },
+    {
+      "countyName": "Walla Walla",
+      "cnt": "67",
+      "avg_ratio": "0.9623",
+      "min_ratio": "0.8228",
+      "max_ratio": "1.1337"
+    },
+    {
+      "countyName": "Yakima",
+      "cnt": "64",
+      "avg_ratio": "0.9619",
+      "min_ratio": "0.7781",
+      "max_ratio": "1.1563"
+    }
+  ],
+  "messages": [],
+  "stdout": "countyName\tcnt\tavg_ratio\tmin_ratio\tmax_ratio\nAdams\t52\t0.9563\t0.7557\t1.1733\nBenton\t71026\t105.4385\t0.0000\t999999.9999\nFranklin\t63\t0.9684\t0.7729\t1.1421\nGrant\t65\t0.9486\t0.7733\t1.2473\nKittitas\t60\t0.9545\t0.7534\t1.1042\nKlickitat\t62\t0.9598\t0.7934\t1.1642\nWalla Walla\t67\t0.9623\t0.8228\t1.1337\nYakima\t64\t0.9619\t0.7781\t1.1563\n",
+  "stderr": "",
+  "execution_time_ms": 479
+}
