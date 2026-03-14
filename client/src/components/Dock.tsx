@@ -1,14 +1,11 @@
 import { useLocation } from 'wouter';
+import { trpc } from '@/lib/trpc';
 import {
   Home,
   Scale,
   Map,
   Database,
-  TrendingUp,
-  Brain,
-  Users,
   Shield,
-  Layers,
   BarChart3,
   Building2,
   Calculator,
@@ -27,6 +24,13 @@ interface DockApp {
 export function Dock() {
   const [location, setLocation] = useLocation();
 
+  // Live pending appeals count — refetch every 60 seconds
+  const { data: statusCounts } = trpc.appeals.getStatusCounts.useQuery(undefined, {
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const pendingCount = statusCounts?.pending ?? 0;
+
   const apps: DockApp[] = [
     {
       id: 'home',
@@ -39,7 +43,7 @@ export function Dock() {
       label: 'Appeals',
       icon: Scale,
       path: '/appeals',
-      badge: 12, // Example: 12 pending appeals
+      badge: pendingCount > 0 ? pendingCount : undefined,
     },
     {
       id: 'analytics',
@@ -122,15 +126,15 @@ export function Dock() {
             >
               <Icon className="w-6 h-6" />
 
-              {/* Badge */}
-              {app.badge && (
+              {/* Live Badge */}
+              {app.badge !== undefined && app.badge > 0 && (
                 <span
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full
+                  className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full
                              bg-[var(--color-signal-alert)] text-white
                              text-xs font-bold flex items-center justify-center
                              shadow-[0_0_10px_rgba(255,51,102,0.5)]"
                 >
-                  {app.badge}
+                  {app.badge > 99 ? '99+' : app.badge}
                 </span>
               )}
 
@@ -156,6 +160,11 @@ export function Dock() {
                            shadow-lg"
               >
                 {app.label}
+                {app.id === 'appeals' && pendingCount > 0 && (
+                  <span className="ml-1 text-[var(--color-signal-alert)]">
+                    ({pendingCount} pending)
+                  </span>
+                )}
               </span>
             </button>
           );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { useLocation } from 'wouter';
+import { useCommandHistory } from '@/hooks/useCommandHistory';
 import {
   Home,
   BarChart3,
@@ -34,10 +35,32 @@ interface CommandItem {
   keywords?: string[];
 }
 
+// Map from command ID to href + label for shared history recording
+const NAV_HREF_MAP: Record<string, { href: string; label: string }> = {
+  'nav-home': { href: '/', label: 'Home Dashboard' },
+  'nav-appeals': { href: '/appeals', label: 'Appeals Management' },
+  'nav-appeals-analytics': { href: '/appeals/analytics', label: 'Appeal Analytics' },
+  'nav-comparison': { href: '/appeals/comparison', label: 'Appeal Comparison' },
+  'nav-templates': { href: '/templates', label: 'Resolution Templates' },
+  'nav-map': { href: '/map-explorer', label: 'Map Explorer' },
+  'nav-data-ingestion': { href: '/wa-data-ingestion', label: 'Data Ingestion' },
+  'nav-regression': { href: '/regression-studio', label: 'Regression Studio' },
+  'nav-avm': { href: '/avm-studio', label: 'AVM Studio' },
+  'nav-model-management': { href: '/model-management', label: 'Model Management' },
+  'nav-admin-users': { href: '/admin/users', label: 'User Management' },
+  'nav-governance': { href: '/governance', label: 'Governance & Audit' },
+  'nav-mass-appraisal-dashboard': { href: '/mass-appraisal-dashboard', label: 'Mass Appraisal Dashboard' },
+  'nav-cluster-heatmap': { href: '/cluster-map', label: 'Cluster Heatmap' },
+  'nav-property-heatmap': { href: '/property-heatmap', label: 'Property Value Heatmap' },
+  'nav-ratio-study-analyzer': { href: '/ratio-study-analyzer', label: 'Ratio Study Analyzer' },
+  'nav-value-drivers': { href: '/value-drivers', label: 'Value Driver Analysis' },
+};
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [, setLocation] = useLocation();
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
+  const { recordNavigation } = useCommandHistory();
 
   // Keyboard shortcut handler (⌘K / Ctrl+K)
   useEffect(() => {
@@ -64,10 +87,16 @@ export function CommandPalette() {
     action();
     setOpen(false);
 
-    // Update recent commands
+    // Update legacy recent commands list (for CommandPalette's own Recent section)
     const updated = [commandId, ...recentCommands.filter(id => id !== commandId)].slice(0, 5);
     setRecentCommands(updated);
     localStorage.setItem('recentCommands', JSON.stringify(updated));
+
+    // Also record in shared tf_recent_pages for TerraFusionLayout palette
+    const navInfo = NAV_HREF_MAP[commandId];
+    if (navInfo) {
+      recordNavigation(navInfo.href, navInfo.label);
+    }
   };
 
   // Define all commands

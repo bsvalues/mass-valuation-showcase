@@ -3909,3 +3909,15 @@
 - [x] Add keyboard shortcut footer hints (↑↓ navigate, ↵ open, ESC close)
 - [x] Upgrade Control Center from placeholder text to real quick-access link list
 - [x] TypeScript: 0 errors. alert(): 0. coming soon: 0. TODO: 0.
+
+## 🏁 Phase K: Live Data, County Selector, Shared History
+
+- [x] Wire Dock appeals badge to live pending appeals count via trpc.appeals.getStatusCounts (refetch every 60s, "99+" overflow, tooltip)
+- [x] County selector on Mass Appraisal Dashboard populated from real DB countyStatistics table (8 WA counties seeded)
+- [x] County selector filters the ratio distribution histogram via getRatioDistribution({ countyName }) query
+- [x] Added optional countyName input to analyticsRouter.getRatioDistribution procedure
+- [x] Created shared useCommandHistory hook (client/src/hooks/useCommandHistory.ts) persisting to tf_recent_pages localStorage key
+- [x] TerraFusionLayout CommandPalette shows Recent Pages section (top of list when no search query) using shared hook
+- [x] CommandPalette.tsx calls recordNavigation for all nav commands, sharing history with TerraFusionLayout palette
+- [x] Removed stale backup files (MapExplorer.backup.tsx, MapExplorer_old.tsx, MapExplorer_with_sidebar.tsx)
+- [x] TypeScript: 0 errors. alert(): 0. TODO/FIXME: 0.

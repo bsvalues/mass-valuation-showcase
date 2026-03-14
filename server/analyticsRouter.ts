@@ -281,9 +281,17 @@ export const analyticsRouter = router({
    * Buckets sales ratios (assessedValue / salePrice) into 0.05-wide bins from 0.50 to 1.50
    */
   getRatioDistribution: publicProcedure
-    .query(async () => {
+    .input(z.object({
+      countyName: z.string().optional(),
+    }).optional())
+    .query(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error('Database not available');
+
+      const conditions: ReturnType<typeof sql>[] = [sql`${sales.salePrice} > 0 AND ${sales.assessedValue} > 0`];
+      if (input?.countyName && input.countyName !== 'all') {
+        conditions.push(sql`${sales.countyName} = ${input.countyName}`);
+      }
 
       const salesData = await db
         .select({
@@ -291,7 +299,7 @@ export const analyticsRouter = router({
           salePrice: sales.salePrice,
         })
         .from(sales)
-        .where(sql`${sales.salePrice} > 0 AND ${sales.assessedValue} > 0`)
+        .where(and(...conditions))
         .limit(5000);
 
       const binEdges = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30];

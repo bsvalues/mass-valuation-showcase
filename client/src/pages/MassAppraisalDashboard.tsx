@@ -48,9 +48,11 @@ export default function MassAppraisalDashboard() {
   const miniMapContainer = useRef<HTMLDivElement>(null);
   const miniMap = useRef<maplibregl.Map | null>(null);
 
-  // Fetch real ratio distribution from database
+  // Fetch real ratio distribution from database, filtered by selected county
   const { data: ratioDistribution, isLoading: ratioLoading } =
-    trpc.analytics.getRatioDistribution.useQuery();
+    trpc.analytics.getRatioDistribution.useQuery(
+      selectedCounty !== 'all' ? { countyName: selectedCounty } : undefined
+    );
 
   // Fetch real parcel count from database
   const { data: parcelList } = trpc.parcels.list.useQuery();
@@ -221,14 +223,16 @@ export default function MassAppraisalDashboard() {
 
         <div className="flex items-center gap-3">
           <Select value={selectedCounty} onValueChange={setSelectedCounty}>
-            <SelectTrigger className="w-40 bg-[var(--color-glass-3)] border-white/10">
-              <SelectValue />
+            <SelectTrigger className="w-48 bg-[var(--color-glass-3)] border-white/10">
+              <SelectValue placeholder="All Counties" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Counties</SelectItem>
-              <SelectItem value="king">King County</SelectItem>
-              <SelectItem value="pierce">Pierce County</SelectItem>
-              <SelectItem value="snohomish">Snohomish County</SelectItem>
+              {countyStatsData.map(c => (
+                <SelectItem key={c.countyName} value={c.countyName}>
+                  {c.countyName}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

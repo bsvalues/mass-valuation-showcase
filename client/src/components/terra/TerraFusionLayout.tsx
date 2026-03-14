@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { LiquidPanel } from "./LiquidPanel";
 import { TactileButton } from "./TactileButton";
+import { useCommandHistory } from "@/hooks/useCommandHistory";
 import {
   Database,
   BarChart3,
@@ -136,6 +137,7 @@ export function TerraFusionLayout({
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const { recentPages, recordNavigation } = useCommandHistory();
 
   // Command Palette keyboard shortcut (⌘K or Ctrl+K)
   React.useEffect(() => {
@@ -187,7 +189,9 @@ export function TerraFusionLayout({
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (filteredItems[selectedIndex]) {
-        setLocation(filteredItems[selectedIndex].href);
+        const item = filteredItems[selectedIndex];
+        recordNavigation(item.href, item.label);
+        setLocation(item.href);
         setCommandPaletteOpen(false);
       }
     } else if (e.key === "Escape") {
@@ -399,6 +403,36 @@ export function TerraFusionLayout({
                 </div>
               ) : (
                 <div className="space-y-0.5 max-h-72 overflow-y-auto">
+                  {/* Recent pages section — shown only when no search query */}
+                  {!searchQuery && recentPages.length > 0 && (
+                    <>
+                      <p className="text-xs text-text-tertiary uppercase tracking-wider px-3 py-1">
+                        Recent — {recentPages.length} page{recentPages.length !== 1 ? "s" : ""}
+                      </p>
+                      {recentPages.map((page) => {
+                        const match = ALL_NAV_ITEMS.find(n => n.href === page.href);
+                        const Icon = match?.icon ?? FileText;
+                        return (
+                          <Link
+                            key={`recent-${page.href}`}
+                            href={page.href}
+                            onClick={() => {
+                              recordNavigation(page.href, page.label);
+                              setCommandPaletteOpen(false);
+                            }}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-glass-1 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0 text-signal-secondary" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">{page.label}</p>
+                              <p className="text-xs text-text-tertiary truncate">{match?.description ?? page.href}</p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                      <div className="h-px bg-glass-border my-2" />
+                    </>
+                  )}
                   {!searchQuery && (
                     <p className="text-xs text-text-tertiary uppercase tracking-wider px-3 py-1 mb-1">
                       All Pages — {filteredItems.length} available
@@ -416,7 +450,10 @@ export function TerraFusionLayout({
                       <Link
                         key={item.href}
                         href={item.href}
-                        onClick={() => setCommandPaletteOpen(false)}
+                        onClick={() => {
+                          recordNavigation(item.href, item.label);
+                          setCommandPaletteOpen(false);
+                        }}
                         className={cn(
                           "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer",
                           isSelected
