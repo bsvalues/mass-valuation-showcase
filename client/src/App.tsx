@@ -59,6 +59,7 @@ import ClusterHeatmap from "./pages/ClusterHeatmap";
 import PropertyComparison from "./pages/PropertyComparison";
 import AssessmentReview from "./pages/AssessmentReview";
 import AssessmentAuditLog from "./pages/AssessmentAuditLog";
+import PropertyHeatmapPage from "./pages/PropertyHeatmapPage";
 
 
 function Router() {
@@ -104,6 +105,7 @@ function Router() {
       <Route path={"/data-import"} component={DataImport} />
       <Route path={"/batch-valuation"} component={BatchValuation} />
       <Route path={"/wa-data-ingestion"} component={WADataIngestion} />
+      <Route path={"/property-heatmap"} component={PropertyHeatmapPage} />
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

@@ -270,8 +270,26 @@ export function TerraFusionLayout({
                 />
               </div>
               
-              <div className="text-sm text-text-secondary">
-                Command Palette coming soon - universal teleport to any parcel, tool, or scene
+              <div className="space-y-1">
+                <p className="text-xs text-text-tertiary uppercase tracking-wider mb-3">Quick Navigation</p>
+                {[
+                  { label: 'Map Explorer', href: '/map-explorer' },
+                  { label: 'Appeals Management', href: '/appeals' },
+                  { label: 'Assessment Review', href: '/assessment-review' },
+                  { label: 'Mass Appraisal Dashboard', href: '/mass-appraisal-dashboard' },
+                  { label: 'Regression Studio', href: '/regression' },
+                  { label: 'Property Heatmap', href: '/property-heatmap' },
+                ].map(item => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setCommandPaletteOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-3 h-3 text-signal-primary" />
+                    <span className="text-sm">{item.label}</span>
+                  </Link>
+                ))}
               </div>
             </div>
           </LiquidPanel>

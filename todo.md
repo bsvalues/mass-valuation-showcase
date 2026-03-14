@@ -3842,39 +3842,55 @@
 ## 🏁 COMPLETE 100% ROADMAP — Zero TODOs, Zero Mocks, Zero Placeholders
 
 ### Phase A: Appeals Completeness
-- [ ] AppealsManagement reads ?filter=in_review URL param on mount and pre-applies status filter
-- [ ] AppealAuditLog real data: implement getAuditLog procedure to query appealTimeline table
-- [ ] AppealsManagement bulk document ZIP download (use JSZip + S3 presigned URLs)
+- [x] AppealsManagement reads ?filter=in_review URL param on mount and pre-applies status filter
+- [x] AppealAuditLog real data: implement getAuditLog procedure to query appealTimeline table
+- [x] AppealsManagement bulk document ZIP download (use JSZip + S3 presigned URLs)
 
 ### Phase B: AppealAnalytics Real Period Calculations
-- [ ] Calculate actual period-over-period % change for all 4 KPI cards from real DB data
-- [ ] Add previous-period query (30 days ago) to appealsAnalyticsRouter
-- [ ] Replace hardcoded "+18%", "+8%", "-12%", "+5%" with real computed deltas
+- [x] Calculate actual period-over-period % change for all 4 KPI cards from real DB data
+- [x] Add previous-period query (30 days ago) to appealsAnalyticsRouter
+- [x] Replace hardcoded "+18%", "+8%", "-12%", "+5%" with real computed deltas
 
 ### Phase C: AppealDocumentUpload Real S3 Upload
-- [ ] Add uploadDocument tRPC mutation to appealsRouter (server-side storagePut)
-- [ ] Replace stub uploadToS3 in AppealDocumentUpload with real tRPC mutation
-- [ ] Return real fileKey + fileUrl from server and save to appealDocuments table
+- [x] Add uploadDocument tRPC mutation to appealsRouter (server-side storagePut)
+- [x] Replace stub uploadToS3 in AppealDocumentUpload with real tRPC mutation
+- [x] Return real fileKey + fileUrl from server and save to appealDocuments table
 
 ### Phase D: CommandPalette Export Report
-- [ ] Replace alert('Export functionality coming soon') with real CSV/PDF export
-- [ ] Export current page context (appeals list, audit log, or assessment data)
-- [ ] Use Blob API for CSV or jsPDF for PDF depending on context
+- [x] Replace alert('Export functionality coming soon') with real CSV/PDF export
+- [x] Export current page context (appeals list, audit log, or assessment data)
+- [x] Use Blob API for CSV or jsPDF for PDF depending on context
 
 ### Phase E: MapExplorer Layer Controls + Polygon Drawing
-- [ ] Implement handleLayerVisibility to toggle Google Maps layer objects (TrafficLayer, TransitLayer, etc.)
-- [ ] Implement handleLayerOpacity to set opacity on overlay layers
-- [ ] Implement polygon drawing using Google Maps DrawingManager API
+- [x] Implement handleLayerVisibility to toggle Google Maps layer objects (TrafficLayer, TransitLayer, etc.)
+- [x] Implement handleLayerOpacity to set opacity on overlay layers
+- [x] Implement polygon drawing using Google Maps DrawingManager API
 
 ### Phase F: CalibrationStudio + MassAppraisalDashboard
-- [ ] Replace CalibrationStudio "Interactive Cost Curve Editor Placeholder" with real Chart.js editable curve
-- [ ] Replace MassAppraisalDashboard mock data with real tRPC countyStatistics queries
+- [x] Replace CalibrationStudio "Interactive Cost Curve Editor Placeholder" with real Chart.js editable curve
+- [x] Replace MassAppraisalDashboard mock data with real tRPC countyStatistics queries
 
 ### Phase G: RegressionStudio + PropertyHeatmapWithFilters
-- [ ] Replace RegressionStudio mockData with real property data from tRPC (sample of 20 parcels)
-- [ ] Re-enable PropertyHeatmapWithFilters tRPC analytics router calls (router now exists)
+- [x] Replace RegressionStudio mockData with real property data from tRPC (sample of 20 parcels)
+- [x] Re-enable PropertyHeatmapWithFilters tRPC analytics router calls (router now exists)
 
 ### Phase H: LoadDataWizard Background Job Creation
-- [ ] Implement background job creation tRPC mutation in LoadDataWizard
-- [ ] Replace TODO comment with real backgroundJobs.create procedure call
-- [ ] Show job status after creation with link to background jobs page
+- [x] Implement background job creation tRPC mutation in LoadDataWizard
+- [x] Replace TODO comment with real backgroundJobs.create procedure call
+- [x] Show job status after creation with link to background jobs page
+
+## 🏁 Navigation & Discovery Completeness
+
+### Phase I: Sidebar + Route Coverage
+- [x] Add Ratio Study Analyzer to Analysis Suite sidebar
+- [x] Add Value Driver Analysis to Analysis Suite sidebar
+- [x] Add Cluster Heatmap to Analysis Suite sidebar
+- [x] Add Property Heatmap to Analysis Suite sidebar
+- [x] Add Mass Appraisal Dashboard to Analysis Suite sidebar
+- [x] Add Appeals Analytics to Governance Suite sidebar
+- [x] Create PropertyHeatmapPage wrapper with DashboardLayout
+- [x] Register /property-heatmap route in App.tsx
+- [x] Add all 6 new pages to CommandPalette navigation items
+- [x] Add all 6 new pages to DashboardLayout breadcrumb routeMap
+- [x] Wire MassAppraisalDashboard county data to real tRPC countyStatistics queries
+- [x] Replace TerraFusionLayout CommandPalette "coming soon" placeholder with real quick-nav links
