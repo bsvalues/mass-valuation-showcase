@@ -1,5 +1,6 @@
 import { CorrelationMatrixHeatmap } from "@/components/CorrelationMatrixHeatmap";
 import { VariableImportanceChart } from "@/components/VariableImportanceChart";
+import { ResidualsVsFittedPlot } from "@/components/ResidualsVsFittedPlot";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ModelComparisonPanel } from "@/components/ModelComparisonPanel";
 import { Badge } from "@/components/ui/badge";
@@ -629,43 +630,41 @@ export default function RegressionStudio() {
                   </CardContent>
                 </Card>
 
-                {/* Diagnostic Plots */}
+                {/* Residuals vs Fitted — full diagnostic component */}
+                {regressionResult && regressionResult.residuals.length > 0 && (
+                  <Card className="border-[#1e2a3a] bg-[#0d1220]">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <Activity className="w-4 h-4 text-[#00FFEE]" />
+                            Residuals vs. Fitted
+                          </CardTitle>
+                          <CardDescription className="text-slate-400">
+                            Diagnostic scatter of residuals against predicted values — reveals non-linearity,
+                            heteroscedasticity, and influential observations.
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline" className="border-[#1e2a3a] text-slate-400 text-xs">
+                          {regressionResult.residuals.length} observations
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ResidualsVsFittedPlot
+                        residuals={regressionResult.residuals}
+                        fitted={regressionResult.fitted}
+                        diagnostics={regressionResult.diagnostics}
+                        n={regressionData?._count}
+                        k={selectedVariables.length}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Remaining Diagnostic Plots (Q-Q, Scale-Location, Residuals vs Leverage) */}
                 {diagnosticPlots && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Residuals vs Fitted */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Residuals vs Fitted</CardTitle>
-                        <CardDescription className="text-xs">Check for non-linearity and heteroscedasticity</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
-                          <ScatterChart>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                            <XAxis
-                              dataKey="x"
-                              type="number"
-                              name="Fitted"
-                              stroke="#888"
-                              tick={{ fill: '#888', fontSize: 11 }}
-                            />
-                            <YAxis
-                              dataKey="y"
-                              type="number"
-                              name="Residuals"
-                              stroke="#888"
-                              tick={{ fill: '#888', fontSize: 11 }}
-                            />
-                            <Tooltip
-                              contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                              labelStyle={{ color: '#fff' }}
-                            />
-                            <ReferenceLine y={0} stroke="#00ffee" strokeDasharray="3 3" />
-                            <Scatter data={diagnosticPlots.residualsVsFitted} fill="#00ffee" fillOpacity={0.6} />
-                          </ScatterChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
 
                     {/* Q-Q Plot */}
                     <Card>

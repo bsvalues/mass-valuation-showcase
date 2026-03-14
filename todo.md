@@ -4009,7 +4009,7 @@
 - [ ] Show t-stat and p-value as custom label on each bar
 - [ ] Add "Not significant" dimming for p > 0.05 variables
 - [ ] Integrate as a new card in RegressionStudio results area
-- [ ] TypeScript: 0 errors
+- [x] TypeScript: 0 errors
 
 
 ## 📊 Phase R: Variable Importance Chart Integration (Completed)
@@ -4028,4 +4028,19 @@
 - [x] Integrated into RegressionStudio as full-width card below CorrelationMatrixHeatmap
 - [x] Conditional render: only shown when a regression has been run
 - [x] variableLabels prop wired from availableVariables for human-readable axis labels
+- [x] TypeScript: 0 errors
+
+## 📊 Phase S: Residuals vs. Fitted Scatter Plot (Completed)
+
+- [x] Audit RegressionResult.residuals and RegressionResult.fitted arrays
+- [x] Build ResidualsVsFittedPlot component with Recharts ComposedChart (Scatter + Line)
+- [x] Zero-reference line (y=0) with label
+- [x] Outlier detection: flag points where |standardized residual| > 2σ (outlier) and > 3σ (severe)
+- [x] Outlier highlighting: amber dots (|z|>2), red dots (|z|>3), larger radius per severity
+- [x] Hover tooltip: observation index, fitted value, raw residual, standardized residual, classification
+- [x] LOESS-style running mean trend line (12 equal-width bins) to reveal non-linearity
+- [x] Heteroscedasticity warning banner (running-mean ratio > 1.5x or Breusch-Pagan p < 0.05)
+- [x] Summary statistics panel: n, residual σ, outlier count, normality pass/fail with p-value
+- [x] Integrated into RegressionStudio as full-width card above Q-Q/Scale-Location/Leverage plots
+- [x] Conditional render: only shown when residuals.length > 0
 - [x] TypeScript: 0 errors
