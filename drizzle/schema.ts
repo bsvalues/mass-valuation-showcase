@@ -1,4 +1,4 @@
-import { date, float, index, int, longtext, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { date, float, index, int, longtext, mysqlEnum, mysqlTable, text, timestamp, tinyint, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -163,6 +163,7 @@ export const regressionModels = mysqlTable("regressionModels", {
   adjustedRSquared: varchar("adjustedRSquared", { length: 32 }),
   fStatistic: varchar("fStatistic", { length: 32 }),
   fPValue: varchar("fPValue", { length: 32 }),
+  isProduction: tinyint("isProduction").default(0).notNull(),
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

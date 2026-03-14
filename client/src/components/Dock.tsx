@@ -10,6 +10,7 @@ import {
   Building2,
   Calculator,
   LineChart,
+  Zap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -30,6 +31,12 @@ export function Dock() {
     staleTime: 30_000,
   });
   const pendingCount = statusCounts?.pending ?? 0;
+
+  // Active production regression model — refetch every 5 minutes
+  const { data: productionModel } = trpc.regressionModels.getProductionModel.useQuery(undefined, {
+    refetchInterval: 5 * 60_000,
+    staleTime: 2 * 60_000,
+  });
 
   const apps: DockApp[] = [
     {
@@ -163,6 +170,12 @@ export function Dock() {
                 {app.id === 'appeals' && pendingCount > 0 && (
                   <span className="ml-1 text-[var(--color-signal-alert)]">
                     ({pendingCount} pending)
+                  </span>
+                )}
+                {app.id === 'home' && productionModel && (
+                  <span className="ml-1 text-cyan-400 flex items-center gap-0.5">
+                    <Zap className="w-2.5 h-2.5" />
+                    {productionModel.name.length > 14 ? productionModel.name.slice(0, 12) + '…' : productionModel.name}
                   </span>
                 )}
               </span>

@@ -15,6 +15,13 @@
       "when": 1773460124777,
       "tag": "0001_giant_jubilee",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1773462661447,
+      "tag": "0002_last_virginia_dare",
+      "breakpoints": true
     }
   ]
 }

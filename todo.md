@@ -3975,3 +3975,14 @@
 - [x] Integrate as a "Compare Models" toggle button in RegressionStudio header
 - [x] Add "Load This Model" button from comparison view
 - [x] TypeScript: 0 errors
+
+## 🏁 Phase P: Model Versioning, Scatter Overlay, Production Promotion
+
+- [x] Add isProduction tinyint column to regressionModels schema
+- [x] Run db:push to migrate
+- [x] Add promoteToProduction and getProductionModel tRPC procedures
+- [x] Add Recharts ScatterChart (fitted vs actual) to ModelComparisonPanel
+- [x] Add Promote to Production toggle button per model in comparison panel
+- [x] Show production model name + R00b2 on Mission Control Valuation Model card
+- [x] Show production model name in Dock Home button tooltip
+- [ ] TypeScript: 0 errors

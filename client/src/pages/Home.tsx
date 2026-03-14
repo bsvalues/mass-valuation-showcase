@@ -31,9 +31,11 @@ export default function Home() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   
-  // System health metrics would be fetched here in production
-
-  // Show layout immediately, user info will load in background
+  // Fetch the active production regression model
+  const { data: productionModel } = trpc.regressionModels.getProductionModel.useQuery(
+    undefined,
+    { enabled: !loading }
+  );
 
   return (
     <>
@@ -102,9 +104,24 @@ export default function Home() {
               <NeonBadge type="success">Ready</NeonBadge>
             </div>
             
-            <div className="text-xs text-text-tertiary">
-              Last calibration: Jan 15, 2026
-            </div>
+            {productionModel ? (
+              <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Zap className="w-3 h-3 text-cyan-400" />
+                  <span className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wide">Production Model</span>
+                </div>
+                <p className="text-xs font-medium text-text-primary truncate" title={productionModel.name}>
+                  {productionModel.name}
+                </p>
+                <p className="text-[10px] text-text-tertiary mt-0.5">
+                  R² {productionModel.rSquared.toFixed(4)} · {productionModel.variables.length} variables
+                </p>
+              </div>
+            ) : (
+              <div className="text-xs text-text-tertiary">
+                No production model set. Run a regression and promote it.
+              </div>
+            )}
 
             <TactileButton
               variant="neon"

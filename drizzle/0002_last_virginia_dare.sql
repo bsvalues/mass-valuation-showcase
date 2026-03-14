@@ -1,0 +1,1 @@
+ALTER TABLE `regressionModels` ADD `isProduction` tinyint DEFAULT 0 NOT NULL;

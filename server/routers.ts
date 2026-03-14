@@ -663,6 +663,57 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+    promoteToProduction: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { regressionModels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq, and } = await import('drizzle-orm');
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        // Demote all models for this user
+        await drizzleDb.update(regressionModels).set({ isProduction: 0 }).where(eq(regressionModels.createdBy, ctx.user.id));
+        // Promote the selected model
+        await drizzleDb.update(regressionModels).set({ isProduction: 1 }).where(and(eq(regressionModels.id, input.id), eq(regressionModels.createdBy, ctx.user.id)));
+        await db.createAuditLog({
+          userId: ctx.user.id,
+          action: "PROMOTE_REGRESSION_MODEL",
+          entityType: "regressionModel",
+          entityId: String(input.id),
+          details: "Promoted regression model to production",
+        });
+        return { success: true };
+      }),
+    getProductionModel: protectedProcedure.query(async ({ ctx }) => {
+      const { regressionModels } = await import('../drizzle/schema');
+      const { getDb } = await import('./db');
+      const { eq, and } = await import('drizzle-orm');
+      const drizzleDb = await getDb();
+      if (!drizzleDb) return null;
+      const [model] = await drizzleDb
+        .select()
+        .from(regressionModels)
+        .where(and(eq(regressionModels.createdBy, ctx.user.id), eq(regressionModels.isProduction, 1)))
+        .limit(1);
+      if (!model) return null;
+      const coeffsRaw = JSON.parse(model.coefficients || '{}');
+      const { intercept, ...coefficients } = coeffsRaw;
+      const variables = JSON.parse(model.independentVariables || '[]');
+      return {
+        id: model.id,
+        name: model.name,
+        description: model.description,
+        variables,
+        coefficients,
+        intercept: intercept ?? 0,
+        rSquared: parseFloat(model.rSquared || '0'),
+        adjustedRSquared: parseFloat(model.adjustedRSquared || '0'),
+        fStatistic: parseFloat(model.fStatistic || '0'),
+        fPValue: parseFloat(model.fPValue || '1'),
+        isProduction: model.isProduction === 1,
+        createdAt: model.createdAt,
+      };
+    }),
   }),
   avmModels: router({
     save: protectedProcedure

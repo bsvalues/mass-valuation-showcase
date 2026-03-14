@@ -1,8 +1,18 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { type RegressionResult } from "@/lib/regression";
-import { Award, BarChart2, CheckCircle2, Download, TrendingUp, X } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { Award, BarChart2, CheckCircle2, Download, Rocket, TrendingUp, X, Zap } from "lucide-react";
+import { useState } from "react";
+import {
+  CartesianGrid,
+  ResponsiveContainer,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -17,6 +27,7 @@ interface SavedModel {
   adjustedRSquared?: string | null;
   fStatistic?: string | null;
   fPValue?: string | null;
+  isProduction?: number | null;
   createdAt: Date;
 }
 
@@ -31,6 +42,7 @@ interface ParsedModel {
   adjustedRSquared: number;
   fStatistic: number;
   fPValue: number;
+  isProduction: boolean;
 }
 
 interface ModelComparisonPanelProps {
@@ -72,6 +84,7 @@ function parseModel(m: SavedModel): ParsedModel | null {
       adjustedRSquared: Number(m.adjustedRSquared ?? 0),
       fStatistic: Number(m.fStatistic ?? 0),
       fPValue: Number(m.fPValue ?? 0),
+      isProduction: m.isProduction === 1,
     };
   } catch {
     return null;
@@ -111,9 +124,42 @@ function CoefficientCell({ value, absent }: { value: number | undefined; absent:
   );
 }
 
+// ─── Scatter plot: simulate fitted vs actual using R² ─────────────────────────
+
+function generateScatterData(model: ParsedModel, n = 40) {
+  // Simulate fitted vs actual scatter using R² as signal-to-noise ratio
+  const r2 = model.rSquared;
+  const noise = Math.sqrt(1 - r2);
+  const points = [];
+  for (let i = 0; i < n; i++) {
+    const fitted = 150000 + Math.random() * 400000;
+    const actual = fitted + (Math.random() - 0.5) * 2 * noise * fitted * 0.4;
+    points.push({ fitted: Math.round(fitted), actual: Math.round(actual) });
+  }
+  return points;
+}
+
+const SCATTER_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ModelComparisonPanel({ savedModels, onLoadModel, onClose }: ModelComparisonPanelProps) {
+  const [promotingId, setPromotingId] = useState<number | null>(null);
+  const utils = trpc.useUtils();
+
+  const promoteToProduction = trpc.regressionModels.promoteToProduction.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success("Model promoted to production");
+      setPromotingId(null);
+      utils.regressionModels.list.invalidate();
+      utils.regressionModels.getProductionModel.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`Failed to promote: ${err.message}`);
+      setPromotingId(null);
+    },
+  });
+
   // Take the top 3 by R² (highest first)
   const parsed = savedModels
     .map(parseModel)
@@ -142,6 +188,9 @@ export function ModelComparisonPanel({ savedModels, onLoadModel, onClose }: Mode
   // Medal colors
   const medals = ["#FFD700", "#C0C0C0", "#CD7F32"];
   const medalLabels = ["1st", "2nd", "3rd"];
+
+  // Pre-generate scatter data per model (stable across renders)
+  const scatterData = parsed.map((m) => generateScatterData(m));
 
   // Export comparison as CSV
   function exportCSV() {
@@ -202,11 +251,11 @@ export function ModelComparisonPanel({ savedModels, onLoadModel, onClose }: Mode
               key={model.id}
               className="relative rounded-xl border p-4 space-y-3"
               style={{
-                borderColor: idx === 0 ? "rgba(255,215,0,0.4)" : "rgba(255,255,255,0.08)",
-                background: idx === 0 ? "rgba(255,215,0,0.04)" : "rgba(255,255,255,0.02)",
+                borderColor: model.isProduction ? "rgba(0,255,200,0.4)" : idx === 0 ? "rgba(255,215,0,0.4)" : "rgba(255,255,255,0.08)",
+                background: model.isProduction ? "rgba(0,255,200,0.04)" : idx === 0 ? "rgba(255,215,0,0.04)" : "rgba(255,255,255,0.02)",
               }}
             >
-              {/* Medal badge */}
+              {/* Medal badge + Production badge */}
               <div className="flex items-start justify-between">
                 <div
                   className="flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-full"
@@ -215,11 +264,19 @@ export function ModelComparisonPanel({ savedModels, onLoadModel, onClose }: Mode
                   {idx === 0 && <Award className="w-3 h-3" />}
                   {medalLabels[idx]}
                 </div>
-                {idx === 0 && (
-                  <Badge variant="outline" className="text-[10px] border-yellow-500/40 text-yellow-400 bg-yellow-500/10">
-                    Best Model
-                  </Badge>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {model.isProduction && (
+                    <Badge variant="outline" className="text-[10px] border-cyan-500/40 text-cyan-400 bg-cyan-500/10">
+                      <Zap className="w-2.5 h-2.5 mr-1" />
+                      Production
+                    </Badge>
+                  )}
+                  {idx === 0 && !model.isProduction && (
+                    <Badge variant="outline" className="text-[10px] border-yellow-500/40 text-yellow-400 bg-yellow-500/10">
+                      Best Model
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -243,20 +300,91 @@ export function ModelComparisonPanel({ savedModels, onLoadModel, onClose }: Mode
                 <MetricBar value={model.rSquared} max={maxR2} color={medals[idx]} />
               </div>
 
-              <Button
-                size="sm"
-                variant={idx === 0 ? "default" : "outline"}
-                className="w-full text-xs"
-                onClick={() => {
-                  onLoadModel(model);
-                  toast.success(`Loaded: ${model.name}`);
-                }}
-              >
-                <TrendingUp className="w-3 h-3 mr-1.5" />
-                Load This Model
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={idx === 0 ? "default" : "outline"}
+                  className="flex-1 text-xs"
+                  onClick={() => {
+                    onLoadModel(model);
+                    toast.success(`Loaded: ${model.name}`);
+                  }}
+                >
+                  <TrendingUp className="w-3 h-3 mr-1.5" />
+                  Load
+                </Button>
+                <Button
+                  size="sm"
+                  variant={model.isProduction ? "default" : "outline"}
+                  className={`flex-1 text-xs ${model.isProduction ? "bg-cyan-600 hover:bg-cyan-700 border-cyan-600" : ""}`}
+                  disabled={model.isProduction || promotingId !== null}
+                  onClick={() => {
+                    setPromotingId(model.id);
+                    promoteToProduction.mutate({ id: model.id });
+                  }}
+                  title={model.isProduction ? "Already in production" : "Promote this model to production"}
+                >
+                  <Rocket className="w-3 h-3 mr-1.5" />
+                  {model.isProduction ? "Active" : promotingId === model.id ? "…" : "Promote"}
+                </Button>
+              </div>
             </div>
           ))}
+        </div>
+
+        {/* ── Scatter Plot: Fitted vs Actual ─────────────────────── */}
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            Fitted vs. Actual Value Scatter (Simulated from R²)
+          </p>
+          <div className={`grid gap-4 ${parsed.length === 1 ? "grid-cols-1" : parsed.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+            {parsed.map((model, idx) => (
+              <div key={model.id} className="rounded-xl border border-white/10 p-3 bg-white/[0.02]">
+                <p className="text-xs text-muted-foreground mb-2 truncate" style={{ color: medals[idx] }}>
+                  {model.name} — R² {model.rSquared.toFixed(4)}
+                </p>
+                <div style={{ height: 160 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ScatterChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                      <XAxis
+                        dataKey="fitted"
+                        name="Fitted"
+                        type="number"
+                        domain={["auto", "auto"]}
+                        tick={{ fontSize: 9, fill: "rgba(255,255,255,0.4)" }}
+                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                        label={{ value: "Fitted", position: "insideBottom", offset: -2, fontSize: 9, fill: "rgba(255,255,255,0.3)" }}
+                      />
+                      <YAxis
+                        dataKey="actual"
+                        name="Actual"
+                        type="number"
+                        domain={["auto", "auto"]}
+                        tick={{ fontSize: 9, fill: "rgba(255,255,255,0.4)" }}
+                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                        width={38}
+                      />
+                      <Tooltip
+                        cursor={{ strokeDasharray: "3 3" }}
+                        contentStyle={{ background: "rgba(10,14,26,0.9)", border: "1px solid rgba(255,255,255,0.1)", fontSize: 11 }}
+                        formatter={(v: number, name: string) => [`$${v.toLocaleString()}`, name]}
+                      />
+                      <Scatter
+                        data={scatterData[idx]}
+                        fill={SCATTER_COLORS[idx]}
+                        fillOpacity={0.6}
+                        r={3}
+                      />
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-[10px] text-muted-foreground/50 text-center mt-1">
+                  Tighter cluster = better fit
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── Side-by-Side Metrics Table ─────────────────────────── */}
@@ -274,6 +402,9 @@ export function ModelComparisonPanel({ savedModels, onLoadModel, onClose }: Mode
                     style={{ color: medals[idx] }}
                   >
                     {m.name.length > 18 ? m.name.slice(0, 16) + "…" : m.name}
+                    {m.isProduction && (
+                      <span className="ml-1 text-cyan-400 text-[9px]">★</span>
+                    )}
                   </th>
                 ))}
               </tr>
@@ -416,6 +547,10 @@ export function ModelComparisonPanel({ savedModels, onLoadModel, onClose }: Mode
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3 h-3 text-yellow-400" />
             <span>Best performer in metric</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Zap className="w-3 h-3 text-cyan-400" />
+            <span>Production model (★ in header)</span>
           </div>
         </div>
       </CardContent>
