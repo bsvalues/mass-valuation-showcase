@@ -4105,3 +4105,16 @@
 - [x] Animate badge with animate-pulse to draw attention
 - [x] Show green CheckCircle2 indicator with target range when data is live
 - [x] TypeScript: 0 errors
+
+## 📊 Phase Z: LLM-Powered Appeal Defense Narratives (Completed)
+
+- [x] Add generateNarrative mutation procedure to defenseStudioRouter using invokeLLM()
+- [x] Build IAAO-compliant system prompt with property data, comparables, and ratio stats context
+- [x] Return structured narrative with sections: Summary, Methodology, Evidence, Conclusion
+- [x] Wire AppealDefenseBuilder AI Generate button to new trpc.defenseStudio.generateNarrative mutation
+- [x] Replace hardcoded stub text with real LLM response
+- [x] Add loading spinner and disabled state during generation
+- [x] Add Copy to Clipboard button on generated narrative
+- [x] Add error handling with toast on LLM failure
+- [x] Add completeness score based on narrative length and IAAO section presence (4-section check)
+- [x] TypeScript: 0 errors

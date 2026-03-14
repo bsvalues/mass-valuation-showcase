@@ -1,8 +1,9 @@
 import { router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { getDb } from "./db";
-import { sales, parcels } from "../drizzle/schema";
-import { and, gte, lte, eq, sql, desc } from "drizzle-orm";
+import { sales, parcels, appeals } from "../drizzle/schema";
+import { and, gte, lte, eq, desc } from "drizzle-orm";
+import { invokeLLM } from "./_core/llm";
 
 /**
  * Defense Studio Router
@@ -143,6 +144,148 @@ export const defenseStudioRouter = router({
       return property[0];
     }),
   
+  /**
+   * Generate an IAAO-compliant defense narrative using LLM
+   * Takes appeal ID and optional comparable sale IDs, fetches all context from DB,
+   * and returns a structured narrative with Summary, Methodology, Evidence, and Conclusion sections.
+   */
+  generateNarrative: protectedProcedure
+    .input(z.object({
+      appealId: z.number(),
+      comparableIds: z.array(z.number()).optional().default([]),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      // 1. Fetch the appeal
+      const appealRows = await db
+        .select()
+        .from(appeals)
+        .where(eq(appeals.id, input.appealId))
+        .limit(1);
+
+      if (appealRows.length === 0) {
+        throw new Error("Appeal not found");
+      }
+      const appeal = appealRows[0];
+
+      // 2. Fetch the subject parcel
+      const parcelRows = await db
+        .select()
+        .from(parcels)
+        .where(eq(parcels.parcelId, appeal.parcelId))
+        .limit(1);
+      const parcel = parcelRows[0] ?? null;
+
+      // 3. Fetch comparable sales if provided
+      let comparables: typeof sales.$inferSelect[] = [];
+      if (input.comparableIds.length > 0) {
+        const { inArray } = await import("drizzle-orm");
+        comparables = await db
+          .select()
+          .from(sales)
+          .where(inArray(sales.id, input.comparableIds));
+      } else {
+        // Auto-fetch recent sales of same property type in same county
+        const conditions = [];
+        if (appeal.countyName) conditions.push(eq(sales.countyName, appeal.countyName));
+        if (parcel?.propertyType) conditions.push(eq(sales.propertyType, parcel.propertyType));
+        comparables = await db
+          .select()
+          .from(sales)
+          .where(conditions.length > 0 ? and(...conditions) : undefined)
+          .orderBy(desc(sales.saleDate))
+          .limit(5);
+      }
+
+      // 4. Build context strings
+      const subjectValueDiff = appeal.currentAssessedValue - appeal.appealedValue;
+      const subjectValueDiffPct = appeal.currentAssessedValue > 0
+        ? ((subjectValueDiff / appeal.currentAssessedValue) * 100).toFixed(1)
+        : '0.0';
+
+      const parcelContext = parcel
+        ? `Address: ${parcel.address ?? parcel.situsAddress ?? 'N/A'}
+  Property Type: ${parcel.propertyTypeDesc ?? parcel.propertyType ?? 'N/A'}
+  Year Built: ${parcel.yearBuilt ?? 'N/A'}
+  Square Feet: ${parcel.squareFeet?.toLocaleString() ?? 'N/A'}
+  Bedrooms: ${parcel.bedrooms ?? 'N/A'}
+  Quality: ${parcel.quality ?? 'N/A'}
+  Condition: ${parcel.condition ?? 'N/A'}
+  Neighborhood: ${parcel.neighborhood ?? 'N/A'}
+  County: ${parcel.county ?? appeal.countyName ?? 'N/A'}`
+        : `Parcel ID: ${appeal.parcelId}\n  County: ${appeal.countyName ?? 'N/A'}`;
+
+      const comparablesContext = comparables.length > 0
+        ? comparables.map((c, i) =>
+            `  Comp ${i + 1}: ${c.situsAddress ?? 'N/A'} — Sale Price: $${c.salePrice.toLocaleString()} on ${c.saleDate instanceof Date ? c.saleDate.toLocaleDateString() : String(c.saleDate)}`
+          ).join('\n')
+        : '  No comparable sales provided.';
+
+      const medianCompPrice = comparables.length > 0
+        ? Math.round(comparables.reduce((s, c) => s + c.salePrice, 0) / comparables.length)
+        : null;
+
+      // 5. Build the LLM prompt
+      const systemPrompt = `You are an expert property tax assessment defense attorney and IAAO-certified mass appraisal analyst.
+You write formal, evidence-based defense narratives for county assessors defending property valuations at appeal hearings.
+Your writing is precise, professional, and cites IAAO standards where appropriate.
+Always structure your response with exactly these four labeled sections:
+1. EXECUTIVE SUMMARY
+2. ASSESSMENT METHODOLOGY
+3. SUPPORTING EVIDENCE
+4. CONCLUSION AND RECOMMENDATION
+Each section should be separated by a blank line. Use plain text only — no markdown, no bullet symbols, no asterisks.`;
+
+      const userPrompt = `Write a formal appeal defense narrative for the following case.
+
+APPEAL DETAILS:
+  Appeal ID: ${appeal.id}
+  Status: ${appeal.status}
+  Appeal Reason: ${appeal.appealReason ?? 'Not specified'}
+  Current Assessed Value: $${appeal.currentAssessedValue.toLocaleString()}
+  Taxpayer Requested Value: $${appeal.appealedValue.toLocaleString()}
+  Difference: $${subjectValueDiff.toLocaleString()} (${subjectValueDiffPct}% reduction requested)
+  Hearing Date: ${appeal.hearingDate ?? 'TBD'}
+
+SUBJECT PROPERTY:
+${parcelContext}
+
+COMPARABLE SALES (${comparables.length} properties):
+${comparablesContext}${
+  medianCompPrice
+    ? `\n\n  Median Comparable Sale Price: $${medianCompPrice.toLocaleString()}`
+    : ''
+}
+
+Write the complete defense narrative now.`;
+
+      // 6. Call LLM
+      const result = await invokeLLM({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+      });
+
+      const narrative = typeof result.choices[0]?.message?.content === 'string'
+        ? result.choices[0].message.content
+        : 'Unable to generate narrative. Please try again.';
+
+      return {
+        narrative,
+        appealId: appeal.id,
+        parcelId: appeal.parcelId,
+        comparableCount: comparables.length,
+        medianCompPrice,
+        subjectValue: appeal.currentAssessedValue,
+        requestedValue: appeal.appealedValue,
+        valueDifference: subjectValueDiff,
+        valueDifferencePct: parseFloat(subjectValueDiffPct),
+      };
+    }),
+
   /**
    * Generate defense report summary statistics
    */
