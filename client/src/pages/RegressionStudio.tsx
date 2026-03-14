@@ -1,4 +1,5 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { ModelComparisonPanel } from "@/components/ModelComparisonPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { multipleRegression, generateDiagnosticPlots, calculateCorrelationMatrix, type RegressionResult } from "@/lib/regression";
-import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText } from "lucide-react";
+import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText, GitCompare } from "lucide-react";
 import { exportRegressionToPDF } from "@/lib/pdfExport";
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
@@ -23,6 +24,7 @@ export default function RegressionStudio() {
   const [correlationMatrix, setCorrelationMatrix] = useState<{ variables: string[]; matrix: number[][] } | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [modelName, setModelName] = useState("");
   const [modelDescription, setModelDescription] = useState("");
   
@@ -156,11 +158,59 @@ export default function RegressionStudio() {
               Advanced statistical analysis with PhD-level regression tools
             </p>
           </div>
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-            <Activity className="w-3 h-3 mr-1" />
-            Statistical Engine
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button
+              variant={compareOpen ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCompareOpen((v) => !v)}
+              disabled={!savedModels || savedModels.length < 2}
+              title={!savedModels || savedModels.length < 2 ? "Save at least 2 models to compare" : "Compare top saved models"}
+            >
+              <GitCompare className="w-4 h-4 mr-2" />
+              Compare Models
+              {savedModels && savedModels.length >= 2 && (
+                <span className="ml-2 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                  {Math.min(savedModels.length, 3)}
+                </span>
+              )}
+            </Button>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+              <Activity className="w-3 h-3 mr-1" />
+              Statistical Engine
+            </Badge>
+          </div>
         </div>
+
+        {/* Model Comparison Panel */}
+        {compareOpen && savedModels && (
+          <ModelComparisonPanel
+            savedModels={savedModels}
+            onLoadModel={(model) => {
+              setSelectedVariables(model.variables.length > 0 ? model.variables : ["squareFeet", "yearBuilt"]);
+              setRegressionResult({
+                coefficients: model.coefficients,
+                intercept: model.intercept,
+                rSquared: model.rSquared,
+                adjustedRSquared: model.adjustedRSquared,
+                fStatistic: model.fStatistic,
+                fPValue: model.fPValue,
+                residuals: [],
+                fitted: [],
+                pValues: Object.fromEntries(model.variables.map((v) => [v, 0.05])),
+                standardErrors: Object.fromEntries(model.variables.map((v) => [v, 0])),
+                tStatistics: Object.fromEntries(model.variables.map((v) => [v, 0])),
+                confidenceIntervals: Object.fromEntries(model.variables.map((v) => [v, [0, 0] as [number, number]])),
+                vif: Object.fromEntries(model.variables.map((v) => [v, 1])),
+                diagnostics: {
+                  normalityTest: { statistic: 0, pValue: 1 },
+                  homoscedasticityTest: { statistic: 0, pValue: 1 },
+                },
+              });
+              setCompareOpen(false);
+            }}
+            onClose={() => setCompareOpen(false)}
+          />
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Variable Selection */}

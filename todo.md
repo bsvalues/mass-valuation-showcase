@@ -3963,3 +3963,15 @@
 - [x] "Load Saved Model" dialog added with full list of saved models (newest first)
 - [x] Each model entry shows R², variables, date, Load button, and Delete button
 - [x] TypeScript: 0 errors. alert(): 0. TODO/FIXME: 0.
+
+## 🔄 Phase O: RegressionStudio Model Comparison View
+
+- [x] Audit RegressionStudio structure and saved models schema
+- [x] Build ModelComparisonPanel component with side-by-side table
+- [x] Add R², Adj. R², F-stat, p-value, and coefficient rows per model
+- [x] Add visual bar indicators for metric ranking
+- [x] Add "Best Model" winner badge on highest R² model
+- [x] Add coefficient heatmap rows (green=positive, red=negative, gray=absent)
+- [x] Integrate as a "Compare Models" toggle button in RegressionStudio header
+- [x] Add "Load This Model" button from comparison view
+- [x] TypeScript: 0 errors
