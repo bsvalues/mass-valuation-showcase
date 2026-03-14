@@ -3999,3 +3999,33 @@
 - [x] Add gradient color legend bar (red → dark → cyan)
 - [x] Integrated as full-width card below diagnostic plots in RegressionStudio
 - [x] TypeScript: 0 errors
+
+## 🔄 Phase R: Variable Importance Chart for RegressionStudio
+- [ ] Audit RegressionStudio regression result structure and coefficient/t-stat data
+- [ ] Build VariableImportanceChart component with horizontal Recharts BarChart
+- [ ] Sort bars by absolute standardized beta weight (most important at top)
+- [ ] Color-code bars: cyan for positive coefficients, red for negative
+- [ ] Add significance threshold reference line (|t| = 1.96 / p = 0.05)
+- [ ] Show t-stat and p-value as custom label on each bar
+- [ ] Add "Not significant" dimming for p > 0.05 variables
+- [ ] Integrate as a new card in RegressionStudio results area
+- [ ] TypeScript: 0 errors
+
+
+## 📊 Phase R: Variable Importance Chart Integration (Completed)
+
+- [x] Build VariableImportanceChart component with horizontal Recharts BarChart
+- [x] Standardized beta coefficients (β* = β × σx / σy) computed client-side
+- [x] Bars sorted by absolute |β*| descending for immediate visual ranking
+- [x] Color-coded positive (cyan #00FFEE) vs negative (red) effects
+- [x] Dimmed bars for non-significant variables (p ≥ 0.05)
+- [x] Significance threshold reference lines (p = 0.05 dashed amber)
+- [x] Custom tooltip with β*, t-stat, p-value, VIF, and significance label
+- [x] Inline significance annotation labels (*** / ** / * / ns + t-value)
+- [x] Summary table below chart with rank, std. β, |std. β|, t-stat, p-value, VIF, sig badge
+- [x] VIF color coding in table (green/amber/red by severity)
+- [x] Footnote with methodological note and warning for insignificant variables
+- [x] Integrated into RegressionStudio as full-width card below CorrelationMatrixHeatmap
+- [x] Conditional render: only shown when a regression has been run
+- [x] variableLabels prop wired from availableVariables for human-readable axis labels
+- [x] TypeScript: 0 errors

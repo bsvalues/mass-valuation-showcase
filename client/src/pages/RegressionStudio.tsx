@@ -1,4 +1,5 @@
 import { CorrelationMatrixHeatmap } from "@/components/CorrelationMatrixHeatmap";
+import { VariableImportanceChart } from "@/components/VariableImportanceChart";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ModelComparisonPanel } from "@/components/ModelComparisonPanel";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { multipleRegression, generateDiagnosticPlots, calculateCorrelationMatrix, type RegressionResult } from "@/lib/regression";
-import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText, GitCompare, Network } from "lucide-react";
+import { Activity, AlertCircle, BarChart3, BarChart2, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText, GitCompare, Network } from "lucide-react";
 import { exportRegressionToPDF } from "@/lib/pdfExport";
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
@@ -797,6 +798,48 @@ export default function RegressionStudio() {
                           availableVariables.map(v => [v.name, v.label])
                         )}
                         vif={regressionResult?.vif}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Variable Importance Chart */}
+                {regressionResult && regressionData && (
+                  <Card className="border-[#1e2a3a] bg-[#0d1220]">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <BarChart2 className="w-4 h-4 text-[#00FFEE]" />
+                            Variable Importance
+                          </CardTitle>
+                          <CardDescription className="text-slate-400">
+                            Standardized beta coefficients (β*) sorted by absolute magnitude.
+                            Bars show each variable's relative contribution to assessed value.
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline" className="border-[#1e2a3a] text-slate-400 text-xs">
+                          {Object.keys(regressionResult.coefficients).length} variables
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <VariableImportanceChart
+                        coefficients={regressionResult.coefficients}
+                        standardErrors={regressionResult.standardErrors}
+                        tStatistics={regressionResult.tStatistics}
+                        pValues={regressionResult.pValues}
+                        vif={regressionResult.vif}
+                        variableData={Object.fromEntries(
+                          selectedVariables.map(v => [
+                            v,
+                            regressionData[v as keyof typeof regressionData] as number[] ?? []
+                          ])
+                        )}
+                        outcomeData={regressionData.totalValue}
+                        variableLabels={Object.fromEntries(
+                          availableVariables.map(v => [v.name, v.label])
+                        )}
                       />
                     </CardContent>
                   </Card>
