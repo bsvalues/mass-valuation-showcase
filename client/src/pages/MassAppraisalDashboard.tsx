@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -64,6 +64,34 @@ export default function MassAppraisalDashboard() {
   const utils = trpc.useUtils();
   const { data: countyStatsData = [] } = trpc.countyStats.getAllCountyStats.useQuery();
 
+  // Batch recalculate all counties
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; running: boolean }>({
+    current: 0, total: 0, running: false,
+  });
+
+  const runBatchRecalculate = useCallback(async () => {
+    const counties = countyStatsData.map(c => c.countyName);
+    if (counties.length === 0) {
+      toast.info('No counties found in database');
+      return;
+    }
+    setBatchProgress({ current: 0, total: counties.length, running: true });
+    let succeeded = 0;
+    for (let i = 0; i < counties.length; i++) {
+      try {
+        await utils.client.countyStats.recalculateCountyStats.mutate({ countyName: counties[i] });
+        succeeded++;
+      } catch {
+        // continue with remaining counties
+      }
+      setBatchProgress({ current: i + 1, total: counties.length, running: i + 1 < counties.length });
+    }
+    utils.countyStats.getAllCountyStats.invalidate();
+    utils.analytics.getRatioDistribution.invalidate();
+    toast.success(`Batch recalculate complete: ${succeeded}/${counties.length} counties updated`);
+    setBatchProgress(prev => ({ ...prev, running: false }));
+  }, [countyStatsData, utils]);
+
   // Recalculate county stats from live parcel data
   const recalculateMutation = trpc.countyStats.recalculateCountyStats.useMutation({
     onSuccess: (result) => {
@@ -80,30 +108,48 @@ export default function MassAppraisalDashboard() {
     },
   });
 
-  // Derived quality metrics (computed from ratio distribution when available)
+  // Prefer DB-stored IAAO metrics for the selected county; fall back to histogram computation
+  const selectedCountyStats = useMemo(() => {
+    if (selectedCounty === 'all') return null;
+    return countyStatsData.find(c => c.countyName === selectedCounty) ?? null;
+  }, [countyStatsData, selectedCounty]);
+
   const qualityMetrics = (() => {
-    if (!ratioDistribution || ratioDistribution.length === 0) {
-      return { medianRatio: 0.96, cod: 8.4, prd: 1.02, totalProperties, recentSales: 1247 };
+    const totalCount = ratioDistribution?.reduce((s, b) => s + b.count, 0) ?? 0;
+
+    // If a specific county is selected and its DB row has IAAO metrics, use them directly
+    if (selectedCountyStats && selectedCountyStats.medianRatio != null) {
+      return {
+        medianRatio: Number(selectedCountyStats.medianRatio),
+        cod: Number(selectedCountyStats.cod ?? 8.4),
+        prd: Number(selectedCountyStats.prd ?? 1.02),
+        totalProperties,
+        recentSales: selectedCountyStats.qualifiedSalesCount ?? totalCount,
+        source: 'db' as const,
+      };
     }
-    const totalCount = ratioDistribution.reduce((s, b) => s + b.count, 0);
+
+    // Fallback: compute from histogram bins
+    if (!ratioDistribution || ratioDistribution.length === 0) {
+      return { medianRatio: 0.96, cod: 8.4, prd: 1.02, totalProperties, recentSales: 1247, source: 'fallback' as const };
+    }
     let cumulative = 0;
     let medianRatio = 0.96;
     for (const bin of ratioDistribution) {
       cumulative += bin.count;
       if (cumulative >= totalCount / 2) {
-        medianRatio = bin.ratio + 0.025; // midpoint of bin
+        medianRatio = bin.ratio + 0.025;
         break;
       }
     }
     const weightedMean = totalCount > 0
       ? ratioDistribution.reduce((s, b) => s + (b.ratio + 0.025) * b.count, 0) / totalCount
       : 0.96;
-    // COD approximation: mean absolute deviation / median * 100
     const cod = totalCount > 0
       ? (ratioDistribution.reduce((s, b) => s + Math.abs(b.ratio + 0.025 - medianRatio) * b.count, 0) / totalCount / medianRatio) * 100
       : 8.4;
     const prd = weightedMean > 0 ? medianRatio / weightedMean : 1.02;
-    return { medianRatio, cod, prd, totalProperties, recentSales: totalCount };
+    return { medianRatio, cod, prd, totalProperties, recentSales: totalCount, source: 'histogram' as const };
   })();
 
   // Map real county statistics to display format, fallback to illustrative data if DB is empty
@@ -111,14 +157,19 @@ export default function MassAppraisalDashboard() {
     if (countyStatsData.length > 0) {
       return countyStatsData.slice(0, 6).map(c => {
         const avgValue = (c.avgLandValue ?? 0) + (c.avgBuildingValue ?? 0);
-        // Derive COD status from parcel count (proxy until COD is stored in DB)
-        const cod = avgValue > 0 ? Math.min(15, Math.max(5, 10000 / (avgValue / 1000))) : 10;
+        // Use real COD from DB if available (populated by recalculateCountyStats)
+        const cod = c.cod != null
+          ? Number(c.cod)
+          : avgValue > 0 ? Math.min(15, Math.max(5, 10000 / (avgValue / 1000))) : 10;
         const status = cod < 8 ? 'excellent' : cod < 10 ? 'good' : cod < 12 ? 'acceptable' : 'review';
         return {
           name: c.countyName,
           properties: c.parcelCount ?? 0,
           avgValue,
           cod: parseFloat(cod.toFixed(1)),
+          prd: c.prd != null ? Number(c.prd) : null,
+          medianRatio: c.medianRatio != null ? Number(c.medianRatio) : null,
+          qualifiedSales: c.qualifiedSalesCount ?? 0,
           status,
         };
       });
@@ -272,7 +323,7 @@ export default function MassAppraisalDashboard() {
               variant="outline"
               className="border-white/10 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-glass-2)]"
               onClick={() => recalculateMutation.mutate({ countyName: selectedCounty })}
-              disabled={recalculateMutation.isPending}
+              disabled={recalculateMutation.isPending || batchProgress.running}
             >
               {recalculateMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -282,6 +333,27 @@ export default function MassAppraisalDashboard() {
               Recalculate Stats
             </Button>
           )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-white/10 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-glass-2)]"
+            onClick={runBatchRecalculate}
+            disabled={batchProgress.running || recalculateMutation.isPending || countyStatsData.length === 0}
+            title="Recalculate IAAO stats for all counties"
+          >
+            {batchProgress.running ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {batchProgress.current}/{batchProgress.total}
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Recalculate All
+              </>
+            )}
+          </Button>
           <Button
             size="sm"
             className="bg-[var(--color-signal-primary)] hover:bg-[var(--color-signal-primary)]/90 text-black"

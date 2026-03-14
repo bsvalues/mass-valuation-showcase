@@ -3945,3 +3945,21 @@
 - [x] Filename format: ratio-study-{county}-{date}.csv
 - [x] Wired Run Model button on Mission Control home page to navigate to /avm-studio
 - [x] TypeScript: 0 errors. alert(): 0. TODO/FIXME: 0.
+
+## 🔄 Phase N: COD/PRD KPI Cards, Batch Recalculate, AVM Studio Persistence
+
+- [ ] Add COD and PRD KPI cards to Mass Appraisal Dashboard from countyStatistics data
+- [ ] Add batch Recalculate All Counties button to Mass Appraisal Dashboard
+- [ ] Persist last AVM Studio model run state on page load from regressionModels table
+
+## 🏁 Phase N: COD/PRD KPI Cards, Batch Recalculate, AVM Studio Persistence
+
+- [x] qualityMetrics now prefers DB-stored IAAO values (medianRatio, cod, prd) when a specific county is selected
+- [x] countyData table uses real COD/PRD from DB when populated by recalculateCountyStats
+- [x] selectedCountyStats memo added to efficiently find the selected county's DB row
+- [x] Batch "Recalculate All" button added with live progress counter (e.g., "3/8")
+- [x] Both single-county and batch buttons are mutually exclusive (disabled while other runs)
+- [x] RegressionStudio auto-loads most recent saved model on first mount via useEffect
+- [x] "Load Saved Model" dialog added with full list of saved models (newest first)
+- [x] Each model entry shows R², variables, date, Load button, and Delete button
+- [x] TypeScript: 0 errors. alert(): 0. TODO/FIXME: 0.

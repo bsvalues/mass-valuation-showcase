@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { multipleRegression, generateDiagnosticPlots, calculateCorrelationMatrix, type RegressionResult } from "@/lib/regression";
 import { Activity, AlertCircle, BarChart3, CheckCircle2, TrendingUp, Save, FolderOpen, Download, Trash2, FileText } from "lucide-react";
 import { exportRegressionToPDF } from "@/lib/pdfExport";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -26,10 +26,47 @@ export default function RegressionStudio() {
   const [modelName, setModelName] = useState("");
   const [modelDescription, setModelDescription] = useState("");
   
-  // Toast notifications handled via alerts for now
   const saveModelMutation = trpc.regressionModels.save.useMutation();
   const { data: savedModels, refetch: refetchModels } = trpc.regressionModels.list.useQuery();
   const deleteModelMutation = trpc.regressionModels.delete.useMutation();
+  const autoLoadedRef = useRef(false);
+
+  // Auto-load the most recent saved model on first mount
+  useEffect(() => {
+    if (autoLoadedRef.current || !savedModels || savedModels.length === 0) return;
+    autoLoadedRef.current = true;
+    const latest = savedModels[savedModels.length - 1];
+    try {
+      const vars: string[] = JSON.parse(latest.independentVariables || '[]');
+      const coefRaw: Record<string, number> = JSON.parse(latest.coefficients || '{}');
+      const { intercept: _intercept, ...coefs } = coefRaw;
+      const reconstructed: RegressionResult = {
+        coefficients: coefs,
+        intercept: _intercept ?? 0,
+        rSquared: Number(latest.rSquared ?? 0),
+        adjustedRSquared: Number(latest.adjustedRSquared ?? 0),
+        fStatistic: Number(latest.fStatistic ?? 0),
+        fPValue: Number(latest.fPValue ?? 0),
+        // Placeholder arrays — will be recalculated when user re-runs
+        residuals: [],
+        fitted: [],
+        pValues: Object.fromEntries(vars.map(v => [v, 0.05])),
+        standardErrors: Object.fromEntries(vars.map(v => [v, 0])),
+        tStatistics: Object.fromEntries(vars.map(v => [v, 0])),
+        confidenceIntervals: Object.fromEntries(vars.map(v => [v, [0, 0] as [number, number]])),
+        vif: Object.fromEntries(vars.map(v => [v, 1])),
+        diagnostics: {
+          normalityTest: { statistic: 0, pValue: 1 },
+          homoscedasticityTest: { statistic: 0, pValue: 1 },
+        },
+      };
+      setSelectedVariables(vars.length > 0 ? vars : ['squareFeet', 'yearBuilt']);
+      setRegressionResult(reconstructed);
+      toast.info(`Restored last model: ${latest.name}`, { duration: 3000 });
+    } catch {
+      // silently ignore parse errors
+    }
+  }, [savedModels]);
 
   // Real property data from tRPC — use up to 500 records with all required fields
   const { data: allParcels, isLoading: parcelsLoading } = trpc.parcels.list.useQuery();
@@ -180,6 +217,98 @@ export default function RegressionStudio() {
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Run Regression Analysis
               </Button>
+
+              {/* Load Saved Model */}
+              <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    <FolderOpen className="w-4 h-4 mr-2" />
+                    Load Saved Model
+                    {savedModels && savedModels.length > 0 && (
+                      <span className="ml-2 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                        {savedModels.length}
+                      </span>
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Load Saved Model</DialogTitle>
+                    <DialogDescription>
+                      Select a previously saved regression model to restore its coefficients and variables.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {!savedModels || savedModels.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-6">No saved models yet.</p>
+                    ) : (
+                      savedModels.slice().reverse().map((model) => {
+                        const vars: string[] = (() => { try { return JSON.parse(model.independentVariables || '[]'); } catch { return []; } })();
+                        return (
+                          <div key={model.id} className="flex items-start justify-between p-3 rounded-lg border border-border hover:bg-accent/30 transition-colors">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{model.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                R² = {Number(model.rSquared ?? 0).toFixed(4)} · {vars.join(', ')}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(model.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex gap-2 ml-3">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  try {
+                                    const coefRaw: Record<string, number> = JSON.parse(model.coefficients || '{}');
+                                    const { intercept: _intercept, ...coefs } = coefRaw;
+                                    const reconstructed: RegressionResult = {
+                                      coefficients: coefs,
+                                      intercept: _intercept ?? 0,
+                                      rSquared: Number(model.rSquared ?? 0),
+                                      adjustedRSquared: Number(model.adjustedRSquared ?? 0),
+                                      fStatistic: Number(model.fStatistic ?? 0),
+                                      fPValue: Number(model.fPValue ?? 0),
+                                      residuals: [], fitted: [],
+                                      pValues: Object.fromEntries(vars.map(v => [v, 0.05])),
+                                      standardErrors: Object.fromEntries(vars.map(v => [v, 0])),
+                                      tStatistics: Object.fromEntries(vars.map(v => [v, 0])),
+                                      confidenceIntervals: Object.fromEntries(vars.map(v => [v, [0, 0] as [number, number]])),
+                                      vif: Object.fromEntries(vars.map(v => [v, 1])),
+                                      diagnostics: { normalityTest: { statistic: 0, pValue: 1 }, homoscedasticityTest: { statistic: 0, pValue: 1 } },
+                                    };
+                                    setSelectedVariables(vars.length > 0 ? vars : ['squareFeet', 'yearBuilt']);
+                                    setRegressionResult(reconstructed);
+                                    setLoadDialogOpen(false);
+                                    toast.success(`Loaded: ${model.name}`);
+                                  } catch {
+                                    toast.error('Failed to parse model data');
+                                  }
+                                }}
+                              >
+                                Load
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  deleteModelMutation.mutate({ id: model.id }, {
+                                    onSuccess: () => { refetchModels(); toast.success('Model deleted'); },
+                                    onError: (e) => toast.error(e.message),
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {regressionResult && (
                 <div className="space-y-2">
