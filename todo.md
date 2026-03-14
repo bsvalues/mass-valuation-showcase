@@ -4065,3 +4065,15 @@
 - [x] CSV includes: variable pair, Pearson r, |r|, correlation strength label, VIF A, VIF B
 - [x] CSV includes IAAO-format header metadata (date, variable count, IAAO standard reference)
 - [x] TypeScript: 0 errors
+
+## 📊 Phase V: RatioStudyAnalyzer Live Data (Completed)
+
+- [x] Wire trpc.ratioStudies.calculate.useQuery to replace mock ratioData
+- [x] Wire trpc.ratioStudies.getSalesData.useQuery for ratio distribution scatter chart
+- [x] Add ratio distribution scatter chart (ratio vs sale price) using Recharts ScatterChart
+- [x] Add dynamic compliance evaluation (pass/warning/fail) for medianRatio, COD, PRD, PRB
+- [x] Add study year filter that derives startDate/endDate for all queries
+- [x] Wire Export Report button to trpc.ratioStudies.exportPDF.useMutation with toast
+- [x] Add loading skeletons for KPI cards, calculator inputs, and compliance rows
+- [x] Add empty state with navigation to Data Ingestion when no sales data found
+- [x] TypeScript: 0 errors
