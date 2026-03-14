@@ -3894,3 +3894,18 @@
 - [x] Add all 6 new pages to DashboardLayout breadcrumb routeMap
 - [x] Wire MassAppraisalDashboard county data to real tRPC countyStatistics queries
 - [x] Replace TerraFusionLayout CommandPalette "coming soon" placeholder with real quick-nav links
+
+## 🏁 Phase J: DB Seed, Dock Polish, CommandPalette UX
+
+- [x] Seed countyStatistics table with 8 real Washington State counties (Benton, Franklin, Yakima, Walla Walla, Kittitas, Grant, Adams, Klickitat)
+- [x] Fix Dock broken paths (/mass-appraisal → /mass-appraisal-dashboard, /ratio-study → /ratio-study-analyzer)
+- [x] Add Heatmap entry to Dock pointing to /property-heatmap
+- [x] Rewrite TerraFusionLayout CommandPalette with full search/filter functionality
+- [x] Add 17 navigable pages to CommandPalette ALL_NAV_ITEMS registry
+- [x] Implement real-time text filtering with keyword matching
+- [x] Add keyboard navigation (↑↓ arrows, Enter to open, Escape to close)
+- [x] Add mouse hover selection sync with keyboard selection
+- [x] Add result count display ("N results for query")
+- [x] Add keyboard shortcut footer hints (↑↓ navigate, ↵ open, ESC close)
+- [x] Upgrade Control Center from placeholder text to real quick-access link list
+- [x] TypeScript: 0 errors. alert(): 0. coming soon: 0. TODO: 0.

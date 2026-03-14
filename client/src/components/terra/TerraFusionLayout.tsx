@@ -14,6 +14,14 @@ import {
   User,
   ChevronRight,
   Command,
+  Map,
+  Scale,
+  Brain,
+  Calculator,
+  Building2,
+  LineChart,
+  FileText,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -59,6 +67,37 @@ const SUITES: Suite[] = [
   },
 ];
 
+/**
+ * All navigable pages for the Command Palette
+ */
+interface NavItem {
+  label: string;
+  href: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  keywords: string[];
+}
+
+const ALL_NAV_ITEMS: NavItem[] = [
+  { label: "Map Explorer", href: "/map-explorer", description: "Interactive property map with layers", icon: Map, keywords: ["map", "gis", "spatial", "parcel"] },
+  { label: "Appeals Management", href: "/appeals", description: "Manage property tax appeals", icon: Scale, keywords: ["appeals", "protest", "hearing"] },
+  { label: "Appeals Analytics", href: "/appeals/analytics", description: "Appeal statistics and trends", icon: BarChart3, keywords: ["analytics", "statistics", "trends"] },
+  { label: "Assessment Review", href: "/assessment-review", description: "Review high-variance properties", icon: FileText, keywords: ["assessment", "review", "variance"] },
+  { label: "Mass Appraisal Dashboard", href: "/mass-appraisal-dashboard", description: "County-wide quality metrics and ratio distribution", icon: Building2, keywords: ["mass appraisal", "cod", "prd", "county", "dashboard"] },
+  { label: "Regression Studio", href: "/regression", description: "Statistical modeling and analysis", icon: TrendingUp, keywords: ["regression", "statistics", "modeling"] },
+  { label: "Property Heatmap", href: "/property-heatmap", description: "Filter and visualize assessed values", icon: LineChart, keywords: ["heatmap", "property", "value", "filter"] },
+  { label: "Ratio Study Analyzer", href: "/ratio-study-analyzer", description: "IAAO-standard ratio analysis", icon: Calculator, keywords: ["ratio", "cod", "prd", "iaao"] },
+  { label: "Cluster Heatmap", href: "/cluster-map", description: "Spatial value cluster visualization", icon: Map, keywords: ["cluster", "heatmap", "spatial", "neighborhood"] },
+  { label: "Value Driver Analysis", href: "/value-drivers", description: "Analyze factors driving property values", icon: Brain, keywords: ["value drivers", "factors", "regression"] },
+  { label: "AVM Studio", href: "/avm-studio", description: "Automated valuation models", icon: Brain, keywords: ["avm", "machine learning", "prediction"] },
+  { label: "Calibration Studio", href: "/calibration", description: "Calibrate valuation parameters", icon: Settings, keywords: ["calibration", "parameters", "tuning"] },
+  { label: "Data Ingestion", href: "/wa-data-ingestion", description: "Upload and import parcel data", icon: Database, keywords: ["upload", "import", "csv", "data"] },
+  { label: "Governance & Audit", href: "/governance", description: "Audit logs and compliance", icon: Shield, keywords: ["audit", "logs", "compliance"] },
+  { label: "Defense Studio", href: "/defense", description: "Build appeal defense documents", icon: Shield, keywords: ["defense", "document", "appeal"] },
+  { label: "Property Comparison", href: "/property-comparison", description: "Side-by-side property analysis", icon: Scale, keywords: ["compare", "comparison", "side by side"] },
+  { label: "Market Analysis", href: "/analysis", description: "Market trends and sales analysis", icon: BarChart3, keywords: ["market", "sales", "trends"] },
+];
+
 interface TerraFusionLayoutProps {
   children: React.ReactNode;
   /**
@@ -73,14 +112,14 @@ interface TerraFusionLayoutProps {
 
 /**
  * TerraFusionLayout - Mac Tahoe OS Architecture
- * 
+ *
  * The 5 Layout Primitives:
  * 1. Dock Launcher (bottom) - Suite apps
  * 2. Top System Bar - County, Tax Year, Role, Command Palette
  * 3. Stage (Workspace) - Main content area
  * 4. Control Center - Quick toggles drawer (right side)
  * 5. Command Palette (⌘K) - Universal teleport
- * 
+ *
  * "3 Clicks to Value" Standard:
  * - Every action reachable via: Dock → Stage tabs → Command Palette
  * - If it takes 4 clicks, the architecture has failed
@@ -90,10 +129,13 @@ export function TerraFusionLayout({
   county = "Washington",
   taxYear = "2026",
 }: TerraFusionLayoutProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const [controlCenterOpen, setControlCenterOpen] = React.useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   // Command Palette keyboard shortcut (⌘K or Ctrl+K)
   React.useEffect(() => {
@@ -107,6 +149,51 @@ export function TerraFusionLayout({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Focus input when palette opens; reset state when it closes
+  React.useEffect(() => {
+    if (commandPaletteOpen) {
+      setSearchQuery("");
+      setSelectedIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [commandPaletteOpen]);
+
+  // Filtered nav items based on search query
+  const filteredItems = React.useMemo(() => {
+    if (!searchQuery.trim()) return ALL_NAV_ITEMS;
+    const q = searchQuery.toLowerCase();
+    return ALL_NAV_ITEMS.filter(
+      (item) =>
+        item.label.toLowerCase().includes(q) ||
+        item.description.toLowerCase().includes(q) ||
+        item.keywords.some((kw) => kw.includes(q))
+    );
+  }, [searchQuery]);
+
+  // Reset selected index when filtered list changes
+  React.useEffect(() => {
+    setSelectedIndex(0);
+  }, [filteredItems]);
+
+  // Keyboard navigation inside the palette
+  const handlePaletteKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.min(i + 1, filteredItems.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredItems[selectedIndex]) {
+        setLocation(filteredItems[selectedIndex].href);
+        setCommandPaletteOpen(false);
+      }
+    } else if (e.key === "Escape") {
+      setCommandPaletteOpen(false);
+    }
+  };
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-government-night-base">
@@ -125,9 +212,9 @@ export function TerraFusionLayout({
               <span className="text-xs text-text-secondary">TerraFusion OS</span>
             </div>
           </div>
-          
+
           <div className="h-6 w-px bg-glass-border" />
-          
+
           <div className="flex items-center gap-3 text-sm">
             <div className="flex items-center gap-1.5">
               <span className="text-text-secondary">County:</span>
@@ -198,14 +285,29 @@ export function TerraFusionLayout({
                     onClick={() => setControlCenterOpen(false)}
                     className="p-1 hover:bg-glass-1 rounded transition-colors"
                   >
-                    <ChevronRight className="w-5 h-5 text-text-secondary" />
+                    <X className="w-5 h-5 text-text-secondary" />
                   </button>
                 </div>
-                
+
                 <div className="space-y-3">
-                  <div className="text-sm text-text-secondary">
-                    Quick toggles and filters will appear here based on current context.
-                  </div>
+                  <p className="text-xs text-text-tertiary uppercase tracking-wider mb-3">Quick Access</p>
+                  {ALL_NAV_ITEMS.slice(0, 8).map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setControlCenterOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-glass-1 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                      >
+                        <Icon className="w-4 h-4 text-signal-primary flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{item.label}</p>
+                          <p className="text-xs text-text-tertiary truncate">{item.description}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </LiquidPanel>
@@ -222,7 +324,7 @@ export function TerraFusionLayout({
           {SUITES.map((suite) => {
             const Icon = suite.icon;
             const isActive = location.startsWith(suite.href);
-            
+
             return (
               <Link key={suite.id} href={suite.href}>
                 <button
@@ -250,7 +352,7 @@ export function TerraFusionLayout({
       {/* Command Palette - Primitive #5 */}
       {commandPaletteOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm"
           onClick={() => setCommandPaletteOpen(false)}
         >
           <LiquidPanel
@@ -259,37 +361,89 @@ export function TerraFusionLayout({
             className="w-full max-w-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4">
+            <div className="p-4" onKeyDown={handlePaletteKeyDown}>
+              {/* Search Input */}
               <div className="flex items-center gap-3 mb-4">
-                <Command className="w-5 h-5 text-signal-primary" />
+                <Command className="w-5 h-5 text-signal-primary flex-shrink-0" />
                 <input
+                  ref={inputRef}
                   type="text"
-                  placeholder="Search for parcels, tools, or workflows..."
-                  className="flex-1 bg-transparent border-none outline-none text-text-primary placeholder:text-text-tertiary"
-                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search pages, tools, workflows..."
+                  className="flex-1 bg-transparent border-none outline-none text-text-primary placeholder:text-text-tertiary text-base"
                 />
-              </div>
-              
-              <div className="space-y-1">
-                <p className="text-xs text-text-tertiary uppercase tracking-wider mb-3">Quick Navigation</p>
-                {[
-                  { label: 'Map Explorer', href: '/map-explorer' },
-                  { label: 'Appeals Management', href: '/appeals' },
-                  { label: 'Assessment Review', href: '/assessment-review' },
-                  { label: 'Mass Appraisal Dashboard', href: '/mass-appraisal-dashboard' },
-                  { label: 'Regression Studio', href: '/regression' },
-                  { label: 'Property Heatmap', href: '/property-heatmap' },
-                ].map(item => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setCommandPaletteOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="p-1 hover:bg-glass-1 rounded transition-colors"
                   >
-                    <ChevronRight className="w-3 h-3 text-signal-primary" />
-                    <span className="text-sm">{item.label}</span>
-                  </Link>
-                ))}
+                    <X className="w-4 h-4 text-text-tertiary" />
+                  </button>
+                )}
+                <kbd
+                  onClick={() => setCommandPaletteOpen(false)}
+                  className="px-2 py-1 text-xs bg-glass-2 rounded border border-glass-border text-text-tertiary cursor-pointer hover:bg-glass-3 transition-colors"
+                >
+                  ESC
+                </kbd>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-glass-border mb-3" />
+
+              {/* Results */}
+              {filteredItems.length === 0 ? (
+                <div className="py-6 text-center text-text-tertiary text-sm">
+                  No pages found for "{searchQuery}"
+                </div>
+              ) : (
+                <div className="space-y-0.5 max-h-72 overflow-y-auto">
+                  {!searchQuery && (
+                    <p className="text-xs text-text-tertiary uppercase tracking-wider px-3 py-1 mb-1">
+                      All Pages — {filteredItems.length} available
+                    </p>
+                  )}
+                  {searchQuery && (
+                    <p className="text-xs text-text-tertiary uppercase tracking-wider px-3 py-1 mb-1">
+                      {filteredItems.length} result{filteredItems.length !== 1 ? "s" : ""} for "{searchQuery}"
+                    </p>
+                  )}
+                  {filteredItems.map((item, idx) => {
+                    const Icon = item.icon;
+                    const isSelected = idx === selectedIndex;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setCommandPaletteOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer",
+                          isSelected
+                            ? "bg-signal-primary/10 border border-signal-primary/30 text-text-primary"
+                            : "hover:bg-glass-1 text-text-secondary hover:text-text-primary"
+                        )}
+                        onMouseEnter={() => setSelectedIndex(idx)}
+                      >
+                        <Icon className={cn("w-4 h-4 flex-shrink-0", isSelected ? "text-signal-primary" : "text-text-tertiary")} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{item.label}</p>
+                          <p className="text-xs text-text-tertiary truncate">{item.description}</p>
+                        </div>
+                        {isSelected && (
+                          <ChevronRight className="w-3 h-3 text-signal-primary flex-shrink-0" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Footer hint */}
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-glass-border text-xs text-text-tertiary">
+                <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">↑↓</kbd> navigate</span>
+                <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">↵</kbd> open</span>
+                <span><kbd className="px-1.5 py-0.5 bg-glass-2 rounded border border-glass-border">ESC</kbd> close</span>
               </div>
             </div>
           </LiquidPanel>

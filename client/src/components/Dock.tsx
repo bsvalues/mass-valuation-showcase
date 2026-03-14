@@ -12,6 +12,7 @@ import {
   BarChart3,
   Building2,
   Calculator,
+  LineChart,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -66,17 +67,22 @@ export function Dock() {
     },
     {
       id: 'appraisal',
-      label: 'Appraisal',
+      label: 'Mass Appraisal',
       icon: Building2,
-      path: '/mass-appraisal',
+      path: '/mass-appraisal-dashboard',
     },
     {
       id: 'ratio',
       label: 'Ratio Study',
       icon: Calculator,
-      path: '/ratio-study',
+      path: '/ratio-study-analyzer',
     },
-
+    {
+      id: 'analysis',
+      label: 'Heatmap',
+      icon: LineChart,
+      path: '/property-heatmap',
+    },
   ];
 
   const isActive = (path: string) => {

@@ -1,0 +1,66 @@
+{
+  "query": "SELECT countyName, parcelCount, avgLandValue, avgBuildingValue, totalAssessedValue FROM countyStatistics ORDER BY parcelCount DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2Lyf6vpHy5kosAX.ad5e7732c0a3 --database KxciJFHZo62ThWBBp8dHpL --execute SELECT countyName, parcelCount, avgLandValue, avgBuildingValue, totalAssessedValue FROM countyStatistics ORDER BY parcelCount DESC;",
+  "rows": [
+    {
+      "countyName": "Yakima County",
+      "parcelCount": "98234",
+      "avgLandValue": "41600",
+      "avgBuildingValue": "158300",
+      "totalAssessedValue": "19,620,000,000"
+    },
+    {
+      "countyName": "Benton County",
+      "parcelCount": "87412",
+      "avgLandValue": "48200",
+      "avgBuildingValue": "189500",
+      "totalAssessedValue": "20,910,000,000"
+    },
+    {
+      "countyName": "Grant County",
+      "parcelCount": "42318",
+      "avgLandValue": "29800",
+      "avgBuildingValue": "128400",
+      "totalAssessedValue": "6,732,000,000"
+    },
+    {
+      "countyName": "Franklin County",
+      "parcelCount": "31847",
+      "avgLandValue": "32100",
+      "avgBuildingValue": "142800",
+      "totalAssessedValue": "5,565,000,000"
+    },
+    {
+      "countyName": "Walla Walla County",
+      "parcelCount": "29156",
+      "avgLandValue": "38900",
+      "avgBuildingValue": "171200",
+      "totalAssessedValue": "6,098,000,000"
+    },
+    {
+      "countyName": "Kittitas County",
+      "parcelCount": "24891",
+      "avgLandValue": "44700",
+      "avgBuildingValue": "195600",
+      "totalAssessedValue": "5,959,000,000"
+    },
+    {
+      "countyName": "Klickitat County",
+      "parcelCount": "14872",
+      "avgLandValue": "31200",
+      "avgBuildingValue": "145900",
+      "totalAssessedValue": "2,641,000,000"
+    },
+    {
+      "countyName": "Adams County",
+      "parcelCount": "11203",
+      "avgLandValue": "24600",
+      "avgBuildingValue": "118700",
+      "totalAssessedValue": "1,608,000,000"
+    }
+  ],
+  "messages": [],
+  "stdout": "countyName\tparcelCount\tavgLandValue\tavgBuildingValue\ttotalAssessedValue\nYakima County\t98234\t41600\t158300\t19,620,000,000\nBenton County\t87412\t48200\t189500\t20,910,000,000\nGrant County\t42318\t29800\t128400\t6,732,000,000\nFranklin County\t31847\t32100\t142800\t5,565,000,000\nWalla Walla County\t29156\t38900\t171200\t6,098,000,000\nKittitas County\t24891\t44700\t195600\t5,959,000,000\nKlickitat County\t14872\t31200\t145900\t2,641,000,000\nAdams County\t11203\t24600\t118700\t1,608,000,000\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}
