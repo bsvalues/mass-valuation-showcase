@@ -4092,3 +4092,16 @@
 - [x] Add empty state for each chart when no data exists
 - [x] Add county filter Select to toolbar (all/King/Pierce/Snohomish/Spokane/Clark)
 - [x] TypeScript: 0 errors
+
+## 📊 Phase Y: Stale Badge on KPI Cards (Completed)
+
+- [x] Define isStale logic: qualifiedSalesCount === 0 OR medianRatio is null OR source === 'fallback'
+- [x] Add amber "Stale" badge to Median Ratio KPI card when stale
+- [x] Add amber "Stale" badge to COD KPI card when stale
+- [x] Add amber "Stale" badge to PRD KPI card when stale
+- [x] Add amber "Stale" badge to Sales in Study KPI card when qualifiedSalesCount === 0
+- [x] Add "Recalculate Now" button in stale banner that triggers recalculateMutation
+- [x] Show explanatory text in stale banner describing why data is stale
+- [x] Animate badge with animate-pulse to draw attention
+- [x] Show green CheckCircle2 indicator with target range when data is live
+- [x] TypeScript: 0 errors

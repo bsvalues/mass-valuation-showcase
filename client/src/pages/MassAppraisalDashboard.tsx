@@ -18,6 +18,8 @@ import {
   Download,
   Loader2,
   RefreshCw,
+  Clock,
+  Zap,
 } from 'lucide-react';
 import {
   BarChart,
@@ -151,6 +153,13 @@ export default function MassAppraisalDashboard() {
     const prd = weightedMean > 0 ? medianRatio / weightedMean : 1.02;
     return { medianRatio, cod, prd, totalProperties, recentSales: totalCount, source: 'histogram' as const };
   })();
+
+  // Stale detection: data is stale when source is 'fallback', or when the selected county
+  // has no qualified sales, or when medianRatio is null in the DB row.
+  const isStale = qualityMetrics.source === 'fallback'
+    || (selectedCounty !== 'all' && selectedCountyStats != null && selectedCountyStats.medianRatio == null)
+    || (selectedCounty !== 'all' && selectedCountyStats != null && (selectedCountyStats.qualifiedSalesCount ?? 0) === 0);
+  const isSalesStale = qualityMetrics.recentSales === 0 || qualityMetrics.source === 'fallback';
 
   // Map real county statistics to display format, fallback to illustrative data if DB is empty
   const countyData = useMemo(() => {
@@ -367,40 +376,125 @@ export default function MassAppraisalDashboard() {
       {/* Main Content */}
       <div className="p-6 pb-24 space-y-6">
         {/* Quality Metrics Row */}
+        {/* Stale banner — shown when selected county has no ratio study data */}
+        {isStale && (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg"
+               style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)' }}>
+            <div className="flex items-center gap-2 text-amber-400 text-sm">
+              <Clock className="w-4 h-4 shrink-0 animate-pulse" />
+              <span className="font-medium">Statistics are stale</span>
+              <span className="text-amber-400/70 text-xs">
+                {selectedCounty === 'all'
+                  ? '— No qualified sales found. Upload sales data or select a county.'
+                  : `— ${selectedCounty} County has no ratio study data. Run recalculate to compute IAAO metrics from live parcel data.`}
+              </span>
+            </div>
+            <Button
+              size="sm"
+              className="shrink-0 text-xs h-7 px-3"
+              style={{ background: 'rgba(245,158,11,0.2)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.4)' }}
+              onClick={() => {
+                if (selectedCounty === 'all') {
+                  toast.info('Select a specific county to recalculate its statistics');
+                  return;
+                }
+                recalculateMutation.mutate({ countyName: selectedCounty });
+              }}
+              disabled={recalculateMutation.isPending}
+            >
+              {recalculateMutation.isPending
+                ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Calculating…</>
+                : <><Zap className="w-3 h-3 mr-1" />Recalculate Now</>}
+            </Button>
+          </div>
+        )}
+
         <div className="grid grid-cols-5 gap-4">
-          <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">Median Ratio (A/S)</div>
+          {/* Median Ratio */}
+          <Card className="p-6 border-white/10 relative overflow-hidden"
+               style={{ background: isStale ? 'rgba(245,158,11,0.06)' : 'var(--color-glass-2)', borderColor: isStale ? 'rgba(245,158,11,0.25)' : undefined }}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="text-xs text-[var(--color-text-tertiary)]">Median Ratio (A/S)</div>
+              {isStale && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded animate-pulse"
+                      style={{ background: 'rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                  <Clock className="w-2.5 h-2.5" />Stale
+                </span>
+              )}
+            </div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.medianRatio.toFixed(2)}
             </div>
-            <div className="flex items-center gap-1 text-xs text-[var(--color-signal-success)]">
-              <CheckCircle2 className="w-3 h-3" />
-              Target: 0.90-1.10
-            </div>
+            {isStale ? (
+              <div className="flex items-center gap-1 text-xs text-amber-400/80">
+                <AlertTriangle className="w-3 h-3" />
+                No ratio study data
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-xs text-[var(--color-signal-success)]">
+                <CheckCircle2 className="w-3 h-3" />
+                Target: 0.90–1.10
+              </div>
+            )}
           </Card>
 
-          <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">COD (Uniformity)</div>
+          {/* COD */}
+          <Card className="p-6 border-white/10 relative overflow-hidden"
+               style={{ background: isStale ? 'rgba(245,158,11,0.06)' : 'var(--color-glass-2)', borderColor: isStale ? 'rgba(245,158,11,0.25)' : undefined }}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="text-xs text-[var(--color-text-tertiary)]">COD (Uniformity)</div>
+              {isStale && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded animate-pulse"
+                      style={{ background: 'rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                  <Clock className="w-2.5 h-2.5" />Stale
+                </span>
+              )}
+            </div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.cod.toFixed(1)}%
             </div>
-            <div className="flex items-center gap-1 text-xs text-[var(--color-signal-success)]">
-              <CheckCircle2 className="w-3 h-3" />
-              Excellent (&lt;10%)
-            </div>
+            {isStale ? (
+              <div className="flex items-center gap-1 text-xs text-amber-400/80">
+                <AlertTriangle className="w-3 h-3" />
+                Estimated — not certified
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-xs text-[var(--color-signal-success)]">
+                <CheckCircle2 className="w-3 h-3" />
+                Excellent (&lt;10%)
+              </div>
+            )}
           </Card>
 
-          <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">PRD (Progressivity)</div>
+          {/* PRD */}
+          <Card className="p-6 border-white/10 relative overflow-hidden"
+               style={{ background: isStale ? 'rgba(245,158,11,0.06)' : 'var(--color-glass-2)', borderColor: isStale ? 'rgba(245,158,11,0.25)' : undefined }}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="text-xs text-[var(--color-text-tertiary)]">PRD (Progressivity)</div>
+              {isStale && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded animate-pulse"
+                      style={{ background: 'rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                  <Clock className="w-2.5 h-2.5" />Stale
+                </span>
+              )}
+            </div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.prd.toFixed(2)}
             </div>
-            <div className="flex items-center gap-1 text-xs text-[var(--color-signal-success)]">
-              <CheckCircle2 className="w-3 h-3" />
-              Target: 0.98-1.03
-            </div>
+            {isStale ? (
+              <div className="flex items-center gap-1 text-xs text-amber-400/80">
+                <AlertTriangle className="w-3 h-3" />
+                Estimated — not certified
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-xs text-[var(--color-signal-success)]">
+                <CheckCircle2 className="w-3 h-3" />
+                Target: 0.98–1.03
+              </div>
+            )}
           </Card>
 
+          {/* Total Properties — never stale */}
           <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
             <div className="text-xs text-[var(--color-text-tertiary)] mb-2">Total Properties</div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
@@ -408,18 +502,36 @@ export default function MassAppraisalDashboard() {
             </div>
             <div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]">
               <TrendingUp className="w-3 h-3" />
-              +2.4% YoY
+              On assessment roll
             </div>
           </Card>
 
-          <Card className="p-6 bg-[var(--color-glass-2)] border-white/10">
-            <div className="text-xs text-[var(--color-text-tertiary)] mb-2">Sales in Study</div>
+          {/* Sales in Study */}
+          <Card className="p-6 border-white/10 relative overflow-hidden"
+               style={{ background: isSalesStale ? 'rgba(245,158,11,0.06)' : 'var(--color-glass-2)', borderColor: isSalesStale ? 'rgba(245,158,11,0.25)' : undefined }}>
+            <div className="flex items-start justify-between mb-2">
+              <div className="text-xs text-[var(--color-text-tertiary)]">Sales in Study</div>
+              {isSalesStale && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded animate-pulse"
+                      style={{ background: 'rgba(245,158,11,0.2)', color: '#F59E0B' }}>
+                  <Clock className="w-2.5 h-2.5" />Stale
+                </span>
+              )}
+            </div>
             <div className="text-3xl font-bold text-[var(--color-text-primary)] mb-1">
               {qualityMetrics.recentSales.toLocaleString()}
             </div>
-            <div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]">
-              Used for ratio analysis
-            </div>
+            {isSalesStale ? (
+              <div className="flex items-center gap-1 text-xs text-amber-400/80">
+                <AlertTriangle className="w-3 h-3" />
+                No qualified sales
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-xs text-[var(--color-signal-success)]">
+                <CheckCircle2 className="w-3 h-3" />
+                Used for ratio analysis
+              </div>
+            )}
           </Card>
         </div>
 
