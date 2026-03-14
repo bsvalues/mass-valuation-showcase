@@ -1,9 +1,48 @@
 import { router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { getDb } from "./db";
-import { batchJobs, batchResults, parcels } from "../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { batchJobs, batchResults, parcels, regressionModels } from "../drizzle/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { avmModel, type ParcelFeatures } from "./avmModel";
+
+/**
+ * Parcel column → regression variable name mapping
+ * Matches the variable names used when saving regression models from RegressionStudio
+ */
+const PARCEL_FEATURE_MAP: Record<string, (p: Record<string, unknown>) => number> = {
+  squareFeet:   (p) => Number(p.squareFeet   ?? 0),
+  yearBuilt:    (p) => Number(p.yearBuilt    ?? 0),
+  landValue:    (p) => Number(p.landValue    ?? 0),
+  buildingValue:(p) => Number(p.buildingValue ?? 0),
+  totalValue:   (p) => Number(p.totalValue   ?? 0),
+  bedrooms:     (p) => Number(p.bedrooms     ?? 0),
+  bathrooms:    (p) => Number(p.bathrooms    ?? 0),
+  garageSpaces: (p) => Number(p.garageSpaces ?? 0),
+  lotSize:      (p) => Number(p.lotSize      ?? 0),
+  latitude:     (p) => Number(p.latitude     ?? 0),
+  longitude:    (p) => Number(p.longitude    ?? 0),
+};
+
+/**
+ * Apply stored linear regression coefficients to a parcel row.
+ * Returns predicted value or null if no coefficients match any parcel features.
+ */
+function applyLinearModel(
+  parcel: Record<string, unknown>,
+  coefficients: Record<string, number>,
+  intercept: number,
+  variables: string[]
+): number {
+  let predicted = intercept;
+  for (const varName of variables) {
+    const coeff = coefficients[varName];
+    if (coeff === undefined) continue;
+    const getter = PARCEL_FEATURE_MAP[varName];
+    const value = getter ? getter(parcel) : 0;
+    predicted += coeff * value;
+  }
+  return Math.max(0, predicted);
+}
 
 /**
  * Batch Valuation Router
@@ -179,6 +218,36 @@ export const batchValuationRouter = router({
     }),
   
   /**
+   * Get the user's current production regression model info (for UI display)
+   */
+  getProductionModelInfo: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const [model] = await db
+        .select()
+        .from(regressionModels)
+        .where(and(eq(regressionModels.createdBy, ctx.user.id), eq(regressionModels.isProduction, 1)))
+        .limit(1);
+      if (!model) return null;
+      const coeffsRaw = JSON.parse(model.coefficients || '{}') as Record<string, number>;
+      const { intercept, ...coefficients } = coeffsRaw;
+      const variables: string[] = JSON.parse(model.independentVariables || '[]');
+      return {
+        id: model.id,
+        name: model.name,
+        description: model.description,
+        variables,
+        coefficients,
+        intercept: intercept ?? 0,
+        rSquared: parseFloat(model.rSquared || '0'),
+        adjustedRSquared: parseFloat(model.adjustedRSquared || '0'),
+        dependentVariable: model.dependentVariable,
+        createdAt: model.createdAt,
+      };
+    }),
+
+  /**
    * Delete a batch job and its results
    */
   deleteJob: protectedProcedure
@@ -265,9 +334,51 @@ async function processBatchJob(jobId: number, parcelsToProcess: any[]) {
         longitude: p.longitude,
       }));
       
-      // Run predictions
-      const predictions = await avmModel.predictBatch(features);
-      
+      // Determine inference method: use production regression model if available, else fall back to mock AVM
+      // Fetch production model once (outside inner loop for performance)
+      let regressionCoeffs: Record<string, number> | null = null;
+      let regressionIntercept = 0;
+      let regressionVariables: string[] = [];
+      let modelTypeName = "mock-avm";
+
+      if (i === 0) {
+        // Only fetch on first batch iteration
+        const [prodModel] = await db
+          .select()
+          .from(regressionModels)
+          .where(eq(regressionModels.isProduction, 1))
+          .limit(1);
+        if (prodModel) {
+          const raw = JSON.parse(prodModel.coefficients || '{}') as Record<string, number>;
+          const { intercept, ...coefficients } = raw;
+          regressionCoeffs = coefficients;
+          regressionIntercept = intercept ?? 0;
+          regressionVariables = JSON.parse(prodModel.independentVariables || '[]');
+          modelTypeName = `regression-linear:${prodModel.id}`;
+          console.log(`[BatchJob ${jobId}] Using production regression model: ${prodModel.name} (${regressionVariables.length} variables)`);
+        } else {
+          console.log(`[BatchJob ${jobId}] No production regression model found — using mock AVM`);
+        }
+      }
+
+      // Run predictions using real regression coefficients or mock AVM
+      const predictions: Array<{ parcelId: string; predictedValue: number; features: ParcelFeatures; error?: string }> =
+        regressionCoeffs
+          ? batch.map((p: Record<string, unknown>) => ({
+              parcelId: p.parcelId as string,
+              predictedValue: applyLinearModel(p, regressionCoeffs!, regressionIntercept, regressionVariables),
+              features: {
+                parcelId: p.parcelId as string,
+                landValue: p.landValue as number,
+                buildingValue: p.buildingValue as number,
+                squareFeet: p.squareFeet as number,
+                yearBuilt: p.yearBuilt as number,
+                propertyType: p.propertyType as string,
+                neighborhood: p.neighborhood as string,
+              },
+            }))
+          : await avmModel.predictBatch(features);
+
       // Save results to database
       for (const prediction of predictions) {
         try {
@@ -275,7 +386,7 @@ async function processBatchJob(jobId: number, parcelsToProcess: any[]) {
             batchJobId: jobId,
             parcelId: prediction.parcelId,
             predictedValue: prediction.predictedValue,
-            modelType: "mock-avm",
+            modelType: modelTypeName,
             features: JSON.stringify(prediction.features),
             error: prediction.error || null,
           });

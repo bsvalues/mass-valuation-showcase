@@ -4158,3 +4158,31 @@
 - [x] Add "Last report sent" timestamp display in Governance header
 - [x] Fix fake Math.random audit log hashes with real crypto.subtle SHA-256 hashes
 - [x] TypeScript: 0 errors
+
+## 📊 Phase AI: Batch Valuation Real Inference (In Progress)
+
+- [ ] Add runBatchInference procedure to batchValuationRouter using stored regressionModels coefficients
+- [ ] Procedure fetches production regression model (isProduction=1) for the user
+- [ ] Apply linear regression formula: predicted = intercept + Σ(coeff_i × parcel_feature_i)
+- [ ] Map parcel DB columns to regression variable names (squareFeet, yearBuilt, landValue, etc.)
+- [ ] Store results in batchResults with modelType='regression-linear' and real predicted values
+- [ ] Add getProductionModelInfo procedure to batchValuationRouter for UI display
+- [ ] Add model selector UI: show production regression model name and R² in job creation form
+- [ ] Add results table to BatchValuation page showing parcel ID, predicted value, current value, variance %
+- [ ] Add CSV export for batch results
+- [ ] Add "No production model" warning when isProduction model is not set
+- [ ] Add auto-poll for job progress (refetch every 2s while status=processing)
+- [ ] TypeScript: 0 errors
+
+## 📊 Phase AI: Batch Valuation Real Inference (Completed)
+- [x] Add getProductionModelInfo procedure to batchValuationRouter
+- [x] Replace mock avmModel.predictBatch() with real linear regression using stored coefficients
+- [x] Add null guard: fall back to mock AVM when no production model is set
+- [x] Add deleteJob procedure to batchValuationRouter
+- [x] Rewrite BatchValuation page with production model info banner
+- [x] Add 2-second auto-poll for active jobs (processing/pending)
+- [x] Add job selection panel with progress bars
+- [x] Add results table with predicted value, current value, variance %, colour coding
+- [x] Add Export CSV button for completed job results
+- [x] Add loading skeletons and empty states
+- [x] TypeScript: 0 errors
