@@ -1,6 +1,7 @@
 import { CorrelationMatrixHeatmap } from "@/components/CorrelationMatrixHeatmap";
 import { VariableImportanceChart } from "@/components/VariableImportanceChart";
 import { ResidualsVsFittedPlot } from "@/components/ResidualsVsFittedPlot";
+import { CooksDistancePlot } from "@/components/CooksDistancePlot";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ModelComparisonPanel } from "@/components/ModelComparisonPanel";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ export default function RegressionStudio() {
   const [regressionResult, setRegressionResult] = useState<RegressionResult | null>(null);
   const [diagnosticPlots, setDiagnosticPlots] = useState<any>(null);
   const [correlationMatrix, setCorrelationMatrix] = useState<{ variables: string[]; matrix: number[][] } | null>(null);
+  const [regressionX, setRegressionX] = useState<{ [key: string]: number[] } | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -125,7 +127,8 @@ export default function RegressionStudio() {
 
     const result = multipleRegression(regressionData.totalValue, X);
     setRegressionResult(result);
-    setDiagnosticPlots(generateDiagnosticPlots(result));
+    setRegressionX(X);
+    setDiagnosticPlots(generateDiagnosticPlots(result, X));
     
     // Calculate correlation matrix for all selected variables
     const corrMatrix = calculateCorrelationMatrix(X);
@@ -734,40 +737,39 @@ export default function RegressionStudio() {
                       </CardContent>
                     </Card>
 
-                    {/* Residuals vs Leverage */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Residuals vs Leverage</CardTitle>
-                        <CardDescription className="text-xs">Identify influential observations</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <ResponsiveContainer width="100%" height={250}>
-                          <ScatterChart>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                            <XAxis
-                              dataKey="x"
-                              type="number"
-                              name="Leverage"
-                              stroke="#888"
-                              tick={{ fill: '#888', fontSize: 11 }}
-                            />
-                            <YAxis
-                              dataKey="y"
-                              type="number"
-                              name="Std. Residuals"
-                              stroke="#888"
-                              tick={{ fill: '#888', fontSize: 11 }}
-                            />
-                            <Tooltip
-                              contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                              labelStyle={{ color: '#fff' }}
-                            />
-                            <Scatter data={diagnosticPlots.residualsVsLeverage} fill="#00ffee" fillOpacity={0.6} />
-                          </ScatterChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
                   </div>
+                )}
+
+                {/* Cook's Distance — full-width influential observation chart */}
+                {diagnosticPlots && regressionResult && diagnosticPlots.cooksD && diagnosticPlots.cooksD.length > 0 && (
+                  <Card className="col-span-full">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <BarChart2 className="w-4 h-4 text-primary" />
+                            Cook's Distance — Influential Observations
+                          </CardTitle>
+                          <CardDescription>
+                            IAAO-standard measure of each observation's influence on the regression coefficients.
+                            Bars coloured by influence tier; threshold lines at 4/n and D = 1.0.
+                          </CardDescription>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {diagnosticPlots.cooksD.filter((d: number) => d > 1.0).length} strong ·{" "}
+                          {diagnosticPlots.cooksD.filter((d: number) => d > 4 / diagnosticPlots.cooksD.length && d <= 1.0).length} moderate
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <CooksDistancePlot
+                        residuals={regressionResult.residuals}
+                        cooksD={diagnosticPlots.cooksD}
+                        leverage={diagnosticPlots.leverage}
+                        k={selectedVariables.length}
+                      />
+                    </CardContent>
+                  </Card>
                 )}
 
                 {/* Correlation Matrix Heatmap */}

@@ -4044,3 +4044,15 @@
 - [x] Integrated into RegressionStudio as full-width card above Q-Q/Scale-Location/Leverage plots
 - [x] Conditional render: only shown when residuals.length > 0
 - [x] TypeScript: 0 errors
+
+## 📊 Phase T: Cook's Distance Chart (Completed)
+
+- [x] Extend regression.ts: add computeHatDiagonal() using X(X'X)^-1X' diagonal
+- [x] Extend regression.ts: add computeCooksDistance() using standardised residuals + leverage
+- [x] Extend generateDiagnosticPlots() to return cooksDistance array and leverage array
+- [x] Build CooksDistancePlot component with colour-coded bar chart (green/amber/red)
+- [x] Add 4/n threshold reference line and 1.0 strong-influence line
+- [x] Add top-10 most influential observations table
+- [x] Add interpretation guide panel
+- [x] Replace simplified Residuals vs Leverage card in RegressionStudio with CooksDistancePlot
+- [x] TypeScript: 0 errors

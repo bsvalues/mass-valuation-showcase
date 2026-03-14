@@ -379,11 +379,80 @@ export function multipleRegression(
 }
 
 /**
+ * Compute the hat matrix diagonal (leverage values) h_ii = X(X'X)^{-1}X'.
+ * Accepts the design matrix (n × (k+1), with leading 1s for intercept).
+ * Returns an array of n leverage values in [0, 1].
+ */
+export function computeHatDiagonal(
+  y: number[],
+  X: { [variable: string]: number[] }
+): number[] {
+  const n = y.length;
+  const variableNames = Object.keys(X);
+
+  // Build design matrix with intercept column
+  const designMatrix: number[][] = [];
+  for (let i = 0; i < n; i++) {
+    const row = [1];
+    for (const varName of variableNames) {
+      row.push(X[varName][i]);
+    }
+    designMatrix.push(row);
+  }
+
+  try {
+    const Xt = Matrix.transpose(designMatrix);
+    const XtX = Matrix.multiply(Xt, designMatrix);
+    const XtXInv = Matrix.inverse(XtX);
+
+    // h_ii = x_i' (X'X)^{-1} x_i  — compute row-by-row
+    return designMatrix.map(row => {
+      // (X'X)^{-1} x_i
+      const Ax = XtXInv.map(invRow =>
+        invRow.reduce((sum, val, j) => sum + val * row[j], 0)
+      );
+      // x_i' Ax
+      return row.reduce((sum, val, j) => sum + val * Ax[j], 0);
+    });
+  } catch {
+    // Fallback to uniform leverage if matrix is singular
+    return Array(n).fill(1 / n);
+  }
+}
+
+/**
+ * Compute Cook's Distance for each observation.
+ * D_i = (e_i^2 / (k * MSE)) * (h_ii / (1 - h_ii)^2)
+ * where e_i is the raw residual, k is the number of predictors (excl. intercept),
+ * MSE is the mean squared error, and h_ii is the leverage.
+ */
+export function computeCooksDistance(
+  residuals: number[],
+  leverage: number[],
+  k: number
+): number[] {
+  const n = residuals.length;
+  const mse = residuals.reduce((sum, r) => sum + r * r, 0) / Math.max(n - k - 1, 1);
+  if (mse === 0) return Array(n).fill(0);
+
+  return residuals.map((e, i) => {
+    const h = Math.min(leverage[i], 1 - 1e-10); // guard against h_ii = 1
+    const denom = Math.pow(1 - h, 2);
+    if (denom < 1e-12) return 0;
+    return (e * e / (k * mse)) * (h / denom);
+  });
+}
+
+/**
  * Generate diagnostic data for plotting
  */
-export function generateDiagnosticPlots(result: RegressionResult) {
+export function generateDiagnosticPlots(
+  result: RegressionResult,
+  X?: { [variable: string]: number[] }
+) {
   const { residuals, fitted } = result;
   const n = residuals.length;
+  const k = Object.keys(result.coefficients).length;
 
   // Residuals vs Fitted
   const residualsVsFitted = fitted.map((f, i) => ({ x: f, y: residuals[i] }));
@@ -397,15 +466,22 @@ export function generateDiagnosticPlots(result: RegressionResult) {
 
   // Scale-Location (sqrt of standardized residuals vs fitted)
   const residualStd = Math.sqrt(
-    residuals.reduce((sum, r) => sum + r * r, 0) / (n - 1)
+    residuals.reduce((sum, r) => sum + r * r, 0) / Math.max(n - 1, 1)
   );
   const scaleLocation = fitted.map((f, i) => ({
     x: f,
-    y: Math.sqrt(Math.abs(residuals[i] / residualStd))
+    y: Math.sqrt(Math.abs(residuals[i] / Math.max(residualStd, 1e-10)))
   }));
 
-  // Residuals vs Leverage (Cook's distance)
-  const leverage = fitted.map((_, i) => 1 / n); // Simplified
+  // Hat-matrix leverage (proper or fallback)
+  const leverage: number[] = X
+    ? computeHatDiagonal(fitted, X) // reuse fitted as y-proxy (only design matrix matters)
+    : Array(n).fill(1 / n);
+
+  // Cook's Distance
+  const cooksD = computeCooksDistance(residuals, leverage, k);
+
+  // Residuals vs Leverage (now with real leverage)
   const residualsVsLeverage = leverage.map((lev, i) => ({
     x: lev,
     y: residuals[i]
@@ -415,7 +491,9 @@ export function generateDiagnosticPlots(result: RegressionResult) {
     residualsVsFitted,
     qqPlot,
     scaleLocation,
-    residualsVsLeverage
+    residualsVsLeverage,
+    leverage,
+    cooksD,
   };
 }
 
