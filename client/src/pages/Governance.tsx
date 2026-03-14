@@ -3,9 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { AlertTriangle, CheckCircle2, FileCode, Shield, ShieldAlert, ShieldCheck, History, Lock } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileCode, Mail, RefreshCw, Shield, ShieldAlert, ShieldCheck, History, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 interface AuditEntry {
   id: string;
@@ -15,28 +16,92 @@ interface AuditEntry {
   hash: string;
 }
 
+
+async function computeShortHash(input: string): Promise<string> {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(input);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}...${hex.slice(-4)}`;
+  } catch {
+    return "????????...????";
+  }
+}
+
+function MonthlyReportButton() {
+  const { data: reportStatus } = trpc.system.getMonthlyReportStatus.useQuery();
+  const triggerMutation = trpc.system.triggerMonthlyReport.useMutation({
+    onSuccess: (result) => {
+      if (result?.sent) {
+        toast.success("Monthly report sent", {
+          description: `Report for ${result.reportMonth} delivered successfully.`,
+        });
+      } else {
+        toast.warning("Report generated but delivery failed", {
+          description: "Check notification service configuration.",
+        });
+      }
+    },
+    onError: (err) => {
+      toast.error("Failed to send report", { description: err.message });
+    },
+  });
+
+  const lastSent = reportStatus?.lastSentAt
+    ? new Date(reportStatus.lastSentAt).toLocaleString()
+    : null;
+
+  return (
+    <div className="flex items-center gap-2">
+      {lastSent && (
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Mail className="w-3 h-3" />
+          Last report: {lastSent}
+        </span>
+      )}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => triggerMutation.mutate()}
+        disabled={triggerMutation.isPending}
+        className="flex items-center gap-1.5"
+      >
+        <RefreshCw className={`w-3.5 h-3.5 ${triggerMutation.isPending ? "animate-spin" : ""}`} />
+        {triggerMutation.isPending ? "Sending..." : "Send Monthly Report"}
+      </Button>
+    </div>
+  );
+}
+
 export default function Governance() {
   const { data: backendLogs, isLoading } = trpc.auditLogs.list.useQuery();
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([]);
 
   useEffect(() => {
-    if (backendLogs && backendLogs.length > 0) {
-      const formattedLogs = backendLogs.map(log => ({
-        id: `LOG-${log.id}`,
-        action: log.action + (log.details ? `: ${log.details.substring(0, 50)}...` : ''),
-        user: "User",
-        timestamp: log.timestamp.toISOString(),
-        hash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
-      }));
-      setAuditLog(formattedLogs);
-    } else {
-      // Fallback to mock data if no real logs
-      const mockLog: AuditEntry[] = [
-        { id: "LOG-9001", action: "System Calibration: Base Rate -> $145.50", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), hash: "0x9a8b...7c2d" },
-        { id: "LOG-9002", action: "Data Ingestion: tax_roll_2025.csv", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), hash: "0x1f2e...3d4c" },
-      ];
-      setAuditLog(mockLog);
+    async function buildLogs() {
+      if (backendLogs && backendLogs.length > 0) {
+        const formattedLogs = await Promise.all(
+          backendLogs.map(async (log) => ({
+            id: `LOG-${log.id}`,
+            action: log.action + (log.details ? `: ${log.details.substring(0, 50)}...` : ''),
+            user: "User",
+            timestamp: log.timestamp.toISOString(),
+            hash: `0x${await computeShortHash(`${log.id}-${log.action}-${log.timestamp.toISOString()}`)}`,
+          }))
+        );
+        setAuditLog(formattedLogs);
+      } else {
+        // Fallback to mock data if no real logs
+        const mockLog: AuditEntry[] = [
+          { id: "LOG-9001", action: "System Calibration: Base Rate -> $145.50", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), hash: "0x9a8b...7c2d" },
+          { id: "LOG-9002", action: "Data Ingestion: tax_roll_2025.csv", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), hash: "0x1f2e...3d4c" },
+        ];
+        setAuditLog(mockLog);
+      }
     }
+    buildLogs();
   }, [backendLogs]);
 
   if (isLoading) {
@@ -67,7 +132,8 @@ export default function Governance() {
               Powered by <span className="font-mono text-primary font-bold">RiskSentinel™ QC Engine</span>
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <MonthlyReportButton />
             <Button variant="outline">Export Audit Log</Button>
             <Button className="bg-primary text-primary-foreground">Run Full Compliance Scan</Button>
           </div>

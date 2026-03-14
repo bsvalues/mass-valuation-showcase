@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, router } from "./trpc";
+import { triggerMonthlyReportManually, getMonthlyReportStatus } from "../cronJobs";
 
 export const systemRouter = router({
   health: publicProcedure
@@ -25,5 +26,16 @@ export const systemRouter = router({
       return {
         success: delivered,
       } as const;
+    }),
+
+  triggerMonthlyReport: adminProcedure
+    .mutation(async () => {
+      const result = await triggerMonthlyReportManually();
+      return result;
+    }),
+
+  getMonthlyReportStatus: adminProcedure
+    .query(() => {
+      return getMonthlyReportStatus();
     }),
 });

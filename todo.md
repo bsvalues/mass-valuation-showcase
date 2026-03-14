@@ -4131,3 +4131,30 @@
 - [x] Add AI capability reference panel (4 topic areas)
 - [x] Add loading/error states (Skeleton for stats, toast on chat error)
 - [x] TypeScript: 0 errors
+
+## 📊 Phase AB: Monthly Report Cron Job (In Progress)
+
+- [ ] Remove broken external import from cronJobs.ts
+- [ ] Implement generateMonthlyReportContent() using live DB data (countyStatistics, appeals, parcels, sales)
+- [ ] Wire scheduledMonthlyReports() to call notifyOwner() with IAAO statistics summary
+- [ ] Add manual trigger tRPC mutation for admin testing (trpc.system.triggerMonthlyReport)
+- [ ] Enable monthly cron schedule in initializeCronJobs() using getMillisecondsUntilFirstOfMonth()
+- [ ] Add "Last Report Sent" indicator to Governance page
+- [ ] Add "Send Report Now" admin button in Governance page
+- [ ] Fix fake SHA-256 hashes in audit log (replace Math.random() with real hash)
+- [ ] TypeScript: 0 errors
+
+## 📊 Phase AB: Monthly Report Cron Job (Completed)
+
+- [x] Audit cronJobs.ts and identify broken import (scripts/generate_monthly_reports.js — non-existent)
+- [x] Rewrite cronJobs.ts with inline generateMonthlyReportContent() using live DB queries
+- [x] Monthly report aggregates: county ratio statistics, total parcels, total sales, appeals by status
+- [x] Monthly report uses notifyOwner() to deliver formatted IAAO statistics summary
+- [x] Daily appeal reminder job re-enabled with proper 9:00 AM scheduling
+- [x] Monthly report job enabled: fires on 1st of each month at midnight
+- [x] Export getMonthlyReportStatus() and triggerMonthlyReportManually() from cronJobs.ts
+- [x] Add triggerMonthlyReport and getMonthlyReportStatus procedures to systemRouter
+- [x] Add MonthlyReportButton component to Governance page header
+- [x] Add "Last report sent" timestamp display in Governance header
+- [x] Fix fake Math.random audit log hashes with real crypto.subtle SHA-256 hashes
+- [x] TypeScript: 0 errors
