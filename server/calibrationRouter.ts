@@ -327,4 +327,137 @@ export const calibrationRouter = router({
 
       return { success: true };
     }),
+
+  /**
+   * Phase AH: Roll back to a historical snapshot.
+   * Creates a new snapshot cloned from the target (preserving the original),
+   * names it "Rollback to: <original name>", and sets it as active.
+   * Returns the new snapshot id and name.
+   */
+  rollback: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // Fetch the target snapshot
+      const [target] = await db
+        .select()
+        .from(calibrationSnapshots)
+        .where(
+          and(
+            eq(calibrationSnapshots.id, input.id),
+            eq(calibrationSnapshots.userId, ctx.user.id)
+          )
+        )
+        .limit(1);
+
+      if (!target) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Snapshot not found or access denied" });
+      }
+
+      // Deactivate all snapshots for this user+county
+      const deactivateConditions = [eq(calibrationSnapshots.userId, ctx.user.id)];
+      if (target.countyName) {
+        deactivateConditions.push(eq(calibrationSnapshots.countyName, target.countyName));
+      }
+      await db
+        .update(calibrationSnapshots)
+        .set({ isActive: 0 })
+        .where(and(...deactivateConditions));
+
+      // Insert a new snapshot cloned from the target
+      const rollbackName = `Rollback to: ${target.name}`;
+      const result = await db.insert(calibrationSnapshots).values({
+        userId: ctx.user.id,
+        name: rollbackName,
+        description: `Rolled back from snapshot "${target.name}" (id: ${target.id}) saved on ${new Date(target.createdAt).toLocaleDateString()}.`,
+        countyName: target.countyName,
+        costRates: target.costRates,
+        landModelData: target.landModelData,
+        depreciationData: target.depreciationData,
+        neighbourhoodModifiers: target.neighbourhoodModifiers,
+        snapshotMedianRatio: target.snapshotMedianRatio,
+        snapshotCod: target.snapshotCod,
+        snapshotPrd: target.snapshotPrd,
+        isActive: 1,
+      });
+
+      return {
+        success: true,
+        newId: (result as any).insertId as number,
+        name: rollbackName,
+        originalName: target.name,
+      };
+    }),
+
+  /**
+   * Phase AH: Compare two snapshots side-by-side.
+   * Returns both snapshots' cost rates and a computed diff array.
+   */
+  compare: protectedProcedure
+    .input(z.object({ idA: z.number(), idB: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      const snapshots = await db
+        .select({
+          id: calibrationSnapshots.id,
+          name: calibrationSnapshots.name,
+          description: calibrationSnapshots.description,
+          countyName: calibrationSnapshots.countyName,
+          costRates: calibrationSnapshots.costRates,
+          snapshotMedianRatio: calibrationSnapshots.snapshotMedianRatio,
+          snapshotCod: calibrationSnapshots.snapshotCod,
+          snapshotPrd: calibrationSnapshots.snapshotPrd,
+          isActive: calibrationSnapshots.isActive,
+          createdAt: calibrationSnapshots.createdAt,
+        })
+        .from(calibrationSnapshots)
+        .where(
+          and(
+            eq(calibrationSnapshots.userId, ctx.user.id)
+          )
+        );
+
+      const a = snapshots.find(s => s.id === input.idA);
+      const b = snapshots.find(s => s.id === input.idB);
+
+      if (!a || !b) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "One or both snapshots not found" });
+      }
+
+      let ratesA: Record<string, number> = {};
+      let ratesB: Record<string, number> = {};
+      try { ratesA = JSON.parse(a.costRates as string); } catch { /* empty */ }
+      try { ratesB = JSON.parse(b.costRates as string); } catch { /* empty */ }
+
+      // Build unified key list
+      const allKeys = Array.from(new Set([...Object.keys(ratesA), ...Object.keys(ratesB)]));
+
+      const diff = allKeys.map(key => {
+        const valA = ratesA[key] ?? null;
+        const valB = ratesB[key] ?? null;
+        const delta = valA !== null && valB !== null ? valB - valA : null;
+        const pctChange = valA !== null && valB !== null && valA !== 0
+          ? ((valB - valA) / valA) * 100
+          : null;
+        return {
+          key,
+          valA,
+          valB,
+          delta,
+          pctChange,
+          changed: valA !== valB,
+        };
+      });
+
+      return {
+        a: { ...a, costRates: ratesA },
+        b: { ...b, costRates: ratesB },
+        diff,
+        changedCount: diff.filter(d => d.changed).length,
+      };
+    }),
 });

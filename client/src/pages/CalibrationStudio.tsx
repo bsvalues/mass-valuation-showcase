@@ -1,4 +1,5 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { VersionHistoryPanel } from "@/components/VersionHistoryPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertTriangle, CheckCircle2, LineChart, RefreshCw, Sliders,
-  Save, History, Trash2, RotateCcw, Star, StarOff, Clock, Database
+  Save, History, Clock, Database, RotateCcw
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
@@ -181,11 +182,8 @@ export default function CalibrationStudio() {
   const [newSnapshotName, setNewSnapshotName] = useState("");
   const [newSnapshotDesc, setNewSnapshotDesc] = useState("");
   const [selectedCounty, setSelectedCounty] = useState("King");
-  const [loadingSnapshotId, setLoadingSnapshotId] = useState<number | null>(null);
-
   // ── Queries ──────────────────────────────────────────────────────────────────
-  const { data: snapshots, isLoading: snapshotsLoading, refetch: refetchSnapshots } =
-    trpc.calibration.list.useQuery({ countyName: selectedCounty });
+  const utils = trpc.useUtils();
 
   const { data: activeSnapshot, isLoading: activeLoading } =
     trpc.calibration.getActive.useQuery({ countyName: selectedCounty });
@@ -200,27 +198,10 @@ export default function CalibrationStudio() {
       setNewSnapshotName("");
       setNewSnapshotDesc("");
       setIsDirty(false);
-      refetchSnapshots();
+      utils.calibration.list.invalidate();
+      utils.calibration.getActive.invalidate();
     },
     onError: (err) => toast.error("Save failed", { description: err.message }),
-  });
-
-  const deleteMutation = trpc.calibration.delete.useMutation({
-    onSuccess: () => {
-      toast.info("Snapshot deleted");
-      refetchSnapshots();
-    },
-    onError: (err) => toast.error("Delete failed", { description: err.message }),
-  });
-
-  const setActiveMutation = trpc.calibration.setActive.useMutation({
-    onSuccess: (data) => {
-      toast.success("Active snapshot updated", {
-        description: `"${data.name}" is now the active calibration.`,
-      });
-      refetchSnapshots();
-    },
-    onError: (err) => toast.error("Failed to set active", { description: err.message }),
   });
 
   // ── Load active snapshot on mount / county change ─────────────────────────────
@@ -262,33 +243,6 @@ export default function CalibrationStudio() {
       costRates,
       setAsActive: true,
     });
-  };
-
-  const handleLoadSnapshot = (snapshot: NonNullable<typeof snapshots>[number]) => {
-    setLoadingSnapshotId(snapshot.id);
-    try {
-      const parsed = typeof snapshot.costRates === 'string'
-        ? JSON.parse(snapshot.costRates as string)
-        : snapshot.costRates;
-      setCostRates(parsed as CostRates);
-      setIsDirty(false);
-      toast.success("Snapshot Loaded", {
-        description: `Calibration set to "${snapshot.name}" (v${snapshot.version}).`,
-      });
-    } catch {
-      toast.error("Failed to load snapshot — invalid cost rates format.");
-    } finally {
-      setLoadingSnapshotId(null);
-    }
-  };
-
-  const handleSetActive = (id: number) => {
-    setActiveMutation.mutate({ id });
-  };
-
-  const handleDelete = (id: number, name: string) => {
-    if (!confirm(`Delete snapshot "${name}"? This cannot be undone.`)) return;
-    deleteMutation.mutate({ id });
   };
 
   // ── Derived stats ─────────────────────────────────────────────────────────────
@@ -510,152 +464,82 @@ export default function CalibrationStudio() {
           </Card>
         </div>
 
-        {/* ── Scenarios + Controls ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Saved Snapshots */}
-          <Card className="terra-card lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <History className="w-5 h-5 text-purple-400" />
-                Saved Snapshots
-              </CardTitle>
-              <CardDescription>Version history for {selectedCounty} County.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {snapshotsLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-24 w-full rounded-lg" />
-                ))
-              ) : !snapshots || snapshots.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 text-sm space-y-2">
-                  <Database className="w-8 h-8 mx-auto text-slate-600" />
-                  <p>No snapshots saved yet.</p>
-                  <p className="text-xs">Adjust rates and click "Save Snapshot" to persist your calibration.</p>
-                </div>
-              ) : (
-                snapshots.map((snapshot) => (
-                  <div
-                    key={snapshot.id}
-                    className={`p-3 rounded-lg border transition-all ${
-                      snapshot.isActive
-                        ? 'bg-[#00ffee]/5 border-[#00ffee]/30'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`font-medium text-sm truncate max-w-[140px] ${snapshot.isActive ? 'text-[#00ffee]' : 'text-white'}`}>
-                        {snapshot.name}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {snapshot.isActive && (
-                          <Badge className="bg-[#00ffee]/20 text-[#00ffee] border-[#00ffee]/30 text-xs px-1 py-0">
-                            Active
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 text-slate-500 hover:text-red-400"
-                          onClick={() => handleDelete(snapshot.id, snapshot.name)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-xs text-slate-500 mb-2">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(snapshot.createdAt).toLocaleDateString()}
-                      </span>
-                      <span className="font-mono">v{snapshot.version}</span>
-                    </div>
-                    {snapshot.description && (
-                      <p className="text-xs text-slate-400 mb-2 truncate">{snapshot.description}</p>
-                    )}
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="flex-1 bg-white/5 hover:bg-[#00ffee]/20 text-white hover:text-[#00ffee] border border-white/10 text-xs"
-                        onClick={() => handleLoadSnapshot(snapshot)}
-                        disabled={loadingSnapshotId === snapshot.id}
-                      >
-                        {loadingSnapshotId === snapshot.id ? "Loading..." : "Load"}
-                      </Button>
-                      {!snapshot.isActive && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-slate-400 hover:text-[#00ffee] px-2"
-                          onClick={() => handleSetActive(snapshot.id)}
-                          disabled={setActiveMutation.isPending}
-                          title="Set as active calibration"
-                        >
-                          <Star className="w-3 h-3" />
-                        </Button>
-                      )}
-                      {snapshot.isActive && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-[#00ffee] px-2 cursor-default"
-                          disabled
-                          title="This is the active calibration"
-                        >
-                          <StarOff className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Calibration Controls */}
-          <div className="lg:col-span-2">
-            <Tabs defaultValue="cost" className="w-full">
-              <TabsList className="bg-white/5 border border-white/10 p-1 w-full justify-start">
-                <TabsTrigger value="cost">Cost Tables</TabsTrigger>
-                <TabsTrigger value="land">Land Models</TabsTrigger>
-                <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
-                <TabsTrigger value="modifiers">Neighborhood Modifiers</TabsTrigger>
-              </TabsList>
-              <TabsContent value="cost" className="mt-6">
-                <CostCurveEditor
-                  rates={costRates}
-                  onRatesChange={handleRatesChange}
-                  isDirty={isDirty}
-                  onReset={handleReset}
-                />
-              </TabsContent>
-              <TabsContent value="land" className="mt-6">
-                <Card className="terra-card">
-                  <CardContent className="py-12 text-center text-slate-500">
-                    <Sliders className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-                    Land model editor coming in a future release.
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="depreciation" className="mt-6">
-                <Card className="terra-card">
-                  <CardContent className="py-12 text-center text-slate-500">
-                    <Sliders className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-                    Depreciation table editor coming in a future release.
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="modifiers" className="mt-6">
-                <Card className="terra-card">
-                  <CardContent className="py-12 text-center text-slate-500">
-                    <Sliders className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-                    Neighborhood modifier editor coming in a future release.
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+        {/* ── Calibration Controls + Version History ── */}
+        <Tabs defaultValue="cost" className="w-full">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <TabsList className="bg-white/5 border border-white/10 p-1">
+              <TabsTrigger value="cost">Cost Tables</TabsTrigger>
+              <TabsTrigger value="land">Land Models</TabsTrigger>
+              <TabsTrigger value="depreciation">Depreciation</TabsTrigger>
+              <TabsTrigger value="modifiers">Neighborhood Modifiers</TabsTrigger>
+              <TabsTrigger value="history" className="flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5" />
+                Version History
+              </TabsTrigger>
+            </TabsList>
           </div>
-        </div>
+
+          <TabsContent value="cost">
+            <CostCurveEditor
+              rates={costRates}
+              onRatesChange={handleRatesChange}
+              isDirty={isDirty}
+              onReset={handleReset}
+            />
+          </TabsContent>
+
+          <TabsContent value="land">
+            <Card className="terra-card">
+              <CardContent className="py-12 text-center text-slate-500">
+                <Sliders className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                Land model editor coming in a future release.
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="depreciation">
+            <Card className="terra-card">
+              <CardContent className="py-12 text-center text-slate-500">
+                <Sliders className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                Depreciation table editor coming in a future release.
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="modifiers">
+            <Card className="terra-card">
+              <CardContent className="py-12 text-center text-slate-500">
+                <Sliders className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                Neighborhood modifier editor coming in a future release.
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Version History Tab ── */}
+          <TabsContent value="history">
+            <Card className="terra-card">
+              <CardContent className="pt-6">
+                <VersionHistoryPanel
+                  countyName={selectedCounty}
+                  onLoad={(snapshot) => {
+                    try {
+                      const parsed = typeof snapshot.costRates === 'string'
+                        ? JSON.parse(snapshot.costRates as unknown as string)
+                        : snapshot.costRates;
+                      setCostRates(parsed as CostRates);
+                      setIsDirty(false);
+                      toast.success("Snapshot Loaded", {
+                        description: `Calibration set to "${snapshot.name}" (v${snapshot.version}). Switch to Cost Tables to edit.`,
+                      });
+                    } catch {
+                      toast.error("Failed to load snapshot — invalid cost rates format.");
+                    }
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
