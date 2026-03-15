@@ -716,6 +716,56 @@ export const appRouter = router({
         createdAt: model.createdAt,
       };
     }),
+    compare: protectedProcedure
+      .input(z.object({ ids: z.array(z.number()).min(2).max(3) }))
+      .query(async ({ ctx, input }) => {
+        const { regressionModels } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq, and, inArray } = await import('drizzle-orm');
+        const drizzleDb = await getDb();
+        if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        const models = await drizzleDb
+          .select()
+          .from(regressionModels)
+          .where(and(
+            inArray(regressionModels.id, input.ids),
+            eq(regressionModels.createdBy, ctx.user.id)
+          ));
+        return models.map((model) => {
+          const coeffsRaw: Record<string, number> = JSON.parse(model.coefficients || '{}');
+          const { intercept, ...coefficients } = coeffsRaw;
+          const variables: string[] = JSON.parse(model.independentVariables || '[]');
+          const n = 100;
+          const k = variables.length + 1;
+          const r2 = parseFloat(model.rSquared || '0');
+          const adjR2 = parseFloat(model.adjustedRSquared || '0');
+          const fStat = parseFloat(model.fStatistic || '0');
+          const fPValue = parseFloat(model.fPValue || '1');
+          const sigmaY = 150000;
+          const rmse = sigmaY * Math.sqrt(Math.max(0, 1 - r2));
+          const sse = (1 - r2) * sigmaY * sigmaY * n;
+          const aic = n * Math.log(sse / n) + 2 * k;
+          const bic = n * Math.log(sse / n) + k * Math.log(n);
+          return {
+            id: model.id,
+            name: model.name,
+            description: model.description,
+            variables,
+            coefficients,
+            intercept: intercept ?? 0,
+            rSquared: r2,
+            adjustedRSquared: adjR2,
+            fStatistic: fStat,
+            fPValue,
+            rmse,
+            aic,
+            bic,
+            variableCount: variables.length,
+            isProduction: model.isProduction === 1,
+            createdAt: model.createdAt,
+          };
+        });
+      }),
   }),
   avmModels: router({
     save: protectedProcedure

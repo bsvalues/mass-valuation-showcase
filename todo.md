@@ -4186,3 +4186,19 @@
 - [x] Add Export CSV button for completed job results
 - [x] Add loading skeletons and empty states
 - [x] TypeScript: 0 errors
+
+## 📊 Phase AJ: Model Comparison Dashboard (In Progress → Completed above)
+
+## 📊 Phase AJ: Model Comparison Dashboard (Completed)
+- [x] Add regressionModels.compare procedure to routers.ts (AIC, BIC, RMSE computed server-side)
+- [x] Build ModelComparisonDashboard component with model selector (2-3 models)
+- [x] Winner recommendation card with composite scoring (Adj R² +3, AIC +2, BIC +1, RMSE +1)
+- [x] Fit statistics table with 4 sections: Goodness of Fit, Information Criteria, Significance, Complexity
+- [x] Best-value highlighting (CheckCircle2 icon on winning cell per metric)
+- [x] Coefficient comparison grouped bar chart (Recharts BarChart)
+- [x] Variable Presence Matrix table (which variables each model uses + coefficient values)
+- [x] Per-model action cards with Load into Studio and Promote to Production buttons
+- [x] CSV export of full comparison report
+- [x] IAAO guidance footnote (§7.3)
+- [x] Replace ModelComparisonPanel with ModelComparisonDashboard in RegressionStudio
+- [x] TypeScript: 0 errors

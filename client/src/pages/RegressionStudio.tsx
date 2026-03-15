@@ -4,6 +4,7 @@ import { ResidualsVsFittedPlot } from "@/components/ResidualsVsFittedPlot";
 import { CooksDistancePlot } from "@/components/CooksDistancePlot";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ModelComparisonPanel } from "@/components/ModelComparisonPanel";
+import { ModelComparisonDashboard } from "@/components/ModelComparisonDashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,9 +189,9 @@ export default function RegressionStudio() {
           </div>
         </div>
 
-        {/* Model Comparison Panel */}
+        {/* Model Comparison Dashboard */}
         {compareOpen && savedModels && (
-          <ModelComparisonPanel
+          <ModelComparisonDashboard
             savedModels={savedModels}
             onLoadModel={(model) => {
               setSelectedVariables(model.variables.length > 0 ? model.variables : ["squareFeet", "yearBuilt"]);
