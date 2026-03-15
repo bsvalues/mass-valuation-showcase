@@ -13,6 +13,12 @@ import multer from "multer";
 import { handleFileUpload } from "../uploadEndpoint";
 import { handleDocumentUpload, uploadMiddleware } from "../uploadDocument";
 import { initializeCronJobs } from "../cronJobs";
+import {
+  handleExportSnapshotCsv,
+  handleExportSnapshotPdf,
+  handleExportHistoryCsv,
+  handleExportHistoryPdf,
+} from "../calibrationExport";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -49,6 +55,14 @@ async function startServer() {
   });
   app.post("/api/upload", upload.single('file'), handleFileUpload);
   app.post("/api/upload-document", uploadMiddleware, handleDocumentUpload);
+
+  // Calibration snapshot export endpoints (CSV + PDF)
+  // Note: history routes must be registered BEFORE :id routes to avoid param conflicts
+  app.get("/api/calibration/history/export.csv", handleExportHistoryCsv);
+  app.get("/api/calibration/history/export.pdf", handleExportHistoryPdf);
+  app.get("/api/calibration/:id/export.csv", handleExportSnapshotCsv);
+  app.get("/api/calibration/:id/export.pdf", handleExportSnapshotPdf);
+
   // tRPC API
   app.use(
     "/api/trpc",

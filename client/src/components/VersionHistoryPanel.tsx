@@ -23,9 +23,23 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  ArrowDown, ArrowUp, Clock, Database, GitCompare, History,
-  Loader2, Minus, RotateCcw, Star, Zap,
+  ArrowDown, ArrowUp, Clock, Database, Download, FileSpreadsheet,
+  FileText, GitCompare, History, Loader2, Minus, RotateCcw, Star, Zap,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+// ─── Export helper ────────────────────────────────────────────────────────────
+function triggerDownload(url: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => document.body.removeChild(a), 200);
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Snapshot {
@@ -142,6 +156,40 @@ export function VersionHistoryPanel({ countyName, onLoad }: VersionHistoryPanelP
           )}
         </div>
 
+        {/* Header action buttons */}
+        <div className="flex items-center gap-2">
+        {snapshots.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10 text-xs"
+              >
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Export History
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-[#0b1020] border-white/10 text-white">
+              <DropdownMenuLabel className="text-slate-400 text-xs">Full History — {countyName} County</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem
+                className="text-sm cursor-pointer hover:bg-white/10 focus:bg-white/10"
+                onClick={() => triggerDownload(`/api/calibration/history/export.csv?county=${encodeURIComponent(countyName)}`)}
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2 text-emerald-400" />
+                Download CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-sm cursor-pointer hover:bg-white/10 focus:bg-white/10"
+                onClick={() => triggerDownload(`/api/calibration/history/export.pdf?county=${encodeURIComponent(countyName)}`)}
+              >
+                <FileText className="w-4 h-4 mr-2 text-red-400" />
+                Download PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         {/* Compare trigger */}
         {snapshots.length >= 2 && (
           <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
@@ -174,6 +222,7 @@ export function VersionHistoryPanel({ countyName, onLoad }: VersionHistoryPanelP
             </DialogContent>
           </Dialog>
         )}
+        </div>
       </div>
 
       {/* Timeline */}
@@ -318,7 +367,7 @@ function TimelineEntry({
           </div>
 
           {/* Action buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               size="sm"
               variant="outline"
@@ -328,6 +377,37 @@ function TimelineEntry({
               <Zap className="w-3 h-3 mr-1" />
               Load into Editor
             </Button>
+            {/* Per-snapshot export dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-[#0b1020] border-white/10 text-white">
+                <DropdownMenuLabel className="text-slate-400 text-xs">Export Snapshot v{snapshot.version}</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem
+                  className="text-sm cursor-pointer hover:bg-white/10 focus:bg-white/10"
+                  onClick={() => triggerDownload(`/api/calibration/${snapshot.id}/export.csv`)}
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2 text-emerald-400" />
+                  Download CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-sm cursor-pointer hover:bg-white/10 focus:bg-white/10"
+                  onClick={() => triggerDownload(`/api/calibration/${snapshot.id}/export.pdf`)}
+                >
+                  <FileText className="w-4 h-4 mr-2 text-red-400" />
+                  Download PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {!isActive && (
               <Button
                 size="sm"
