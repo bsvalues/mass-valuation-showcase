@@ -677,3 +677,35 @@ export const assessmentAuditLog = mysqlTable("assessmentAuditLog", {
 
 export type AssessmentAuditLog = typeof assessmentAuditLog.$inferSelect;
 export type InsertAssessmentAuditLog = typeof assessmentAuditLog.$inferInsert;
+
+/**
+ * Calibration Snapshots table - persists cost table adjustments and calibration scenarios
+ */
+export const calibrationSnapshots = mysqlTable("calibrationSnapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  countyName: varchar("countyName", { length: 128 }),
+  // Cost table rates stored as JSON: { "Residential (Wood Frame)": 142, ... }
+  costRates: text("costRates").notNull(), // JSON string
+  // Optional extended calibration data
+  landModelData: text("landModelData"),       // JSON string
+  depreciationData: text("depreciationData"), // JSON string
+  neighbourhoodModifiers: text("neighbourhoodModifiers"), // JSON string
+  // IAAO metrics snapshot at time of save
+  snapshotMedianRatio: float("snapshotMedianRatio"),
+  snapshotCod: float("snapshotCod"),
+  snapshotPrd: float("snapshotPrd"),
+  // Whether this is the active/loaded snapshot for the county
+  isActive: tinyint("isActive").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("calib_userid_idx").on(table.userId),
+  countyIdx: index("calib_county_idx").on(table.countyName),
+  activeIdx: index("calib_active_idx").on(table.isActive),
+}));
+
+export type CalibrationSnapshot = typeof calibrationSnapshots.$inferSelect;
+export type InsertCalibrationSnapshot = typeof calibrationSnapshots.$inferInsert;
