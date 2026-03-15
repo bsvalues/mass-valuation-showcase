@@ -144,6 +144,11 @@ export const auditLogs = mysqlTable("auditLogs", {
   entityId: varchar("entityId", { length: 64 }),
   details: text("details"),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
+  // Phase AF: Chained hash fields for tamper-evident audit trail
+  // chainHash = SHA-256(prevHash || action || timestamp || details)
+  // prevHash = chainHash of the immediately preceding entry (null for genesis)
+  chainHash: varchar("chainHash", { length: 64 }),
+  prevHash: varchar("prevHash", { length: 64 }),
 });
 
 export type AuditLog = typeof auditLogs.$inferSelect;

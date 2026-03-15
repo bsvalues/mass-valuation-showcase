@@ -14,6 +14,12 @@ interface AuditEntry {
   user: string;
   timestamp: string;
   hash: string;
+  /** Server-computed chained SHA-256 hash (Phase AF) */
+  chainHash?: string | null;
+  /** Hash of the previous entry — null for genesis */
+  prevHash?: string | null;
+  /** Whether the chain is intact at this entry */
+  chainIntact?: boolean;
 }
 
 
@@ -82,23 +88,30 @@ export default function Governance() {
   useEffect(() => {
     async function buildLogs() {
       if (backendLogs && backendLogs.length > 0) {
-        const formattedLogs = await Promise.all(
-          backendLogs.map(async (log) => ({
+        const formattedLogs = backendLogs.map((log, i) => {
+          const chainHash = log.chainHash ?? null;
+          const prevHash = log.prevHash ?? null;
+          // Chain is intact if: genesis entry has no prevHash, or this entry's prevHash
+          // matches the previous entry's chainHash
+          const prevEntry = i > 0 ? backendLogs[i - 1] : null;
+          const chainIntact = prevEntry
+            ? prevEntry.chainHash === log.prevHash
+            : log.prevHash === null; // genesis: prevHash must be null
+          return {
             id: `LOG-${log.id}`,
-            action: log.action + (log.details ? `: ${log.details.substring(0, 50)}...` : ''),
+            action: log.action + (log.details ? `: ${log.details.substring(0, 60)}` : ''),
             user: "User",
             timestamp: log.timestamp.toISOString(),
-            hash: `0x${await computeShortHash(`${log.id}-${log.action}-${log.timestamp.toISOString()}`)}`,
-          }))
-        );
+            // Display: use server chainHash if available, else compute client-side fallback
+            hash: chainHash ? `0x${chainHash.slice(0, 8)}...${chainHash.slice(-4)}` : '0x????????...????',
+            chainHash,
+            prevHash,
+            chainIntact,
+          };
+        });
         setAuditLog(formattedLogs);
       } else {
-        // Fallback to mock data if no real logs
-        const mockLog: AuditEntry[] = [
-          { id: "LOG-9001", action: "System Calibration: Base Rate -> $145.50", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), hash: "0x9a8b...7c2d" },
-          { id: "LOG-9002", action: "Data Ingestion: tax_roll_2025.csv", user: "Admin", timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), hash: "0x1f2e...3d4c" },
-        ];
-        setAuditLog(mockLog);
+        setAuditLog([]);
       }
     }
     buildLogs();
@@ -235,22 +248,45 @@ export default function Governance() {
                     </div>
                   ) : (
                     auditLog.map((log) => (
-                    <div key={log.id} className="flex items-center justify-between p-3 bg-black/20 rounded border border-white/5">
+                    <div key={log.id} className="flex items-center justify-between p-3 bg-black/20 rounded border border-white/5 hover:bg-black/30 transition-colors">
                       <div className="flex items-center gap-3">
-                        <History className="w-4 h-4 text-slate-500" />
+                        {log.chainIntact === false ? (
+                          <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                        ) : log.chainHash ? (
+                          <ShieldCheck className="w-4 h-4 text-green-400 shrink-0" />
+                        ) : (
+                          <History className="w-4 h-4 text-slate-500 shrink-0" />
+                        )}
                         <div>
                           <p className="text-sm font-medium text-white">{log.action}</p>
                           <div className="flex items-center gap-2 text-xs text-slate-400">
                             <span>{log.user}</span>
                             <span>•</span>
                             <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                            {log.chainIntact === false && (
+                              <span className="text-red-400 font-medium">⚠ Chain broken</span>
+                            )}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Badge variant="outline" className="font-mono text-[10px] text-purple-400 border-purple-500/20">
+                      <div className="text-right space-y-1">
+                        <Badge
+                          variant="outline"
+                          className={`font-mono text-[10px] block ${
+                            log.chainIntact === false
+                              ? 'text-red-400 border-red-500/20'
+                              : log.chainHash
+                              ? 'text-green-400 border-green-500/20'
+                              : 'text-purple-400 border-purple-500/20'
+                          }`}
+                        >
                           {log.hash}
                         </Badge>
+                        {log.prevHash && (
+                          <p className="text-[9px] text-slate-600 font-mono text-right">
+                            ← {log.prevHash.slice(0, 8)}...
+                          </p>
+                        )}
                       </div>
                     </div>
                     ))

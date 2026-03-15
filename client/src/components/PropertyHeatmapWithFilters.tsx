@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { PropertyHeatmap } from "./PropertyHeatmap";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,31 +7,51 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Filter } from "lucide-react";
+import { X, Filter, Loader2, RotateCcw } from "lucide-react";
+
+const VALUE_PRESETS = [
+  { label: "< $200K", min: 0, max: 200_000 },
+  { label: "$200K–$500K", min: 200_000, max: 500_000 },
+  { label: "$500K–$1M", min: 500_000, max: 1_000_000 },
+  { label: "> $1M", min: 1_000_000, max: 5_000_000 },
+];
+
+const YEAR_PRESETS = [
+  { label: "Pre-1950", min: 1800, max: 1950 },
+  { label: "1950–1980", min: 1950, max: 1980 },
+  { label: "1980–2000", min: 1980, max: 2000 },
+  { label: "2000+", min: 2000, max: 2026 },
+];
+
+const DEFAULT_VALUE_RANGE: [number, number] = [0, 2_000_000];
+const DEFAULT_YEAR_RANGE: [number, number] = [1900, 2026];
 
 export function PropertyHeatmapWithFilters() {
   // Fetch filter options from real database
   const { data: filterOptions, isLoading: optionsLoading } = trpc.analytics.getPropertyFilterOptions.useQuery();
 
-  // Filter state
+  // Filter state — live-apply (no separate Apply button needed)
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>("all");
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("all");
-  const [valueRange, setValueRange] = useState<[number, number]>([0, 2000000]);
-  const [filtersActive, setFiltersActive] = useState(false);
+  const [valueRange, setValueRange] = useState<[number, number]>(DEFAULT_VALUE_RANGE);
+  const [yearRange, setYearRange] = useState<[number, number]>(DEFAULT_YEAR_RANGE);
 
-  // Fetch heatmap data with applied filters
+  // Build query input reactively
+  const queryInput = useMemo(() => ({
+    propertyType: selectedPropertyType !== "all" ? selectedPropertyType : undefined,
+    neighborhood: selectedNeighborhood !== "all" ? selectedNeighborhood : undefined,
+    minValue: valueRange[0] > 0 ? valueRange[0] : undefined,
+    maxValue: valueRange[1] < DEFAULT_VALUE_RANGE[1] ? valueRange[1] : undefined,
+    minYearBuilt: yearRange[0] > DEFAULT_YEAR_RANGE[0] ? yearRange[0] : undefined,
+    maxYearBuilt: yearRange[1] < DEFAULT_YEAR_RANGE[1] ? yearRange[1] : undefined,
+    limit: 500,
+  }), [selectedPropertyType, selectedNeighborhood, valueRange, yearRange]);
+
   const { data: rawProperties, isLoading: dataLoading } = trpc.analytics.getPropertyHeatmapData.useQuery(
-    {
-      propertyType: filtersActive && selectedPropertyType !== "all" ? selectedPropertyType : undefined,
-      neighborhood: filtersActive && selectedNeighborhood !== "all" ? selectedNeighborhood : undefined,
-      minValue: filtersActive ? valueRange[0] : undefined,
-      maxValue: filtersActive ? valueRange[1] : undefined,
-      limit: 500,
-    },
+    queryInput,
     { enabled: !optionsLoading }
   );
 
-  // Map raw data to PropertyHeatmap's expected format
   const properties = (rawProperties ?? []).map(p => ({
     id: p.id,
     parcelNumber: p.parcelId,
@@ -40,29 +60,21 @@ export function PropertyHeatmapWithFilters() {
     value: p.totalValue ?? 0,
   }));
 
-  const handleResetFilters = () => {
+  const activeFilterCount =
+    (selectedPropertyType !== "all" ? 1 : 0) +
+    (selectedNeighborhood !== "all" ? 1 : 0) +
+    (valueRange[0] > 0 || valueRange[1] < DEFAULT_VALUE_RANGE[1] ? 1 : 0) +
+    (yearRange[0] > DEFAULT_YEAR_RANGE[0] || yearRange[1] < DEFAULT_YEAR_RANGE[1] ? 1 : 0);
+
+  const handleReset = () => {
     setSelectedPropertyType("all");
     setSelectedNeighborhood("all");
-    setValueRange([0, 2000000]);
-    setFiltersActive(false);
+    setValueRange(DEFAULT_VALUE_RANGE);
+    setYearRange(DEFAULT_YEAR_RANGE);
   };
 
-  const handleApplyFilters = () => {
-    setFiltersActive(true);
-  };
-
-  const activeFilterCount =
-    (filtersActive && selectedPropertyType !== "all" ? 1 : 0) +
-    (filtersActive && selectedNeighborhood !== "all" ? 1 : 0) +
-    (filtersActive && (valueRange[0] > 0 || valueRange[1] < 2000000) ? 1 : 0);
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+  const formatCurrency = (v: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
 
   return (
     <div className="space-y-4">
@@ -78,98 +90,149 @@ export function PropertyHeatmapWithFilters() {
                   {activeFilterCount} active
                 </Badge>
               )}
+              {dataLoading && (
+                <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+              )}
             </div>
-            {activeFilterCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetFilters}
-                className="h-8 text-xs text-cyan-400 hover:text-cyan-300"
-              >
-                <X className="w-3 h-3 mr-1" />
-                Reset All
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">
+                {dataLoading ? "Loading…" : `${properties.length.toLocaleString()} properties`}
+              </span>
+              {activeFilterCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleReset}
+                  className="h-8 text-xs text-cyan-400 hover:text-cyan-300"
+                >
+                  <RotateCcw className="w-3 h-3 mr-1" />
+                  Reset All
+                </Button>
+              )}
+            </div>
           </div>
           <CardDescription className="text-slate-400">
-            Filter {properties.length.toLocaleString()} properties displayed on the heatmap
+            Filters apply live — no button required
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Property Type Filter */}
+        <CardContent className="space-y-5">
+          {/* Row 1: Dropdowns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Property Type */}
             <div className="space-y-2">
-              <Label htmlFor="property-type" className="text-sm text-slate-300">
-                Property Type
-              </Label>
-              <Select
-                value={selectedPropertyType}
-                onValueChange={setSelectedPropertyType}
-                disabled={optionsLoading}
-              >
-                <SelectTrigger id="property-type" className="bg-slate-800 border-slate-700">
+              <Label className="text-sm text-slate-300">Property Type</Label>
+              <Select value={selectedPropertyType} onValueChange={setSelectedPropertyType} disabled={optionsLoading}>
+                <SelectTrigger className="bg-slate-800 border-slate-700">
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
                   {(filterOptions?.propertyTypes ?? []).map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Neighborhood Filter */}
+            {/* Neighborhood */}
             <div className="space-y-2">
-              <Label htmlFor="neighborhood" className="text-sm text-slate-300">
-                Neighborhood
-              </Label>
-              <Select
-                value={selectedNeighborhood}
-                onValueChange={setSelectedNeighborhood}
-                disabled={optionsLoading}
-              >
-                <SelectTrigger id="neighborhood" className="bg-slate-800 border-slate-700">
+              <Label className="text-sm text-slate-300">Neighborhood</Label>
+              <Select value={selectedNeighborhood} onValueChange={setSelectedNeighborhood} disabled={optionsLoading}>
+                <SelectTrigger className="bg-slate-800 border-slate-700">
                   <SelectValue placeholder="All Neighborhoods" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Neighborhoods</SelectItem>
                   {(filterOptions?.neighborhoods ?? []).map((n) => (
-                    <SelectItem key={n} value={n}>
-                      {n}
-                    </SelectItem>
+                    <SelectItem key={n} value={n}>{n}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            {/* Value Range Filter */}
-            <div className="space-y-2">
+          {/* Row 2: Value Range */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
               <Label className="text-sm text-slate-300">Total Value Range</Label>
-              <div className="text-xs text-cyan-400 mb-2">
+              <span className="text-xs text-cyan-400 font-mono">
                 {formatCurrency(valueRange[0])} – {formatCurrency(valueRange[1])}
-              </div>
-              <Slider
-                value={valueRange}
-                onValueChange={(value) => setValueRange(value as [number, number])}
-                min={0}
-                max={2000000}
-                step={10000}
-                className="w-full"
-              />
+              </span>
+            </div>
+            <Slider
+              value={valueRange}
+              onValueChange={(v) => setValueRange(v as [number, number])}
+              min={0}
+              max={DEFAULT_VALUE_RANGE[1]}
+              step={10_000}
+              className="w-full"
+            />
+            {/* Value presets */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {VALUE_PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => setValueRange([p.min, p.max])}
+                  className={`text-xs px-2 py-1 rounded border transition-colors ${
+                    valueRange[0] === p.min && valueRange[1] === p.max
+                      ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300"
+                      : "border-slate-700 text-slate-400 hover:border-cyan-500/30 hover:text-slate-300"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+              {(valueRange[0] !== DEFAULT_VALUE_RANGE[0] || valueRange[1] !== DEFAULT_VALUE_RANGE[1]) && (
+                <button
+                  onClick={() => setValueRange(DEFAULT_VALUE_RANGE)}
+                  className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-500 hover:text-slate-300"
+                >
+                  <X className="w-3 h-3 inline mr-0.5" />Clear
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button
-              onClick={handleApplyFilters}
-              className="bg-cyan-500 hover:bg-cyan-600 text-slate-900"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Apply Filters
-            </Button>
+          {/* Row 3: Year Built Range */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm text-slate-300">Year Built Range</Label>
+              <span className="text-xs text-cyan-400 font-mono">
+                {yearRange[0]} – {yearRange[1]}
+              </span>
+            </div>
+            <Slider
+              value={yearRange}
+              onValueChange={(v) => setYearRange(v as [number, number])}
+              min={DEFAULT_YEAR_RANGE[0]}
+              max={DEFAULT_YEAR_RANGE[1]}
+              step={1}
+              className="w-full"
+            />
+            {/* Year presets */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {YEAR_PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => setYearRange([p.min, p.max])}
+                  className={`text-xs px-2 py-1 rounded border transition-colors ${
+                    yearRange[0] === p.min && yearRange[1] === p.max
+                      ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300"
+                      : "border-slate-700 text-slate-400 hover:border-cyan-500/30 hover:text-slate-300"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+              {(yearRange[0] !== DEFAULT_YEAR_RANGE[0] || yearRange[1] !== DEFAULT_YEAR_RANGE[1]) && (
+                <button
+                  onClick={() => setYearRange(DEFAULT_YEAR_RANGE)}
+                  className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-500 hover:text-slate-300"
+                >
+                  <X className="w-3 h-3 inline mr-0.5" />Clear
+                </button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -229,6 +229,8 @@ export const analyticsRouter = router({
       neighborhood: z.string().optional(),
       minValue: z.number().optional(),
       maxValue: z.number().optional(),
+      minYearBuilt: z.number().optional(),
+      maxYearBuilt: z.number().optional(),
       limit: z.number().default(500),
     }))
     .query(async ({ input }) => {
@@ -253,6 +255,12 @@ export const analyticsRouter = router({
       if (input.maxValue !== undefined) {
         conditions.push(sql`${parcels.totalValue} <= ${input.maxValue}`);
       }
+      if (input.minYearBuilt !== undefined) {
+        conditions.push(sql`${parcels.yearBuilt} >= ${input.minYearBuilt}`);
+      }
+      if (input.maxYearBuilt !== undefined) {
+        conditions.push(sql`${parcels.yearBuilt} <= ${input.maxYearBuilt}`);
+      }
 
       const rows = await db
         .select({
@@ -264,6 +272,7 @@ export const analyticsRouter = router({
           propertyType: parcels.propertyType,
           neighborhood: parcels.neighborhood,
           address: parcels.address,
+          yearBuilt: parcels.yearBuilt,
         })
         .from(parcels)
         .where(and(...conditions))
@@ -517,6 +526,73 @@ export const analyticsRouter = router({
         totalBuildingValue: Number(kpiRow?.totalBuildingValue ?? 0),
         qualifiedSales:     Number(salesRow?.qualifiedSales ?? 0),
         avgSalePrice:       Number(salesRow?.avgSalePrice ?? 0),
+      };
+    }),
+
+  /**
+   * Phase AD: Get live neighbourhood statistics by name.
+   * Returns aggregate metrics for all parcels in a named neighbourhood.
+   */
+  getNeighborhoodStatsByName: publicProcedure
+    .input(z.object({
+      neighborhood: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Database not available');
+
+      const [stats] = await db
+        .select({
+          propertyCount:    sql<number>`COUNT(*)`,
+          medianValue:      sql<number>`AVG(${parcels.totalValue})`,
+          avgSquareFeet:    sql<number>`AVG(${parcels.squareFeet})`,
+          avgPricePerSqFt:  sql<number>`AVG(${parcels.totalValue} / NULLIF(${parcels.squareFeet}, 0))`,
+          avgAge:           sql<number>`AVG(YEAR(CURDATE()) - ${parcels.yearBuilt})`,
+          minValue:         sql<number>`MIN(${parcels.totalValue})`,
+          maxValue:         sql<number>`MAX(${parcels.totalValue})`,
+          avgLandValue:     sql<number>`AVG(${parcels.landValue})`,
+          avgBuildingValue: sql<number>`AVG(${parcels.buildingValue})`,
+        })
+        .from(parcels)
+        .where(
+          and(
+            eq(parcels.neighborhood, input.neighborhood),
+            sql`${parcels.totalValue} IS NOT NULL`,
+            sql`${parcels.totalValue} > 0`,
+          )
+        );
+
+      if (!stats || Number(stats.propertyCount) === 0) {
+        return null;
+      }
+
+      // Get property type distribution
+      const typeDistribution = await db
+        .select({
+          propertyType: parcels.propertyType,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(parcels)
+        .where(eq(parcels.neighborhood, input.neighborhood))
+        .groupBy(parcels.propertyType)
+        .orderBy(sql`COUNT(*) DESC`)
+        .limit(5);
+
+      return {
+        neighborhood:     input.neighborhood,
+        propertyCount:    Number(stats.propertyCount),
+        medianValue:      Math.round(Number(stats.medianValue ?? 0)),
+        avgSquareFeet:    Math.round(Number(stats.avgSquareFeet ?? 0)),
+        avgPricePerSqFt:  Math.round(Number(stats.avgPricePerSqFt ?? 0)),
+        avgAge:           Math.round(Number(stats.avgAge ?? 0)),
+        minValue:         Math.round(Number(stats.minValue ?? 0)),
+        maxValue:         Math.round(Number(stats.maxValue ?? 0)),
+        avgLandValue:     Math.round(Number(stats.avgLandValue ?? 0)),
+        avgBuildingValue: Math.round(Number(stats.avgBuildingValue ?? 0)),
+        propertyTypeDistribution: typeDistribution.map(t => ({
+          type:  t.propertyType ?? 'Unknown',
+          count: Number(t.count),
+        })),
       };
     }),
 });

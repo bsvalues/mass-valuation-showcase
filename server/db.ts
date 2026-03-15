@@ -1,4 +1,5 @@
-import { eq } from "drizzle-orm";
+import { createHash } from "crypto";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, parcels, InsertParcel, sales, InsertSale, auditLogs, InsertAuditLog, regressionModels, InsertRegressionModel, avmModels, InsertAVMModel } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -148,11 +149,48 @@ export async function getSales(userId?: number) {
   return await db.select().from(sales);
 }
 
+// ─── Chained Audit Hash Utility (Phase AF) ────────────────────────────────────
+/**
+ * Compute SHA-256(prevHash || action || timestamp || details).
+ * Uses Node.js built-in `crypto` — server-side only.
+ * Returns a 64-character hex string.
+ */
+function computeChainHash(
+  prevHash: string | null,
+  action: string,
+  timestamp: Date,
+  details: string | null | undefined
+): string {
+  const payload = [
+    prevHash ?? "GENESIS",
+    action,
+    timestamp.toISOString(),
+    details ?? "",
+  ].join("|");
+  return createHash("sha256").update(payload, "utf8").digest("hex");
+}
+
 // Audit log queries
 export async function createAuditLog(log: InsertAuditLog) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(auditLogs).values(log);
+
+  // Phase AF: Fetch the most recent chainHash to build the chain
+  const [lastEntry] = await db
+    .select({ chainHash: auditLogs.chainHash })
+    .from(auditLogs)
+    .orderBy(desc(auditLogs.id))
+    .limit(1);
+
+  const prevHash = lastEntry?.chainHash ?? null;
+  const now = new Date();
+  const chainHash = computeChainHash(prevHash, log.action, now, log.details ?? null);
+
+  const result = await db.insert(auditLogs).values({
+    ...log,
+    chainHash,
+    prevHash,
+  });
   return result;
 }
 
